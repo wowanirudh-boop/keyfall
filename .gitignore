@@ -13,10 +13,10 @@
 # testing
 /coverage
 
-# next.js
+# generated builds
 /.next/
 /.vinext/
-/out/
+/build/
 
 # misc
 .DS_Store
