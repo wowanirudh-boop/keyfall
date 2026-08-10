@@ -8,7 +8,10 @@ import tseslint from "typescript-eslint";
 
 const eslintConfig = defineConfig([
   globalIgnores([
+    "design_handoff_piano_practice_player/**",
     "dist/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

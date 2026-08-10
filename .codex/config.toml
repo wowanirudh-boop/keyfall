@@ -1,0 +1,32 @@
+# Codex profile for the Piano Practice Player build.
+#
+# ⚠ CLI ONLY. The Codex desktop app does not read this file — set the model and
+# approval mode in the app's own settings instead (see CODEX.md § Desktop app).
+# AGENTS.md is what both interfaces read automatically, and it carries the rules.
+#
+# CLI usage:  codex --profile piano "Execute tasks/T01-foundation.md ..."
+# Codex reads GLOBAL config from ~/.codex/config.toml — copy this block there.
+
+[profiles.piano]
+# A long, spec-heavy build with strict fidelity requirements — favour the
+# strongest available model and high reasoning effort over speed.
+model = "gpt-5-codex"
+model_reasoning_effort = "high"
+
+# Each task ends in a verification gate the agent must actually run, so it needs
+# to execute npm scripts without stopping to ask. Workspace-write keeps it inside
+# the repo; network access is needed for `npm install` only.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[profiles.piano.sandbox_workspace_write]
+network_access = true
+
+# Read-only reference material. The agent may read these; it must never edit
+# them. AGENTS.md states this as hard rule #1 and check:guardrails verifies the
+# files still exist, but keeping them out of the write path is cheaper than
+# catching it after the fact.
+#
+# If your Codex version supports path exclusions, add:
+#   PRD.md
+#   PRD design scope discussion/**

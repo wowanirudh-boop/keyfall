@@ -1,5 +1,190 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/space-grotesk-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../assets/fonts/space-grotesk-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/space-grotesk-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/ibm-plex-mono-400-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../assets/fonts/ibm-plex-mono-500-latin.woff2") format("woff2");
+}
+
+@theme static {
+  --color-bg: #0B0C0E;
+  --color-stage: #0A0B0D;
+  --color-stage-gradient-end: #0D0F13;
+  --color-strike-line: #2A2F36;
+  --color-panel: #0E1013;
+  --color-card: #101216;
+  --color-raised: #14161A;
+  --color-control: #1D2026;
+  --color-control-hover: #262A31;
+  --color-backdrop: rgba(6,7,9,0.78);
+  --color-border-1: #1A1D22;
+  --color-border-2: #1D2026;
+  --color-border-3: #23262C;
+  --color-border-4: #2C3037;
+  --color-border-5: #3A3F47;
+  --color-text: #E8EAED;
+  --color-secondary: #8A9099;
+  --color-mono-dim-1: #6B727C;
+  --color-mono-dim-2: #5B626B;
+  --color-mono-dim-3: #3E444C;
+  --color-on-accent: #06121A;
+  --color-key-white-face: #151821;
+  --color-key-black-face: #0C0E11;
+  --color-key-white-border: #252A32;
+  --color-key-black-border: #20242B;
+  --color-key-white-prepare: #161B21;
+  --color-key-black-prepare: #14181D;
+  --color-key-white-label: #5E6672;
+  --color-key-black-label: #4A515A;
+  --color-hand-right: #4CC2FF;
+  --color-hand-right-hover: #77D2FF;
+  --color-hand-right-tint: #0E2331;
+  --color-hand-left: #FF7A45;
+  --color-result-hover-border: #34576B;
+  --color-result-hover-bg: #131820;
+  --color-amber: #FFB25E;
+  --color-amber-bg: #1B1509;
+  --color-amber-border: #4A3A22;
+  --color-amber-border-dim: #2E2513;
+  --color-amber-text: #E0C9A5;
+  --color-amber-text-dim: #C9A874;
+  --color-notice-bg: #14110A;
+  --color-error: #FF3B6B;
+  --color-error-bg: #1A0E14;
+  --color-error-border: #4A2230;
+  --color-error-text: #F0B9C6;
+  --color-error-key-border: #FF6E90;
+  --color-error-key-label: #2A0A12;
+  --color-listening: #3ED598;
+  --color-listening-text: #7FD4AE;
+  --color-listening-bg: #0D1512;
+  --color-listening-border: #2A3B33;
+  --color-hand-right-toggle-on-bg: #4CC2FF18;
+
+  --alpha-note-glow: 55;
+  --alpha-pressed-glow: 66;
+  --alpha-prepare-inset: 22;
+  --alpha-prepare-border: 88;
+  --alpha-toggle-on-bg: 18;
+  --alpha-loop-fill: 1F;
+  --alpha-loop-border: 55;
+  --alpha-timeline-bar: 66;
+  --alpha-error-glow: 88;
+
+  --spacing-3: 3px;
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-7: 7px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-14: 14px;
+  --spacing-16: 16px;
+  --spacing-18: 18px;
+  --spacing-22: 22px;
+  --spacing-26: 26px;
+  --spacing-30: 30px;
+  --spacing-36: 36px;
+  --spacing-40: 40px;
+
+  --text-display: 46px;
+  --text-title: 19px;
+  --text-heading: 17px;
+  --text-subheading: 15px;
+  --text-body: 14px;
+  --text-body-sm: 13px;
+  --text-small: 12px;
+  --text-mono-count: 24px;
+  --text-mono-time: 13px;
+  --text-mono-meta: 11px;
+  --text-mono-label: 10px;
+  --text-mono-tiny: 9px;
+  --text-key-white-idle: 9px;
+  --text-key-white-pressed: 13px;
+  --text-key-black-idle: 7px;
+  --text-key-black-pressed: 10px;
+
+  --radius-chip: 2px;
+  --radius-note: 3px;
+  --radius-key-white: 4px;
+  --radius-button: 5px;
+  --radius-input: 6px;
+  --radius-device-row: 7px;
+  --radius-card: 8px;
+  --radius-modal: 10px;
+  --radius-pill: 20px;
+
+  --shadow-note-right: 0 0 14px #4CC2FF55;
+  --shadow-note-left: 0 0 14px #FF7A4555;
+  --shadow-pressed-key-right: 0 -2px 20px #4CC2FF66;
+  --shadow-pressed-key-left: 0 -2px 20px #FF7A4566;
+  --shadow-prepare-key-right: inset 0 -8px 14px #4CC2FF22;
+  --shadow-prepare-key-left: inset 0 -8px 14px #FF7A4522;
+  --shadow-error-key: 0 0 18px #FF3B6B88;
+  --shadow-playhead: 0 0 10px #4CC2FF88;
+
+  --duration-key-background: 40ms;
+  --duration-key-label: 60ms;
+  --duration-notice: 4200ms;
+  --font-ui: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --lookahead-seconds: 3;
+  --highlight-lead-time-seconds: 1;
+  --key-label-mode: all;
+  --listen-auto-start: 1;
+  --keyboard-midi-low: 21;
+  --keyboard-midi-high: 108;
+  --keyboard-white-count: 52;
+  --keyboard-black-count: 36;
+  --keyboard-black-pitch-classes: 1 3 6 8 10;
+  --keyboard-black-width-ratio: 0.62;
+  --keyboard-black-height-ratio: 0.62;
+  --keyboard-height: clamp(112px, 15vh, 158px);
+  --waterfall-note-width-ratio: 0.86;
+  --waterfall-note-margin-left-ratio: 0.07;
+  --waterfall-min-note-height: 5px;
+  --report-bucket-count: 26;
+  --report-hot-bucket-threshold: 0.7;
+  --grading-tolerance: 300ms;
+  --grading-candidate-window: 900ms;
+  --grading-error-flash-musical-seconds: 0.35;
+}
+
 *,
 *::before,
 *::after {
@@ -7,6 +192,20 @@
 }
 
 html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
 }

@@ -13,6 +13,6 @@
     "jsx": "react-jsx",
     "types": ["vite/client"]
   },
-  "include": ["src", "vite.config.ts"],
+  "include": ["src", "playwright.config.ts", "vite.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules"]
 }

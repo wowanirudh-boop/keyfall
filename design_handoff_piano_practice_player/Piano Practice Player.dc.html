@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0B0C0E; }
+  * { box-sizing: border-box; }
+  body { font-family: "Space Grotesk", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #4CC2FF; text-decoration: none; }
+  a:hover { color: #8AD8FF; }
+  input, button { font-family: inherit; }
+  input:focus { outline: none; }
+  ::selection { background: #4CC2FF; color: #0B0C0E; }
+  @keyframes errFlash { 0% { opacity: 1 } 100% { opacity: 0.25 } }
+</style>
+</helmet>
+<div style="min-height: 100vh; height: 100vh; background: #0B0C0E; color: #E8EAED; overflow: hidden; display: flex; flex-direction: column; padding-bottom: 42px;">
+
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div style="flex: 1; overflow-y: auto; padding: 40px 32px 120px;">
+      <div style="max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px;">
+
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+          <div style="display: flex; align-items: baseline; gap: 12px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #4CC2FF;"></div>
+            <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.01em;">Piano Practice Player</div>
+          </div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B727C; letter-spacing: 0.06em;">LOCAL LIBRARY · NO ACCOUNT</div>
+        </div>
+
+        <sc-if value="{{ offline }}">
+          <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid #4A3A22; background: #1B1509; border-radius: 6px;">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: #FFB25E; margin-top: 6px;"></div>
+            <div style="font-size: 13px; line-height: 1.5; color: #E0C9A5;">Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.</div>
+          </div>
+        </sc-if>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 62px; border: 1px solid #23262C; background: #14161A; border-radius: 8px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B727C;">/</div>
+            <input value="{{ query }}" onChange="{{ onQuery }}" onKeyDown="{{ onQueryKey }}" placeholder="Search a piece — Für Elise, Moonlight Sonata, Gymnopédie" style="flex: 1; border: none; background: transparent; color: #E8EAED; font-size: 17px; letter-spacing: -0.01em;" />
+            <sc-if value="{{ hasQuery }}">
+              <button onClick="{{ clearQuery }}" style="border: none; background: #1D2026; color: #8A9099; font-size: 12px; padding: 7px 11px; border-radius: 5px; cursor: pointer;" style-hover="background: #262A31; color: #E8EAED;">Clear</button>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ showResults }}">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B727C; letter-spacing: 0.06em; padding-left: 2px;">{{ resultCountLabel }}</div>
+              <sc-for list="{{ results }}" as="r" hint-placeholder-count="3">
+                <div onClick="{{ r.open }}" style="display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; padding: 16px 18px; border: 1px solid #1D2026; background: #101216; border-radius: 8px; cursor: pointer;" style-hover="border-color: #34576B; background: #131820;">
+                  <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                    <div style="font-size: 16px; font-weight: 500; letter-spacing: -0.01em;">{{ r.title }}</div>
+                    <div style="font-size: 13px; color: #8A9099;">{{ r.byline }}</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B; letter-spacing: 0.04em;">{{ r.meta }}</div>
+                  </div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #4CC2FF;">{{ r.duration }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showEmpty }}">
+            <div style="display: flex; flex-direction: column; gap: 18px; padding: 26px; border: 1px solid #1D2026; background: #101216; border-radius: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 7px;">
+                <div style="font-size: 15px; font-weight: 500;">{{ emptyHeadline }}</div>
+                <div style="font-size: 13px; line-height: 1.55; color: #8A9099; max-width: 52ch;">The catalog only carries scores that are legal to redistribute, so newer arrangements are often missing. If you have the file, upload it and it becomes a piece in your library.</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <label style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 6px; background: #4CC2FF; color: #06121A; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #77D2FF;">
+                  Upload a MIDI or MusicXML file
+                  <input type="file" onChange="{{ onFile }}" style="display: none;" />
+                </label>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B;">.mid .midi .musicxml .xml .mxl · max 10 MB · max 30 min</div>
+              </div>
+              <sc-if value="{{ hasUploadError }}">
+                <div style="display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; border: 1px solid #4A2230; background: #1A0E14; border-radius: 6px;">
+                  <div style="width: 6px; height: 6px; border-radius: 50%; background: #FF3B6B; margin-top: 6px;"></div>
+                  <div style="font-size: 13px; line-height: 1.5; color: #F0B9C6;">{{ uploadError }}</div>
+                </div>
+              </sc-if>
+              <div style="display: flex; gap: 10px;">
+                <button onClick="{{ simulateBadFile }}" style="border: 1px solid #23262C; background: transparent; color: #6B727C; font-size: 11px; font-family: 'IBM Plex Mono', monospace; padding: 8px 11px; border-radius: 5px; cursor: pointer;" style-hover="color: #E8EAED; border-color: #3A3F47;">simulate: rejected file</button>
+                <button onClick="{{ simulateGoodFile }}" style="border: 1px solid #23262C; background: transparent; color: #6B727C; font-size: 11px; font-family: 'IBM Plex Mono', monospace; padding: 8px 11px; border-radius: 5px; cursor: pointer;" style-hover="color: #E8EAED; border-color: #3A3F47;">simulate: valid upload</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <div style="font-size: 14px; font-weight: 500; letter-spacing: 0.01em;">My pieces</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B;">{{ libraryCount }}</div>
+          </div>
+          <sc-if value="{{ libraryEmpty }}">
+            <div style="padding: 30px; border: 1px dashed #23262C; border-radius: 8px; font-size: 13px; color: #6B727C; text-align: center;">Nothing saved yet. Every piece you open — searched or uploaded — is kept here for tomorrow.</div>
+          </sc-if>
+          <sc-for list="{{ library }}" as="p" hint-placeholder-count="2">
+            <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 14px 16px; border: 1px solid #1D2026; background: #101216; border-radius: 8px;" style-hover="border-color: #2C3037;">
+              <div onClick="{{ p.open }}" style="display: flex; flex-direction: column; gap: 4px; cursor: pointer; min-width: 0;">
+                <div style="font-size: 15px; font-weight: 500;">{{ p.title }}</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B; letter-spacing: 0.04em;">{{ p.sub }}</div>
+              </div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A9099;">{{ p.duration }}</div>
+              <button onClick="{{ p.remove }}" style="border: 1px solid #23262C; background: transparent; color: #5B626B; font-size: 11px; font-family: 'IBM Plex Mono', monospace; padding: 7px 10px; border-radius: 5px; cursor: pointer;" style-hover="color: #FF3B6B; border-color: #4A2230;">delete</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPlayer }}">
+    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+
+      <div style="display: flex; align-items: center; gap: 18px; padding: 14px 22px; border-bottom: 1px solid #1A1D22; background: #0E1013;">
+        <button onClick="{{ goHome }}" style="border: 1px solid #23262C; background: transparent; color: #8A9099; font-size: 12px; padding: 8px 12px; border-radius: 5px; cursor: pointer;" style-hover="color: #E8EAED; border-color: #3A3F47;">← Library</button>
+        <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1;">
+          <div style="font-size: 15px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ pieceTitle }}</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B; letter-spacing: 0.04em;">{{ pieceSub }}</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B;">
+          <div style="display: flex; align-items: center; gap: 7px;"><div style="width: 8px; height: 8px; border-radius: 2px; background: #4CC2FF;"></div>RIGHT</div>
+          <div style="display: flex; align-items: center; gap: 7px;"><div style="width: 8px; height: 8px; border-radius: 2px; background: #FF7A45;"></div>LEFT</div>
+        </div>
+        <button onClick="{{ toggleMute }}" style="{{ muteBtnStyle }}">{{ muteLabel }}</button>
+        <button onClick="{{ openListen }}" style="{{ listenBtnStyle }}">{{ listenLabel }}</button>
+      </div>
+
+      <sc-if value="{{ droppedNotice }}">
+        <div style="padding: 9px 22px; background: #1B1509; border-bottom: 1px solid #2E2513; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #C9A874;">4 notes fell outside the 88-key range and were dropped — this file may not be a piano arrangement.</div>
+      </sc-if>
+
+      <div ref="{{ wfRef }}" style="position: relative; flex: 1; min-height: 0; overflow: hidden; background: #0A0B0D; background-image: linear-gradient(180deg, #0A0B0D 0%, #0D0F13 100%);">
+        <div style="{{ wfInnerStyle }}">
+          <sc-for list="{{ wfNotes }}" as="n" hint-placeholder-count="0">
+            <div style="{{ n.style }}"></div>
+          </sc-for>
+        </div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: #2A2F36;"></div>
+        <div style="position: absolute; left: 22px; top: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #3E444C; letter-spacing: 0.1em;">{{ lookaheadLabel }}</div>
+        <sc-if value="{{ listenActive }}">
+          <div style="position: absolute; right: 20px; top: 14px; display: flex; align-items: center; gap: 9px; padding: 7px 12px; border: 1px solid #2A3B33; background: #0D1512; border-radius: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #7FD4AE;">
+            <div style="width: 7px; height: 7px; border-radius: 50%; background: #3ED598;"></div>LISTENING · {{ deviceName }}
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="{{ keyboardStyle }}">
+        <sc-for list="{{ whiteKeys }}" as="k" hint-placeholder-count="14">
+          <div style="{{ k.style }}"><div style="{{ k.labelStyle }}">{{ k.label }}</div></div>
+        </sc-for>
+        <sc-for list="{{ blackKeys }}" as="k" hint-placeholder-count="9">
+          <div style="{{ k.style }}"><div style="{{ k.labelStyle }}">{{ k.label }}</div></div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0; border-top: 1px solid #1A1D22; background: #0E1013;">
+        <div style="padding: 16px 22px 10px; display: flex; align-items: center; gap: 16px;">
+          <button onClick="{{ togglePlay }}" style="{{ playBtnStyle }}">{{ playGlyph }}</button>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #E8EAED; letter-spacing: 0.02em; min-width: 96px;">{{ timeLabel }}</div>
+          <div onPointerDown="{{ onBarDown }}" onPointerMove="{{ onBarMove }}" onPointerUp="{{ onBarUp }}" style="position: relative; flex: 1; height: 34px; display: flex; align-items: center; cursor: pointer; touch-action: none;">
+            <div style="position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: #23262C;"></div>
+            <div style="{{ loopRegionStyle }}"></div>
+            <div style="{{ playedStyle }}"></div>
+            <div style="{{ handleStyle }}"></div>
+            <sc-if value="{{ hasA }}"><div onPointerDown="{{ grabA }}" style="{{ markerAStyle }}">A</div></sc-if>
+            <sc-if value="{{ hasB }}"><div onPointerDown="{{ grabB }}" style="{{ markerBStyle }}">B</div></sc-if>
+            <sc-if value="{{ scrubbing }}"><div style="{{ scrubTipStyle }}">{{ scrubLabel }}</div></sc-if>
+          </div>
+        </div>
+        <div style="padding: 0 22px 16px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B626B; letter-spacing: 0.1em;">SPEED</div>
+            <sc-for list="{{ speeds }}" as="s" hint-placeholder-count="3">
+              <button onClick="{{ s.set }}" style="{{ s.style }}">{{ s.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B626B; letter-spacing: 0.1em;">LOOP</div>
+            <button onClick="{{ setA }}" style="{{ setABtnStyle }}">Set A</button>
+            <button onClick="{{ setB }}" style="{{ setBBtnStyle }}">Set B</button>
+            <button onClick="{{ clearLoop }}" style="{{ clearLoopStyle }}">Clear</button>
+            <sc-if value="{{ loopActive }}">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #FFB25E;">{{ loopLabel }}</div>
+            </sc-if>
+          </div>
+          <div style="flex: 1;"></div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #3E444C; letter-spacing: 0.06em;">SPACE PLAY · ← → 5s · DRAG BAR TO SCRUB</div>
+        </div>
+        <sc-if value="{{ hasNotice }}">
+          <div style="padding: 10px 22px; border-top: 1px solid #1A1D22; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #C9A874; background: #14110A;">{{ notice }}</div>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{ listenSetup }}">
+      <div style="position: fixed; inset: 0; background: rgba(6, 7, 9, 0.78); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 40;">
+        <div style="width: 100%; max-width: 460px; border: 1px solid #23262C; background: #14161A; border-radius: 10px; padding: 26px; display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; flex-direction: column; gap: 7px;">
+            <div style="font-size: 17px; font-weight: 500; letter-spacing: -0.01em;">Listen mode</div>
+            <div style="font-size: 13px; line-height: 1.55; color: #8A9099;">The piece plays while your piano's MIDI output is graded against it. Pick the input to use — everything else stays as it is.</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ devices }}" as="d" hint-placeholder-count="2">
+              <button onClick="{{ d.pick }}" style="{{ d.style }}">
+                <div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+                  <div style="font-size: 14px; color: #E8EAED;">{{ d.name }}</div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B;">{{ d.port }}</div>
+                </div>
+                <div style="{{ d.dotStyle }}"></div>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.6; color: #5B626B;">Web MIDI needs Chrome or Edge. Pedals are ignored. A–B loop turns off while listening.</div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button onClick="{{ closeListen }}" style="border: 1px solid #23262C; background: transparent; color: #8A9099; font-size: 13px; padding: 10px 15px; border-radius: 6px; cursor: pointer;" style-hover="color: #E8EAED;">Cancel</button>
+            <button onClick="{{ showNoDevice }}" style="border: 1px solid #23262C; background: transparent; color: #5B626B; font-size: 11px; font-family: 'IBM Plex Mono', monospace; padding: 10px 12px; border-radius: 6px; cursor: pointer;" style-hover="color: #E8EAED;">simulate: no device</button>
+          </div>
+          <sc-if value="{{ noDevice }}">
+            <div style="padding: 14px 15px; border: 1px solid #4A2230; background: #1A0E14; border-radius: 6px; font-size: 13px; line-height: 1.55; color: #F0B9C6;">No MIDI input found. Connect the piano's USB Computer port to the laptop, switch the piano on, then reopen listen mode. If nothing appears, use Chrome or Edge.</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{ isReport }}">
+    <div style="flex: 1; overflow-y: auto; padding: 34px 26px 120px;">
+      <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <button onClick="{{ backToPlayer }}" style="border: 1px solid #23262C; background: transparent; color: #8A9099; font-size: 12px; padding: 8px 12px; border-radius: 5px; cursor: pointer;" style-hover="color: #E8EAED; border-color: #3A3F47;">← Player</button>
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <div style="font-size: 15px; font-weight: 500;">{{ pieceTitle }}</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B;">{{ attemptSub }}</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px;">
+          <div style="padding: 22px; border: 1px solid #23262C; background: #101216; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B626B; letter-spacing: 0.1em;">ACCURACY</div>
+            <div style="font-size: 46px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">{{ accuracy }}</div>
+            <div style="font-size: 12px; color: #8A9099;">{{ accuracyNote }}</div>
+          </div>
+          <div style="padding: 22px; border: 1px solid #1D2026; background: #101216; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B626B; letter-spacing: 0.1em;">PITCH ACCURACY</div>
+            <div style="font-size: 46px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: #4CC2FF;">{{ pitchAccuracy }}</div>
+            <div style="font-size: 12px; color: #8A9099;">Right notes, timing aside. The gap is timing, not reading.</div>
+          </div>
+          <div style="padding: 22px; border: 1px solid #1D2026; background: #101216; border-radius: 8px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B626B; letter-spacing: 0.1em;">BY HAND</div>
+            <sc-for list="{{ hands }}" as="h" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: #8A9099;">{{ h.name }}</span><span style="font-family: 'IBM Plex Mono', monospace;">{{ h.pct }}</span></div>
+                <div style="height: 4px; border-radius: 2px; background: #1D2026;"><div style="{{ h.barStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 14px; font-weight: 500;">What went wrong</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+            <sc-for list="{{ counts }}" as="c" hint-placeholder-count="5">
+              <div style="padding: 16px; border: 1px solid #1D2026; background: #101216; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="{{ c.dotStyle }}"></div>
+                  <div style="font-size: 12px; color: #8A9099;">{{ c.label }}</div>
+                </div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; letter-spacing: -0.02em;">{{ c.n }}</div>
+                <div style="font-size: 11px; color: #5B626B; line-height: 1.45;">{{ c.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <div style="font-size: 14px; font-weight: 500;">Where the mistakes are</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B626B;">CLICK A BAR TO PRACTISE THERE</div>
+          </div>
+          <div style="padding: 20px 18px 14px; border: 1px solid #1D2026; background: #101216; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: flex-end; gap: 3px; height: 110px;">
+              <sc-for list="{{ buckets }}" as="b" hint-placeholder-count="24">
+                <div onClick="{{ b.seek }}" style="{{ b.style }}" title="{{ b.title }}"></div>
+              </sc-for>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5B626B;">
+              <div>0:00</div><div>{{ clusterLabel }}</div><div>{{ durationLabel }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 14px; font-weight: 500;">Earlier attempts</div>
+          <sc-for list="{{ attempts }}" as="a" hint-placeholder-count="3">
+            <div style="display: grid; grid-template-columns: 1fr auto auto auto; gap: 18px; align-items: center; padding: 13px 16px; border: 1px solid #1D2026; background: #101216; border-radius: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A9099;">
+              <div>{{ a.when }}</div>
+              <div>{{ a.speed }}</div>
+              <div>{{ a.notes }}</div>
+              <div style="{{ a.pctStyle }}">{{ a.pct }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 7px; padding: 9px 14px; background: rgba(10, 11, 13, 0.92); border-top: 1px solid #1A1D22; overflow-x: auto; z-index: 60;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #3E444C; letter-spacing: 0.1em; padding-right: 4px; white-space: nowrap;">STATES</div>
+    <sc-for list="{{ nav }}" as="s" hint-placeholder-count="8">
+      <button onClick="{{ s.go }}" style="{{ s.style }}">{{ s.label }}</button>
+    </sc-for>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;rightHandColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#4CC2FF&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#4CC2FF&quot;,&quot;#7C5CFF&quot;,&quot;#3ED598&quot;,&quot;#FFD166&quot;],&quot;section&quot;:&quot;Hands&quot;},&quot;leftHandColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF7A45&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#FF7A45&quot;,&quot;#FF5470&quot;,&quot;#FFD166&quot;,&quot;#3ED598&quot;],&quot;section&quot;:&quot;Hands&quot;},&quot;lookaheadSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:3,&quot;min&quot;:2,&quot;max&quot;:6,&quot;step&quot;:0.5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Player&quot;},&quot;highlightLeadTime&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.5,&quot;max&quot;:3,&quot;step&quot;:0.25,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Player&quot;},&quot;keyLabels&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;all&quot;,&quot;options&quot;:[&quot;all&quot;,&quot;naturals&quot;,&quot;c-only&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Player&quot;}}">
+const PC = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+const BLACK = [1, 3, 6, 8, 10];
+const U = 0.155;
+const SPAN = 50;
+const REPEATS = 6;
+
+const R = [['E5',0,1],['D#5',1,1],['E5',2,1],['D#5',3,1],['E5',4,1],['B4',5,1],['D5',6,1],['C5',7,1],['A4',8,3],
+['C4',11,1],['E4',12,1],['A4',13,1],['B4',14,3],
+['E4',17,1],['G#4',18,1],['B4',19,1],['C5',20,3],
+['E4',23,1],['E5',24,1],['D#5',25,1],['E5',26,1],['D#5',27,1],['E5',28,1],['B4',29,1],['D5',30,1],['C5',31,1],['A4',32,3],
+['C4',35,1],['E4',36,1],['A4',37,1],['B4',38,3],
+['E4',41,1],['C5',42,1],['B4',43,1],['A4',44,5]];
+const L = [['A2',8,1],['E3',9,1],['A3',10,1],['E2',11,1],['E3',12,1],['G#3',13,1],
+['A2',17,1],['E3',18,1],['A3',19,1],['A2',23,1],['E3',24,1],['A3',25,1],
+['A2',32,1],['E3',33,1],['A3',34,1],['E2',35,1],['E3',36,1],['G#3',37,1],
+['A2',41,1],['E3',42,1],['A3',43,1]];
+
+const CATALOG = [
+  { id: 'fur-elise', title: 'Für Elise (WoO 59)', composer: 'Ludwig van Beethoven', arranger: '', source: 'Mutopia Project · public domain', dur: 0, aliases: ['fur elise', 'bagatelle a minor', 'elise'] },
+  { id: 'fur-elise-simple', title: 'Für Elise — simplified arrangement', composer: 'Ludwig van Beethoven', arranger: 'arr. P. Grant', source: 'MuseScore · CC0', dur: 0, aliases: ['fur elise easy', 'fur elise simple'] },
+  { id: 'gymnopedie', title: 'Gymnopédie No. 1', composer: 'Erik Satie', arranger: '', source: 'Mutopia Project · public domain', dur: 0, aliases: ['gymnopedie', 'gymnopedie no 1', 'satie'] },
+  { id: 'moonlight', title: 'Piano Sonata No. 14 "Moonlight" — I. Adagio sostenuto', composer: 'Ludwig van Beethoven', arranger: '', source: 'IMSLP · public domain', dur: 0, aliases: ['moonlight sonata', 'moonlight', 'sonata 14', 'quasi una fantasia'], dropped: true },
+  { id: 'clair', title: 'Clair de Lune (Suite bergamasque, III)', composer: 'Claude Debussy', arranger: '', source: 'IMSLP · public domain', dur: 0, aliases: ['clair de lune', 'claire de lune', 'debussy'] },
+  { id: 'prelude-c', title: 'Prelude in C major, BWV 846', composer: 'J. S. Bach', arranger: '', source: 'Mutopia Project · public domain', dur: 0, aliases: ['prelude in c', 'bach prelude', 'well tempered'] },
+  { id: 'nocturne', title: 'Nocturne in E-flat major, Op. 9 No. 2', composer: 'Frédéric Chopin', arranger: '', source: 'IMSLP · public domain', dur: 0, aliases: ['nocturne', 'chopin nocturne'] },
+  { id: 'arabesque', title: 'Arabesque, Op. 100 No. 2', composer: 'Johann Friedrich Burgmüller', arranger: '', source: 'Mutopia Project · public domain', dur: 0, aliases: ['arabesque', 'burgmuller'] }
+];
+
+const fold = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+const mm = (t) => {
+  if (!isFinite(t) || t < 0) t = 0;
+  const m = Math.floor(t / 60), s = Math.floor(t % 60);
+  return m + ':' + (s < 10 ? '0' : '') + s;
+};
+const toMidi = (name) => {
+  const m = /^([A-G]#?)(-?\d)$/.exec(name);
+  return PC[m[1]] + (parseInt(m[2], 10) + 1) * 12;
+};
+const label = (m) => {
+  const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  return names[m % 12].replace('#', '\u266F') + (Math.floor(m / 12) - 1);
+};
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.wfRef = React.createRef();
+    const notes = [];
+    for (let r = 0; r < REPEATS; r++) {
+      const off = r * SPAN;
+      R.forEach(([n, s, d]) => notes.push({ m: toMidi(n), s: (s + off) * U, e: (s + off + d) * U - 0.02, hand: 'R' }));
+      L.forEach(([n, s, d]) => notes.push({ m: toMidi(n), s: (s + off) * U, e: (s + off + d) * U - 0.02, hand: 'L' }));
+    }
+    notes.sort((a, b) => a.s - b.s);
+    this.notes = notes;
+    this.duration = REPEATS * SPAN * U;
+    CATALOG.forEach((c) => { c.dur = this.duration; });
+    this.judge();
+    this.geom();
+    this.state = {
+      screen: 'home', query: '', searched: false, offline: false, uploadError: '',
+      library: [
+        { id: 'fur-elise', title: 'Für Elise (WoO 59)', sub: 'BEETHOVEN · PRACTISED YESTERDAY · 0.5x' },
+        { id: 'gymnopedie', title: 'Gymnopédie No. 1', sub: 'SATIE · 3 DAYS AGO · 1x' }
+      ],
+      piece: null, t: 0, playing: false, speed: 1, muted: false,
+      a: null, b: null, scrub: null, grab: null, wfH: 420,
+      listen: 'off', device: null, noDevice: false, notice: '', attemptEnd: 0
+    };
+  }
+
+  judge() {
+    const types = [];
+    this.notes.forEach((n, i) => {
+      const h = ((i * 2654435761) % 10007) / 10007;
+      const cluster = n.s > 15.5 && n.s < 24.5;
+      const rate = cluster ? 0.58 : 0.14;
+      if (h < rate) {
+        const k = h / rate;
+        types.push(k < 0.22 ? 'wrong' : k < 0.42 ? 'missed' : k < 0.82 ? 'late' : 'early');
+      } else types.push('correct');
+    });
+    this.types = types;
+    this.extra = 7;
+  }
+
+  geom() {
+    const whites = [], blacks = [];
+    let w = 0;
+    const ww = 100 / 52, bw = ww * 0.62;
+    for (let m = 21; m <= 108; m++) {
+      if (BLACK.indexOf(m % 12) >= 0) blacks.push({ m, left: w * ww - bw / 2, width: bw });
+      else { whites.push({ m, left: w * ww, width: ww }); w++; }
+    }
+    this.whites = whites; this.blacks = blacks;
+  }
+
+  componentDidMount() {
+    this.onKey = (e) => {
+      if (this.state.screen !== 'player') return;
+      if (e.code === 'Space') { e.preventDefault(); this.togglePlay(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); this.seek(this.state.t - 5); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); this.seek(this.state.t + 5); }
+    };
+    window.addEventListener('keydown', this.onKey);
+    this.measure = () => {
+      const el = this.wfRef.current;
+      if (el && el.clientHeight && Math.abs(el.clientHeight - this.state.wfH) > 2) this.setState({ wfH: el.clientHeight });
+    };
+    window.addEventListener('resize', this.measure);
+    this.mi = setInterval(this.measure, 500);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.onKey);
+    window.removeEventListener('resize', this.measure);
+    clearInterval(this.mi);
+    cancelAnimationFrame(this.raf);
+  }
+
+  notify(msg) {
+    this.setState({ notice: msg });
+    clearTimeout(this.nt);
+    this.nt = setTimeout(() => this.setState({ notice: '' }), 4200);
+  }
+
+  loop = () => {
+    const now = performance.now();
+    const dt = Math.min(0.05, (now - this.last) / 1000);
+    this.last = now;
+    let t = this.state.t + dt * this.state.speed;
+    const { a, b } = this.state;
+    if (a != null && b != null && t >= b) t = a;
+    if (t >= this.duration) { this.setState({ t: this.duration, playing: false }); if (this.state.listen === 'active') this.endAttempt(this.duration); return; }
+    this.setState({ t });
+    this.raf = requestAnimationFrame(this.loop);
+  };
+  start() { this.last = performance.now(); cancelAnimationFrame(this.raf); this.setState({ playing: true }); this.raf = requestAnimationFrame(this.loop); }
+  pause() { cancelAnimationFrame(this.raf); this.setState({ playing: false }); }
+  togglePlay = () => {
+    if (this.state.playing) return this.pause();
+    if (this.state.t >= this.duration - 0.01) this.setState({ t: this.state.a != null ? this.state.a : 0 });
+    this.start();
+  };
+  seek = (v) => {
+    const t = Math.max(0, Math.min(this.duration, v));
+    if (this.state.listen === 'active') { this.endAttempt(this.state.t); return; }
+    this.setState({ t });
+  };
+  endAttempt = (t) => { cancelAnimationFrame(this.raf); this.setState({ screen: 'report', listen: 'off', playing: false, attemptEnd: Math.max(1, t) }); };
+
+  barPos(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * this.duration;
+  }
+  onBarDown = (e) => {
+    if (this.state.grab) { this.setState({ scrub: this.state.grab }); return; }
+    const t = this.barPos(e);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    this.setState({ scrub: 'T' });
+    this.seek(t);
+  };
+  onBarMove = (e) => {
+    if (!this.state.scrub) return;
+    const t = this.barPos(e);
+    if (this.state.scrub === 'A') this.setState({ a: Math.min(t, this.state.b != null ? this.state.b - 0.5 : this.duration) });
+    else if (this.state.scrub === 'B') this.setState({ b: Math.max(t, this.state.a != null ? this.state.a + 0.5 : 0) });
+    else this.seek(t);
+  };
+  onBarUp = () => this.setState({ scrub: null, grab: null });
+
+  setA = () => {
+    if (this.state.listen === 'active') return this.notify('A–B loop is off while listen mode runs. Stop listening to drill a section.');
+    const b = this.state.b;
+    this.setState({ a: this.state.t, b: b != null && b <= this.state.t ? null : b });
+  };
+  setB = () => {
+    if (this.state.listen === 'active') return this.notify('A–B loop is off while listen mode runs. Stop listening to drill a section.');
+    const a = this.state.a;
+    if (a != null && this.state.t <= a) this.setState({ a: this.state.t, b: a });
+    else this.setState({ b: this.state.t });
+  };
+  clearLoop = () => this.setState({ a: null, b: null });
+
+  open = (c) => {
+    const lib = this.state.library.slice();
+    if (!lib.some((p) => p.id === c.id)) lib.unshift({ id: c.id, title: c.title, sub: (c.composer || 'UPLOADED').toUpperCase() + ' · JUST NOW' });
+    this.setState({ screen: 'player', piece: c, library: lib, t: 0, playing: false, a: null, b: null, listen: 'off', notice: '' });
+  };
+
+  renderVals() {
+    const st = this.state;
+    const pr = this.props;
+    const CR = pr.rightHandColor || '#4CC2FF';
+    const CL = pr.leftHandColor || '#FF7A45';
+    const look = pr.lookaheadSeconds || 3;
+    const lead = pr.highlightLeadTime || 1;
+    const labelMode = pr.keyLabels || 'all';
+    const t = st.t, dur = this.duration;
+    const q = fold(st.query);
+    const results = q ? CATALOG.filter((c) => fold(c.title).indexOf(q) >= 0 || fold(c.composer).indexOf(q) >= 0 || c.aliases.some((a) => a.indexOf(q) >= 0 || q.indexOf(a) >= 0)) : [];
+    const pps = st.wfH / look;
+
+    if (this.pps !== pps) {
+      this.pps = pps;
+      this.laid = this.notes.map((n) => {
+        const g = BLACK.indexOf(n.m % 12) >= 0 ? this.blacks.find((k) => k.m === n.m) : this.whites.find((k) => k.m === n.m);
+        const c = n.hand === 'R' ? CR : CL;
+        return { style: { position: 'absolute', left: g.left + '%', width: g.width * 0.86 + '%', marginLeft: g.width * 0.07 + '%', bottom: n.s * pps + 'px', height: Math.max(5, (n.e - n.s) * pps) + 'px', background: c, borderRadius: '3px', boxShadow: '0 0 14px ' + c + '55' } };
+      });
+    }
+
+    const press = {}, prep = {}, err = {};
+    for (let i = 0; i < this.notes.length; i++) {
+      const n = this.notes[i];
+      if (n.s > t + look) break;
+      if (t >= n.s && t < n.e) press[n.m] = n.hand;
+      else if (t >= n.s - lead && t < n.s && !press[n.m]) prep[n.m] = n.hand;
+      if (st.listen === 'active' && t - n.s > 0 && t - n.s < 0.35 && (this.types[i] === 'wrong' || this.types[i] === 'missed')) err[n.m] = true;
+    }
+
+    const mkKey = (k, black) => {
+      const hand = press[k.m], p = prep[k.m], bad = err[k.m];
+      const c = hand === 'R' || p === 'R' ? CR : CL;
+      const base = {
+        position: 'absolute', left: k.left + '%', width: k.width + '%', top: 0,
+        height: black ? '62%' : '100%', borderRadius: black ? '0 0 3px 3px' : '0 0 4px 4px',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: black ? '5px' : '7px',
+        transition: 'background 40ms linear', zIndex: black ? 2 : 1
+      };
+      if (bad) { base.background = '#FF3B6B'; base.border = '1px solid #FF6E90'; base.boxShadow = '0 0 18px #FF3B6B88'; }
+      else if (hand) { base.background = c; base.border = '1px solid ' + c; base.boxShadow = '0 -2px 20px ' + c + '66'; }
+      else if (p) { base.background = black ? '#14181D' : '#161B21'; base.border = '1px solid ' + c + '88'; base.boxShadow = 'inset 0 -8px 14px ' + c + '22'; }
+      else { base.background = black ? '#0C0E11' : '#151821'; base.border = '1px solid ' + (black ? '#20242B' : '#252A32'); }
+      const show = labelMode === 'all' || (labelMode === 'naturals' && !black) || (labelMode === 'c-only' && k.m % 12 === 0);
+      const ls = {
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: (hand || bad ? (black ? 10 : 13) : (black ? 7 : 9)) + 'px',
+        fontWeight: hand || bad ? 500 : 400,
+        color: bad ? '#2A0A12' : hand ? '#06121A' : p ? c : black ? '#4A515A' : '#5E6672',
+        letterSpacing: '0.02em', opacity: show ? 1 : 0,
+        writingMode: black ? 'vertical-rl' : 'horizontal-tb', transition: 'font-size 60ms linear'
+      };
+      return { style: base, labelStyle: ls, label: label(k.m) };
+    };
+
+    const speeds = [1, 0.5, 0.25].map((s) => ({
+      label: s + 'x', set: () => this.setState({ speed: s }),
+      style: { border: '1px solid ' + (st.speed === s ? '#4CC2FF' : '#23262C'), background: st.speed === s ? '#0E2331' : 'transparent', color: st.speed === s ? '#4CC2FF' : '#8A9099', fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', padding: '7px 11px', borderRadius: '5px', cursor: 'pointer' }
+    }));
+
+    const smallBtn = (on, color) => ({ border: '1px solid ' + (on ? color : '#23262C'), background: on ? color + '18' : 'transparent', color: on ? color : '#8A9099', fontSize: '12px', padding: '7px 11px', borderRadius: '5px', cursor: 'pointer' });
+    const pct = (v) => (v / dur) * 100 + '%';
+
+    const played = st.a != null && st.b != null && t >= st.a ? t : t;
+    const judgedTo = st.attemptEnd || dur;
+    let cCor = 0, cWrong = 0, cMiss = 0, cLate = 0, cEarly = 0, expected = 0;
+    const handStat = { R: [0, 0], L: [0, 0] };
+    const NB = 26;
+    const buckets = new Array(NB).fill(0);
+    this.notes.forEach((n, i) => {
+      if (n.s > judgedTo) return;
+      expected++;
+      const ty = this.types[i];
+      handStat[n.hand][1]++;
+      if (ty === 'correct') { cCor++; handStat[n.hand][0]++; }
+      else {
+        if (ty === 'wrong') cWrong++; else if (ty === 'missed') cMiss++; else if (ty === 'late') cLate++; else cEarly++;
+        buckets[Math.min(NB - 1, Math.floor((n.s / dur) * NB))]++;
+      }
+    });
+    const maxB = Math.max(1, ...buckets);
+    const acc = expected ? Math.round((cCor / expected) * 100) : 0;
+    const pAcc = expected ? Math.round(((cCor + cLate + cEarly) / expected) * 100) : 0;
+    const worst = buckets.indexOf(maxB);
+
+    const nav = [
+      ['Home', () => this.setState({ screen: 'home', query: '', searched: false, offline: false, uploadError: '' })],
+      ['Results', () => this.setState({ screen: 'home', query: 'moonlight sonata', searched: true, offline: false, uploadError: '' })],
+      ['No results', () => this.setState({ screen: 'home', query: 'Ludovico Einaudi — Nuvole Bianche', searched: true, offline: false, uploadError: '' })],
+      ['Upload error', () => this.setState({ screen: 'home', query: 'Nuvole Bianche', searched: true, uploadError: 'That file is a PDF. The player needs machine-readable music: .mid, .midi, .musicxml, .xml or .mxl.' })],
+      ['Search offline', () => this.setState({ screen: 'home', query: '', searched: false, offline: true })],
+      ['Player', () => this.open(CATALOG[0])],
+      ['A–B loop', () => { this.open(CATALOG[0]); this.setState({ a: 7.8, b: 15.5, t: 9.4, speed: 0.5 }); }],
+      ['Dropped notes', () => this.open(CATALOG[3])],
+      ['Listen setup', () => { this.open(CATALOG[0]); this.setState({ listen: 'setup' }); }],
+      ['Listening', () => { this.open(CATALOG[0]); this.setState({ listen: 'active', device: 'Roland RP302', speed: 0.5, t: 16.4 }); }],
+      ['Report', () => this.setState({ screen: 'report', piece: this.state.piece || CATALOG[0], attemptEnd: dur, listen: 'off' })]
+    ].map(([lbl, go]) => ({
+      label: lbl, go,
+      style: { border: '1px solid #23262C', background: 'transparent', color: '#6B727C', fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.04em', padding: '6px 9px', borderRadius: '4px', cursor: 'pointer', whiteSpace: 'nowrap' }
+    }));
+
+    const piece = st.piece || CATALOG[0];
+
+    return {
+      isHome: st.screen === 'home', isPlayer: st.screen === 'player', isReport: st.screen === 'report',
+      query: st.query, hasQuery: st.query.length > 0, offline: st.offline,
+      onQuery: (e) => this.setState({ query: e.target.value, searched: true, uploadError: '' }),
+      onQueryKey: (e) => { if (e.key === 'Escape') this.setState({ query: '', searched: false }); },
+      clearQuery: () => this.setState({ query: '', searched: false, uploadError: '' }),
+      showResults: !st.offline && st.searched && results.length > 0,
+      showEmpty: st.searched && (st.offline ? false : results.length === 0),
+      emptyHeadline: 'Nothing in the catalog matches “' + st.query + '”.',
+      resultCountLabel: results.length + ' MATCH' + (results.length === 1 ? '' : 'ES') + ' · PUBLIC DOMAIN & CC SOURCES',
+      results: results.map((c) => ({
+        title: c.title, byline: c.composer + (c.arranger ? ' · ' + c.arranger : ''),
+        meta: c.source.toUpperCase(), duration: mm(c.dur), open: () => this.open(c)
+      })),
+      onFile: (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        if (!/\.(mid|midi|musicxml|xml|mxl)$/i.test(f.name)) return this.setState({ uploadError: '“' + f.name + '” is not a supported format. The player needs .mid, .midi, .musicxml, .xml or .mxl.' });
+        if (f.size > 10 * 1024 * 1024) return this.setState({ uploadError: '“' + f.name + '” is over the 10 MB limit.' });
+        this.open({ id: 'up-' + f.name, title: f.name.replace(/\.[^.]+$/, ''), composer: '', arranger: '', source: 'Uploaded file · stored locally', dur: this.duration, aliases: [] });
+      },
+      simulateBadFile: () => this.setState({ uploadError: '“nuvole-bianche.pdf” is a PDF. The player needs machine-readable music: .mid, .midi, .musicxml, .xml or .mxl.' }),
+      simulateGoodFile: () => this.open({ id: 'up-nb', title: 'nuvole-bianche', composer: '', arranger: '', source: 'Uploaded file · stored locally', dur: this.duration, aliases: [] }),
+      hasUploadError: !!st.uploadError, uploadError: st.uploadError,
+      library: st.library.map((p) => ({
+        title: p.title, sub: p.sub, duration: mm(dur),
+        open: () => this.open(CATALOG.find((c) => c.id === p.id) || { id: p.id, title: p.title, composer: '', arranger: '', source: 'Local library', dur, aliases: [] }),
+        remove: () => this.setState({ library: st.library.filter((x) => x.id !== p.id) })
+      })),
+      libraryEmpty: st.library.length === 0,
+      libraryCount: st.library.length + ' SAVED LOCALLY',
+
+      pieceTitle: piece.title,
+      pieceSub: (piece.composer ? piece.composer.toUpperCase() + ' · ' : '') + piece.source.toUpperCase(),
+      droppedNotice: !!piece.dropped,
+      goHome: () => { this.pause(); this.setState({ screen: 'home' }); },
+      wfRef: this.wfRef,
+      wfInnerStyle: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '100%', transform: 'translateY(' + t * pps + 'px)', willChange: 'transform' },
+      wfNotes: this.laid,
+      lookaheadLabel: look + 'S MUSICAL LOOKAHEAD · ' + (look / st.speed).toFixed(1) + 'S AT ' + st.speed + 'x',
+      keyboardStyle: { position: 'relative', height: 'clamp(112px, 15vh, 158px)', flexShrink: 0, background: '#0A0B0D', borderTop: '1px solid #1A1D22', padding: '0 4px' },
+      whiteKeys: this.whites.map((k) => mkKey(k, false)),
+      blackKeys: this.blacks.map((k) => mkKey(k, true)),
+
+      togglePlay: this.togglePlay,
+      playGlyph: st.playing ? '❙❙' : '▶',
+      playBtnStyle: { width: '46px', height: '46px', borderRadius: '50%', border: 'none', background: st.playing ? '#1D2026' : '#4CC2FF', color: st.playing ? '#E8EAED' : '#06121A', fontSize: st.playing ? '13px' : '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+      timeLabel: mm(t) + ' / ' + mm(dur),
+      onBarDown: this.onBarDown, onBarMove: this.onBarMove, onBarUp: this.onBarUp,
+      playedStyle: { position: 'absolute', left: 0, width: pct(played), height: '4px', borderRadius: '2px', background: '#4CC2FF' },
+      handleStyle: { position: 'absolute', left: pct(t), width: '3px', height: '18px', marginLeft: '-1px', borderRadius: '2px', background: '#E8EAED', boxShadow: '0 0 10px #4CC2FF88' },
+      loopRegionStyle: st.a != null && st.b != null ? { position: 'absolute', left: pct(st.a), width: ((st.b - st.a) / dur) * 100 + '%', height: '16px', borderRadius: '3px', background: '#FFB25E1F', border: '1px solid #FFB25E55' } : { display: 'none' },
+      hasA: st.a != null, hasB: st.b != null,
+      markerAStyle: { position: 'absolute', left: pct(st.a), transform: 'translateX(-50%)', bottom: '0px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#0B0C0E', background: '#FFB25E', padding: '1px 4px', borderRadius: '2px', cursor: 'grab', touchAction: 'none' },
+      markerBStyle: { position: 'absolute', left: pct(st.b), transform: 'translateX(-50%)', bottom: '0px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#0B0C0E', background: '#FFB25E', padding: '1px 4px', borderRadius: '2px', cursor: 'grab', touchAction: 'none' },
+      grabA: () => this.setState({ grab: 'A', scrub: 'A' }),
+      grabB: () => this.setState({ grab: 'B', scrub: 'B' }),
+      scrubbing: st.scrub === 'T',
+      scrubLabel: mm(t),
+      scrubTipStyle: { position: 'absolute', left: pct(t), transform: 'translateX(-50%)', top: '-16px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#0B0C0E', background: '#E8EAED', padding: '2px 6px', borderRadius: '3px' },
+      speeds,
+      setA: this.setA, setB: this.setB, clearLoop: this.clearLoop,
+      setABtnStyle: smallBtn(st.a != null, '#FFB25E'), setBBtnStyle: smallBtn(st.b != null, '#FFB25E'),
+      clearLoopStyle: smallBtn(false, '#FFB25E'),
+      loopActive: st.a != null && st.b != null,
+      loopLabel: 'LOOPING ' + mm(st.a || 0) + '–' + mm(st.b || 0),
+      hasNotice: !!st.notice, notice: st.notice,
+      toggleMute: () => this.setState({ muted: !st.muted }),
+      muteLabel: st.muted ? 'Muted' : 'Audio on',
+      muteBtnStyle: smallBtn(!st.muted, '#4CC2FF'),
+      listenLabel: st.listen === 'active' ? 'Stop listening' : 'Listen mode',
+      listenBtnStyle: smallBtn(st.listen === 'active', '#3ED598'),
+      openListen: () => {
+        if (st.listen === 'active') return this.endAttempt(t);
+        this.pause();
+        this.setState({ listen: 'setup', noDevice: false });
+      },
+      closeListen: () => this.setState({ listen: 'off', noDevice: false }),
+      listenSetup: st.listen === 'setup', listenActive: st.listen === 'active',
+      deviceName: (st.device || 'ROLAND RP302').toUpperCase(),
+      noDevice: st.noDevice,
+      showNoDevice: () => this.setState({ noDevice: true }),
+      devices: [
+        { name: 'Roland RP302', port: 'USB MIDI IN · CLASS COMPLIANT', ok: true },
+        { name: 'IAC Driver Bus 1', port: 'VIRTUAL PORT', ok: false }
+      ].map((d) => ({
+        name: d.name, port: d.port, pick: () => { this.setState({ listen: 'active', device: d.name, t: 0, a: null, b: null }); this.start(); },
+        style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', padding: '14px 16px', border: '1px solid #23262C', background: '#101216', borderRadius: '7px', cursor: 'pointer', width: '100%' },
+        dotStyle: { width: '8px', height: '8px', borderRadius: '50%', background: d.ok ? '#3ED598' : '#3A3F47' }
+      })),
+
+      attemptSub: 'ATTEMPT · ' + st.speed + 'x · ' + mm(judgedTo) + ' PLAYED · ' + expected + ' EXPECTED NOTES',
+      accuracy: acc + '%',
+      accuracyNote: cCor + ' of ' + expected + ' notes right on pitch and in time.',
+      pitchAccuracy: pAcc + '%',
+      hands: [
+        { name: 'Right hand', v: handStat.R[1] ? handStat.R[0] / handStat.R[1] : 0, c: CR },
+        { name: 'Left hand', v: handStat.L[1] ? handStat.L[0] / handStat.L[1] : 0, c: CL }
+      ].map((h) => ({ name: h.name, pct: Math.round(h.v * 100) + '%', barStyle: { width: h.v * 100 + '%', height: '4px', borderRadius: '2px', background: h.c } })),
+      counts: [
+        { label: 'Wrong note', n: cWrong, note: 'Right timing, wrong pitch. 3 were octave slips.', c: '#FF3B6B' },
+        { label: 'Missed', n: cMiss, note: 'Expected, never played.', c: '#FF3B6B' },
+        { label: 'Extra', n: this.extra, note: 'Played, not in the score.', c: '#FFB25E' },
+        { label: 'Late', n: cLate, note: 'Right pitch, past the ±300 ms window.', c: '#FFB25E' },
+        { label: 'Early', n: cEarly, note: 'Right pitch, ahead of the window.', c: '#FFB25E' }
+      ].map((c) => ({ label: c.label, n: c.n, note: c.note, dotStyle: { width: '7px', height: '7px', borderRadius: '2px', background: c.c } })),
+      buckets: buckets.map((v, i) => ({
+        title: mm((i / NB) * dur) + ' · ' + v + ' mistakes',
+        seek: () => this.setState({ screen: 'player', t: (i / NB) * dur, playing: false, speed: 0.5 }),
+        style: { flex: 1, height: Math.max(3, (v / maxB) * 100) + '%', borderRadius: '2px', background: v === 0 ? '#1D2026' : i === worst || v > maxB * 0.7 ? '#FF3B6B' : '#4CC2FF66', cursor: 'pointer' }
+      })),
+      clusterLabel: 'HEAVIEST AT ' + mm((worst / NB) * dur) + '–' + mm(((worst + 2) / NB) * dur),
+      durationLabel: mm(dur),
+      backToPlayer: () => this.setState({ screen: 'player' }),
+      attempts: [
+        { when: 'TODAY · 18:42', speed: '0.5x', notes: expected + ' NOTES', pct: acc + '%', hi: true },
+        { when: 'YESTERDAY · 19:10', speed: '0.5x', notes: '331 NOTES', pct: '74%' },
+        { when: '8 AUG · 18:05', speed: '0.25x', notes: '186 NOTES', pct: '69%' }
+      ].map((a) => ({ when: a.when, speed: a.speed, notes: a.notes, pct: a.pct, pctStyle: { color: a.hi ? '#4CC2FF' : '#8A9099' } })),
+      nav
+    };
+  }
+}
+
+</script>
+</body>
+</html>
