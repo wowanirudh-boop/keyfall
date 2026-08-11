@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roland RP302 MIDI clock spike</title>
+    <link rel="stylesheet" href="/spikes/midi-clock/style.css" />
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">T00 / S-3</p>
+      <h1>Roland RP302 MIDI clock harness</h1>
+      <p>
+        Run once in Chrome and once in Edge with the RP302 connected over USB.
+        The run lasts 60 seconds and uses a 120 BPM audible metronome.
+      </p>
+
+      <section class="controls">
+        <button id="start" type="button">Request MIDI and start 60 s run</button>
+        <button id="stop" type="button" disabled>Stop and calculate</button>
+        <button id="download" type="button" disabled>Download JSON</button>
+        <strong id="status">Not started</strong>
+      </section>
+
+      <label>
+        Exact browser permission prompt text
+        <textarea id="prompt-text" rows="3" placeholder="Paste or transcribe the browser prompt exactly"></textarea>
+      </label>
+
+      <section class="grid">
+        <article>
+          <h2>Live devices</h2>
+          <pre id="devices">No MIDIAccess yet.</pre>
+        </article>
+        <article>
+          <h2>Current result</h2>
+          <pre id="result">No result yet.</pre>
+        </article>
+      </section>
+
+      <article>
+        <h2>Permission and power-cycle log</h2>
+        <pre id="events">No events yet.</pre>
+      </article>
+    </main>
+    <script type="module" src="/spikes/midi-clock/main.js"></script>
+  </body>
+</html>

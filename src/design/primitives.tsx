@@ -1,4 +1,5 @@
 import { useId, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
+import { alpha, color } from './tokens';
 
 export function GhostButton({ className = '', type, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
@@ -13,18 +14,31 @@ export function GhostButton({ className = '', type, ...props }: ButtonHTMLAttrib
 export function TogglePill({
   className = '',
   on,
+  accent = 'hand-right',
+  style,
   type,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { on: boolean }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { on: boolean; accent?: 'hand-right' | 'listening' }) {
+  const listening = accent === 'listening';
   const stateClasses = on
-    ? 'border-hand-right bg-hand-right-toggle-on-bg text-hand-right'
+    ? listening
+      ? 'border-listening text-listening-text'
+      : 'border-hand-right bg-hand-right-toggle-on-bg text-hand-right'
     : 'border-border-3 bg-transparent text-secondary';
+  const activeStyle = on && listening
+    ? {
+        borderColor: color.listening,
+        backgroundColor: `${color.listening}${alpha.toggleOnBg}`,
+        color: color.listening,
+      }
+    : undefined;
 
   return (
     <button
       type={type ?? 'button'}
       aria-pressed={on}
       className={`cursor-pointer rounded-button border px-[11px] py-[7px] text-small ${stateClasses} ${className}`.trim()}
+      style={{ ...activeStyle, ...style }}
       {...props}
     />
   );

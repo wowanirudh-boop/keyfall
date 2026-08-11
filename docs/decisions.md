@@ -39,13 +39,27 @@ sandbox user, so it needs
 before any git command works.*
 
 ### D-002 — Waterfall renders a time window, not the whole piece
-**2026-08-10 · Decided — supersedes the prototype's approach**
+**2026-08-10 · Decided · 2026-08-11 rationale corrected by spike S-1**
 
-See `docs/algorithms.md` §3. The prototype's full-piece static layer is correct
-for its ~200-note demo and fails at the PRD's 30-minute upload limit
-(10,000–16,000 glowing absolutely-positioned divs in a ~350,000px layer under
-`will-change: transform`). The single-`translateY` technique and every per-note
+See `docs/algorithms.md` §3. The single-`translateY` technique and every per-note
 style are kept; only the population strategy changes to a windowed slice.
+
+**The original rationale was partly wrong and S-1 measured it.** This decision
+predicted the full-piece layer "does not composite". It does — on a 144 Hz
+display both strategies animated at 144.24 fps, because once the layer is
+painted, moving it is GPU work regardless of node count. Anyone re-testing fps
+alone would conclude windowing was unnecessary. It is not; the cost is elsewhere:
+
+| Metric | Full layer (16,000 notes) | Windowed (71 notes) |
+|---|---:|---:|
+| Time to first paint | 185.5 ms | 8.3 ms |
+| Seek repaint | **142.6 ms — misses the 100 ms gate** | 12.5 ms |
+| Notes in DOM | 16,000 | 71 |
+
+The binding reason for D-002 is **seek repaint and first paint**, not frame rate.
+Scrubbing is the core practice interaction (PRD F4, ±100 ms), and the full layer
+fails it by 42 ms. Treat the heap column in `docs/spike-results.md` as GC noise
+rather than evidence — the full layer's heap fell during the run.
 
 ### D-003 — Grading runs two passes; the authoritative one is offline
 **2026-08-10 · Decided**
@@ -186,6 +200,38 @@ So: Tailwind is permitted and expected; `@theme` carries the tokens; and
 guardrail failure, exactly like a raw hex in a style object. Arbitrary values for
 one-off *sizes* the handoff specifies (`p-[7px_11px]`) are fine — that is D-013
 applied to Tailwind syntax.
+
+### D-016 — Asset budget, split by load phase
+**2026-08-11 · Decided — closes a gap S-2 exposed**
+
+Spike S-2 hit a real inconsistency: `tasks/T00-spikes.md` referred to "the ≤ 8 MB
+total asset budget" while D-008 defines 8 MB as the **sampled-piano subset**
+budget specifically. It resolved this correctly by precedence, but the effect was
+that nothing owned the total — which T10 needs before it can decide what to
+precache. The budget is therefore split by when a user actually pays for it:
+
+| Phase | Budget | Contents |
+|---|---:|---|
+| **First load** (precached) | **≤ 1.5 MB** | app shell, JS/CSS, self-hosted fonts (~52 KB measured), catalog manifest |
+| **On first play** (lazy) | **≤ 8 MB** | Salamander sampled-piano subset (D-008) |
+| **On first MusicXML open** (lazy) | **≤ 2.5 MB gzip** | Verovio converter — measured at 2.24 MiB gzip |
+| Per score asset | — | cached on first open, not precached |
+
+MIDI-only users must never download Verovio, and no user downloads the sampler
+before pressing play. T10 verifies the precache manifest against the first-load
+budget; exceeding a lazy budget needs a superseding decision, not a quiet bump.
+
+### D-017 — Catalog-unavailable reuses the no-results upload card
+**2026-08-11 · Decided — resolves PRD F1 versus the prototype state**
+
+PRD F1 and T03 require upload to remain fully usable when catalog search is
+unavailable. The prototype's offline state hides results but only renders its
+upload control inside the no-results state, leaving no upload control reachable
+when the offline query is empty. The shipped offline state therefore places the
+existing §2 no-results/upload card directly below the search field, with the
+headline "Open a local score while catalog search is unavailable." All card
+geometry, body copy, upload control, limits hint, and error treatment remain
+unchanged; this adds no new visual language.
 
 ---
 

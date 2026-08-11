@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { createServer, type ViteDevServer } from 'vite';
+import { build, preview, type PreviewServer } from 'vite';
 
-let server: ViteDevServer;
+let server: PreviewServer;
 
 test.beforeAll(async () => {
-  server = await createServer({
-    server: { host: '127.0.0.1', port: 4181, strictPort: true },
+  await build({ logLevel: 'silent' });
+  server = await preview({
+    logLevel: 'silent',
+    preview: { host: '127.0.0.1', port: 4181, strictPort: true },
   });
-  await server.listen();
 });
 
 test.afterAll(async () => {
@@ -27,8 +28,9 @@ test.beforeEach(async ({ page }) => {
 
 test('direct deep links and the fallback route render through the SPA', async ({ page }) => {
   await page.goto('/pieces/anything');
-  await expect(page.getByText('Player')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Piece anything' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'This piece is not in My pieces.' }),
+  ).toBeVisible();
 
   await page.goto('/reports/attempt-42');
   await expect(page.getByText('Report')).toBeVisible();

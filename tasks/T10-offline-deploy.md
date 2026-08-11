@@ -39,6 +39,37 @@ navigation from D-007 after a reload.
 Add an attempt-not-found and piece-not-found state for links whose IndexedDB
 records no longer exist (different browser, cleared storage).
 
+## Attribution gate — must clear before the first public deploy
+
+**Six of the twelve seed scores are CC-BY-SA** (2.5, 3.0 and 4.0 — Moonlight I,
+Mozart K.545 I, Chopin Nocturne Op. 9 No. 2, Gnossienne No. 1, Schumann Melody,
+and one more; check `catalog/LICENCES.md`). The remaining six are public domain
+and carry no conditions.
+
+Locally this is moot. **Deploying to Cloudflare Pages is redistribution**, and
+CC-BY-SA attribution obligations attach at that moment. PRD F2's legal guardrail
+says the app ships only from sources whose licences permit redistribution —
+permission that is conditional on meeting the terms.
+
+The manifest currently records `licence.name`, `licence.url`, `licence.sourceUrl`
+and `licence.sha256`, which covers the licence link but **not the creator
+credit**. "Mutopia Project" is the publisher, not the author of the engraving;
+each Mutopia score names a maintainer/typesetter, and that is the credit
+CC-BY-SA requires.
+
+- [ ] Add `licence.creator` to `CatalogEntry`, populated per asset from its
+      Mutopia page, and extend the manifest validator to require it **only for
+      non-public-domain rows**.
+- [ ] Surface it wherever source is already shown (handoff §1 result meta line,
+      §4 player header) — no new visual language, same mono treatment.
+- [ ] Record each creator in `catalog/LICENCES.md` alongside the existing rows.
+
+Two things this gate does **not** require, so nobody over-corrects: ShareAlike
+does not reach the application. Bundling a score with software is aggregation,
+not derivation, and the shipped assets are byte-identical originals (their
+checksums prove it), so no derivative score is being distributed and the app's
+own licence is unaffected.
+
 ## Acceptance criteria
 
 1. With the network blocked after a first visit: the app boots, My Pieces lists

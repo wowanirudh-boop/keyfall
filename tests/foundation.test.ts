@@ -25,7 +25,7 @@ describe('foundation contract', () => {
       'test:e2e': 'playwright test',
       'check:types': 'tsc --noEmit',
       'check:guardrails': 'node scripts/check-guardrails.mjs',
-      check: 'npm run check:types && npm run check:guardrails && npm test',
+      check: 'npm run check:types && npm run lint && npm run check:guardrails && npm test',
     });
   });
 

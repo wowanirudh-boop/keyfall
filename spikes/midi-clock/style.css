@@ -1,0 +1,99 @@
+:root {
+  color: #edf1f8;
+  background: #0b0e13;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+h1 {
+  margin: 4px 0 12px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #91a0b5;
+  font-size: 12px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 0;
+}
+
+button {
+  padding: 9px 12px;
+  border: 1px solid #546177;
+  border-radius: 4px;
+  color: inherit;
+  background: #18202c;
+  font: inherit;
+}
+
+button:disabled {
+  opacity: 0.45;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+}
+
+textarea,
+pre {
+  border: 1px solid #2e394a;
+  border-radius: 4px;
+  color: #cbd6e5;
+  background: #10161f;
+  font: inherit;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+article {
+  min-width: 0;
+}
+
+pre {
+  min-height: 120px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

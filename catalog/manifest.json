@@ -1,0 +1,182 @@
+[
+  {
+    "id": "fur-elise",
+    "title": "Für Elise",
+    "composer": "Ludwig van Beethoven",
+    "aliases": ["bagatelle no 25", "woo 59"],
+    "asset": "fur-elise.mid",
+    "format": "midi",
+    "durationSeconds": 130.4166145,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BeethovenLv/WoO59/fur_Elise_WoO59/fur_Elise_WoO59.mid",
+      "sha256": "1c12c21c7bbf4cf163896732672648a69d497636059837abd153c71abe50215a"
+    }
+  },
+  {
+    "id": "gymnopedie-no-1",
+    "title": "Gymnopédie No. 1",
+    "composer": "Erik Satie",
+    "aliases": ["first gymnopedie"],
+    "asset": "gymnopedie-no-1.mid",
+    "format": "midi",
+    "durationSeconds": 141,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/SatieE/gymnopedie_1/gymnopedie_1.mid",
+      "sha256": "09ce7337b4bf42ba12e1aa64b4c7dc7fcfa6455f1070cb12f8880a755df97384"
+    }
+  },
+  {
+    "id": "clair-de-lune",
+    "title": "Clair de Lune",
+    "composer": "Claude Debussy",
+    "aliases": ["suite bergamasque no 3"],
+    "asset": "clair-de-lune.mid",
+    "format": "midi",
+    "durationSeconds": 322.5,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/DebussyC/L75/debussy_Ste_Bergamesq_Clair/debussy_Ste_Bergamesq_Clair.mid",
+      "sha256": "4eee9a1546ffde1ff74cb9824ba0e57cbc821185a15185bfea9faed97820bf8c"
+    }
+  },
+  {
+    "id": "moonlight-sonata-i",
+    "title": "Piano Sonata No. 14 — Moonlight I",
+    "composer": "Ludwig van Beethoven",
+    "aliases": ["moonlight sonata", "moonlight sonata first movement", "opus 27 no 2"],
+    "asset": "moonlight-sonata-i.mid",
+    "format": "midi",
+    "durationSeconds": 276,
+    "licence": {
+      "name": "CC-BY-SA-2.5",
+      "url": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BeethovenLv/O27/moonlight/moonlight-mids.zip",
+      "sha256": "a34e969c4957f0e9e98fc9ff0278cc1284931bdae6d463469797faa2b73a9c5c"
+    }
+  },
+  {
+    "id": "prelude-in-c-bwv846",
+    "title": "Prelude in C major, BWV 846",
+    "composer": "Johann Sebastian Bach",
+    "aliases": ["well tempered clavier prelude 1", "wtc prelude 1"],
+    "asset": "bach-bwv846.mid",
+    "format": "midi",
+    "durationSeconds": 140,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV846/wtk1-prelude1/wtk1-prelude1.mid",
+      "sha256": "874e07d0479542971bfceaf420d6117da8d602d89d26eea4610e7dd1ef58bf26"
+    }
+  },
+  {
+    "id": "minuet-in-g",
+    "title": "Minuet in G, BWV Anh. 114",
+    "composer": "Johann Sebastian Bach",
+    "aliases": ["anna magdalena minuet", "menuet in g"],
+    "asset": "minuet-in-g.mid",
+    "format": "midi",
+    "durationSeconds": 41.142816,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh114/anna-magdalena-04/anna-magdalena-04.mid",
+      "sha256": "fd87a6673e18104047842a1c858d2c9d8eb9ad845d7a8fa46e3664b17642cb75"
+    }
+  },
+  {
+    "id": "mozart-k545-i",
+    "title": "Piano Sonata No. 16, K. 545 I",
+    "composer": "Wolfgang Amadeus Mozart",
+    "aliases": ["sonata facile", "mozart k 545 first movement"],
+    "asset": "mozart-k545-i.mid",
+    "format": "midi",
+    "durationSeconds": 132.272595,
+    "licence": {
+      "name": "CC-BY-SA-3.0",
+      "url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/MozartWA/KV545/K545-1/K545-1.mid",
+      "sha256": "54e510ba1e5865aeedc4e96bf70b83c93ecddf5b66660033ef98a5a8204ab02d"
+    }
+  },
+  {
+    "id": "chopin-prelude-op28-no4",
+    "title": "Prelude in E minor, Op. 28 No. 4",
+    "composer": "Frédéric Chopin",
+    "aliases": ["chopin prelude 4", "suffocation prelude"],
+    "asset": "chopin-prelude-op28-no4.mid",
+    "format": "midi",
+    "durationSeconds": 108.214228,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-4/Chop-28-4.mid",
+      "sha256": "c1d7e05aa4e6e2baeec2e9108402a969c16d5df302b82fd66d110634697f2e3b"
+    }
+  },
+  {
+    "id": "chopin-nocturne-op9-no2",
+    "title": "Nocturne in E♭ major, Op. 9 No. 2",
+    "composer": "Frédéric Chopin",
+    "aliases": ["chopin nocturne 2", "nocturne op 9 no 2"],
+    "asset": "chopin-nocturne-op9-no2.mid",
+    "format": "midi",
+    "durationSeconds": 202.272525,
+    "licence": {
+      "name": "CC-BY-SA-3.0",
+      "url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/ChopinFF/O9/chopin_nocturne_op9_n2/chopin_nocturne_op9_n2.mid",
+      "sha256": "e202d3941ce5f26397f57f59f0e2e4e3ad9e19061fa3c4dc596c5ee6a6a2548e"
+    }
+  },
+  {
+    "id": "gnossienne-no-1",
+    "title": "Gnossienne No. 1",
+    "composer": "Erik Satie",
+    "aliases": ["first gnossienne"],
+    "asset": "gnossienne-no-1.mid",
+    "format": "midi",
+    "durationSeconds": 196.725,
+    "licence": {
+      "name": "CC-BY-SA-4.0",
+      "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/SatieE/Gnossienne/no_1/no_1.mid",
+      "sha256": "f49fc6c6653295e09350d64479d09b4c31091aa5dade81f2494383ab7e71708a"
+    }
+  },
+  {
+    "id": "burgmuller-arabesque",
+    "title": "Arabesque, Op. 100 No. 2",
+    "composer": "Johann Friedrich Burgmüller",
+    "aliases": ["burgmuller arabesque", "l arabesque"],
+    "asset": "burgmuller-arabesque.mid",
+    "format": "midi",
+    "durationSeconds": 26.052576,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-02/25EF-02.mid",
+      "sha256": "9b689a9b3f178e7bb2b5899d0559e223e9d8de7081d83fc087760ac2b4d378e1"
+    }
+  },
+  {
+    "id": "schumann-melody",
+    "title": "Melody, Op. 68 No. 1",
+    "composer": "Robert Schumann",
+    "aliases": ["melodie", "album for the young no 1"],
+    "asset": "schumann-melody.mid",
+    "format": "midi",
+    "durationSeconds": 96,
+    "licence": {
+      "name": "CC-BY-SA-2.5",
+      "url": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-01-melodie/schumann-op68-01-melodie.mid",
+      "sha256": "f05a2e1f1fa397f4617d13d6b7bf679550ad9ae8032ed8c6b0f8446d519f5419"
+    }
+  }
+]

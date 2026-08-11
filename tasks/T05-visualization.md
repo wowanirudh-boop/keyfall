@@ -89,6 +89,18 @@ legend.
     `TransientNotice` auto-dismisses at `motion.noticeMs` (4200 ms).
 14. The waterfall background uses the `color.stage → color.stageGradientEnd`
     gradient and a 1px `color.strikeLine` rule at the bottom edge.
+15. **Hand colours are correct on a real two-staff score.** T02's staff-mapping
+    gate runs against an 8-note fixture; spike S-2 measured 99.873% across 1,578
+    attacks on three real scores, and *that* measurement is currently protected
+    by no test. Promote the three public-domain scores from
+    `spikes/musicxml/fixtures/` (Bach BWV 846, Mozart K.545 exposition, Clara
+    Schumann Op. 1 No. 1) into `src/music/__fixtures__/real-scores/`, point the
+    existing ≥ 99% note-by-note gate at them, and assert here that the waterfall
+    renders each note in the colour its source `<staff>` implies.
+
+    This lands in T05 because this is where a silent regression becomes
+    visible — wrong-coloured notes — rather than where it originates. Keep the
+    small fixtures for the fast unit tests; the real scores gate correctness.
 
 ## Verify
 
@@ -100,7 +112,7 @@ npm run check
 
 ## Done
 
-- [ ] Fourteen criteria asserted, 4, 7 and 11 explicitly
+- [ ] Fifteen criteria asserted; 4, 7, 11 and 15 explicitly
 - [ ] Verified side by side against the prototype at 1440×900 and 1024×768
 - [ ] Pressed state live; prepare and error states implemented but inert
       (wired in T07/T08)

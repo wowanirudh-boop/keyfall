@@ -86,8 +86,9 @@ npm run preview             # serve the production build (offline/SW checks)
 npm test                    # unit + component tests
 npm run test:e2e            # Playwright
 npm run check:types         # tsc --noEmit
+npm run lint                # eslint
 npm run check:guardrails    # repo rules above, machine-checked
-npm run check               # types + guardrails + unit tests — the gate
+npm run check               # types + lint + guardrails + unit tests — the gate
 ```
 
 `npm run check` must pass before any task is reported complete.

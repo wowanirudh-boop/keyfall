@@ -129,6 +129,25 @@ npm run check
 - [ ] Every Home state in `docs/design-contract.md` §3 verified at both viewports
 - [ ] No `simulate:` control anywhere
 
+## Prerequisite — clear the inherited lint failures
+
+`npm run lint` currently **fails** with two `react-hooks/set-state-in-effect`
+errors carried over from T05: `Notices.tsx:31` and `WaterfallStage.tsx:131`.
+Lint was not part of `npm run check` until now, so both survived a completed
+task. It is in the gate from this task onward — fix them first.
+
+Neither is a live bug. `WaterfallStage`'s window rebuild is correctly guarded by
+`mustRebuild`, so it fires on threshold crossing rather than per frame, and T06's
+hitch gate measured it clean. But `windowState` is both a dependency of the
+effect and set inside it, so each rebuild costs two effect runs and two renders,
+and the pattern is one refactor away from a cascading-render loop.
+
+Prefer removing the effect over silencing the rule: derive the window during
+render with `useMemo` keyed on a quantised anchor, or use React's documented
+adjust-state-during-render comparison. **Do not add an eslint-disable.** Re-run
+T05's AC7 (window contents equal the reference) and T06's AC12 (hitch gate)
+afterwards — both must still pass.
+
 ## 🚦 MVP gate
 
 The MVP is complete only when all of the following hold:
@@ -139,7 +158,12 @@ The MVP is complete only when all of the following hold:
 - [ ] The piece reopens from My Pieces after a full browser restart
 - [ ] Player works with the network blocked once the piece is open
 - [ ] Every Home and Player state in `docs/design-contract.md` §3 verified at
-      1440×900 and 1024×768
+      1440×900 and 1024×768, **with a saved screenshot per state per viewport**
+      under `test-results/visual/`. Visual verification has been self-attested
+      so far and has already been wrong once: T05 reported its prototype
+      comparison complete, and T06 then found a CSS reset overriding Tailwind's
+      type utilities — so the typography did not match when T05 was signed off.
+      Screenshots make the claim checkable instead of assertable.
 - [ ] 30-minute dense fixture: ≥ 58 fps, seek responsive, memory stable
 - [ ] `npm run check` and `npm run test:e2e` green
 - [ ] Zero prototype scaffolding in the bundle

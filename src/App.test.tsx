@@ -12,18 +12,20 @@ function renderRoute(path: string) {
 }
 
 describe('application routes', () => {
-  it('renders the Home route shell', () => {
+  it('renders the Home route', () => {
     renderRoute('/');
 
     expect(screen.getByText('Piano Practice Player')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Choose a piece to begin.' })).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'Search catalog' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'My pieces' })).toBeTruthy();
   });
 
-  it('renders the piece route shell with its route parameter', () => {
+  it('renders the missing-library state for an unknown piece', async () => {
     renderRoute('/pieces/anything');
 
-    expect(screen.getByText('Player')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Piece anything' })).toBeTruthy();
+    expect(
+      await screen.findByRole('heading', { name: 'This piece is not in My pieces.' }),
+    ).toBeTruthy();
   });
 
   it('renders the report route shell with its route parameter', () => {

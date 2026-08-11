@@ -6,6 +6,7 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 export default defineConfig({
   appType: "spa",
+  build: { assetsInlineLimit: 0 },
   plugins: [react()],
   server: isCodexSeatbeltSandbox
     ? { watch: { useFsEvents: false, usePolling: true } }

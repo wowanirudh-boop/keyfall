@@ -66,6 +66,18 @@ when a loop is set.
 11. The time readout formats as `m:ss / m:ss` per `docs/algorithms.md` §8 —
     golden cases `0:00`, `0:46`, `2:05`, and a negative or non-finite input
     clamps to `0:00` (PRD F4).
+12. **No frame hitches while scrubbing.** T05's perf harness records only a
+    60-second *average* fps (`(commitCount - 1) / elapsedSeconds`), which cannot
+    detect the failure T05's own trap warns about: rebuilding the waterfall
+    window every frame, or on every seek tick, instead of on threshold crossing.
+    A 150 ms rebuild stall every few seconds costs ~2% of frames — it passes a
+    ≥ 58 fps average comfortably and looks like a visible stutter.
+
+    Extend the harness to record the **longest frame interval** and the **count
+    of frames over 32 ms**, then assert during a continuous 10-second drag across
+    the 30-minute dense fixture: longest frame **< 50 ms**, and frames over 32 ms
+    **< 1%**. Scrubbing is the highest window-rebuild-rate interaction in the
+    product, so this is where the cadence is really tested.
 
 ## Verify
 
@@ -77,7 +89,7 @@ npm run check
 
 ## Done
 
-- [ ] Eleven criteria asserted, 2 explicitly (it is a PRD number)
+- [ ] Twelve criteria asserted; 2 and 12 explicitly (a PRD number, and the hitch gate T05 could not catch)
 - [ ] Every Player transport state in `docs/design-contract.md` §3 verified at
       both viewports
 - [ ] Loop region and markers use `alpha.loopFill` / `alpha.loopBorder`, not

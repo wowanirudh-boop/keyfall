@@ -11,15 +11,22 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "spike:waterfall": "vite --host 127.0.0.1 --port 4190 --strictPort --open /spikes/waterfall/index.html",
+    "spike:musicxml": "node spikes/musicxml/run.mjs",
+    "spike:midi-clock": "vite --host 127.0.0.1 --port 4191 --strictPort --open /spikes/midi-clock/index.html",
     "lint": "eslint . --ignore-pattern dist",
     "check:types": "tsc --noEmit",
     "check:guardrails": "node scripts/check-guardrails.mjs",
-    "check": "npm run check:types && npm run check:guardrails && npm test"
+    "check": "npm run check:types && npm run lint && npm run check:guardrails && npm test"
   },
   "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "dexie": "^4.2.1",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "react-router-dom": "^7.18.2"
+    "react-router-dom": "^7.18.2",
+    "tone": "^15.1.22",
+    "verovio": "^6.2.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

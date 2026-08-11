@@ -36,12 +36,41 @@ degrade (this is the single most likely correctness bug in the task):
 
 | Source | Rule |
 |---|---|
-| MusicXML with staves | staff 1 → right, staff 2 → left |
+| MusicXML with staves | staff 1 → right, staff 2 → left, **by Verovio track index** |
 | MIDI, exactly two note-bearing tracks | lower median pitch → left, higher → right |
 | Anything else | all `unknown` |
 
 When every note is `unknown`: the player uses one colour (`color.handRight`),
 collapses the hand legend, and the report omits the per-hand card.
+
+**Findings from spike S-2 that bind this task** (`docs/spike-results.md`):
+
+- **Map by track index, not MIDI channel.** Verovio emits two distinguishable
+  tracks but puts **both on channel 0**. A channel-based mapping silently
+  collapses both hands into one — the exact silent-degradation failure this rule
+  exists to prevent.
+- **Never fall through to the median-pitch heuristic for MusicXML input.**
+  Measured staff-mapping fidelity was 99.873% across 1,578 attacks on three real
+  scores, with all 246 cross-hand notes (staff-2 notes above middle C) staying on
+  the staff-2 track. Keep a **≥ 99% note-by-note gate** as a test.
+- **Two Bach mismatches are unexplained** — the harness counts missing or
+  coalesced events as mismatches, so they are probably ties, not wrong-hand
+  assignment. Confirm which; do not inherit it as an unknown.
+- Keep S-2's **pitch-content diagnostic** in the note-by-note import test: it
+  found 20 pitch differences that moved no event across staves, and that
+  distinction is what makes the ≥ 99% gate meaningful.
+- **Structural expansion needs no fallback for the common cases.** Verovio
+  expanded repeats, voltas, D.C., D.S., To Coda and Fine correctly against the
+  W3C conformance fixture. The structural-fallback warning is for genuinely
+  unsupported or malformed input only — do not fire it routinely.
+- **Verovio lazy-loads** as a MusicXML-only chunk (2.24 MiB gzip, D-016). MIDI
+  users must never download it. Assert this in the build output.
+
+**Dependency placement fix:** `verovio` and `@tonejs/midi` are currently in
+`devDependencies`, but both ship in the bundle. Move them to `dependencies`
+(`react-router-dom` is already there). Vite bundles either way, so nothing is
+broken today — but `npm ci --omit=dev` would fail to build, which is a trap worth
+closing now.
 
 **Tempo (D-010).** Honour the tempo map and base/section tempo marks. Ignore
 only continuous expressive deviation: rit., accel., fermata, rubato,

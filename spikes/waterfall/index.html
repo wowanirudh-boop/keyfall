@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waterfall scale spike</title>
+    <link rel="stylesheet" href="/spikes/waterfall/style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">T00 / S-1</p>
+          <h1>Waterfall scale spike</h1>
+        </div>
+        <nav aria-label="Render strategy">
+          <a href="?strategy=full">A: full layer</a>
+          <a href="?strategy=windowed">B: windowed</a>
+        </nav>
+      </header>
+      <section class="summary" aria-live="polite">
+        <strong id="status">Preparing deterministic fixture…</strong>
+        <pre id="result"></pre>
+      </section>
+      <section class="waterfall" aria-label="Measured waterfall viewport">
+        <div class="keyboard-line"></div>
+        <div id="note-layer"></div>
+      </section>
+    </main>
+    <script type="module" src="/spikes/waterfall/main.ts"></script>
+  </body>
+</html>
