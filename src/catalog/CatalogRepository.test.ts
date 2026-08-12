@@ -4,14 +4,18 @@ import { resolve } from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import shippedManifest from "../../catalog/manifest.json";
+import shippedManifestJson from "../../catalog/manifest.json";
+import composerAliases from "../../scripts/catalog-composers.json";
 import { FIXTURE_ASSETS, FIXTURE_MANIFEST } from "./__fixtures__/manifest";
 import {
   CatalogAssetError,
   CatalogRepository,
   searchCatalog,
+  type CatalogEntry,
   validateCatalogEntry,
 } from "./CatalogRepository";
+
+const shippedManifest = shippedManifestJson as Array<CatalogEntry & { mutopiaId: string }>;
 
 function fixtureRepository(manifest: unknown = FIXTURE_MANIFEST) {
   return new CatalogRepository({
@@ -40,7 +44,7 @@ describe("CatalogRepository", () => {
 
     const entries = await repository.load();
 
-    expect(entries.length).toBeGreaterThan(300);
+    expect(entries.length).toBeGreaterThanOrEqual(460);
     expect(loadAsset).not.toHaveBeenCalled();
     expect(repository.search("fur elise").map((entry) => entry.title)).toEqual(["Für Elise"]);
     await expect(repository.open(entries[0])).resolves.toBeInstanceOf(Uint8Array);
@@ -65,7 +69,7 @@ describe("CatalogRepository", () => {
     expect(fetchMock).toHaveBeenCalledWith("/catalog/manifest.json");
   });
 
-  it("[T03b AC6] matches all full-catalog golden cases in under 50 ms", async () => {
+  it("[T03b AC6] [T03d AC8, AC9] matches all full-catalog golden cases in under 50 ms", async () => {
     const repository = fixtureRepository(shippedManifest);
     await repository.load();
     const startedAt = performance.now();
@@ -96,6 +100,94 @@ describe("CatalogRepository", () => {
     };
 
     expect(searchCatalog([substring, exact], "sonata")).toEqual([exact, substring]);
+  });
+
+  it("[T03d AC6] ranks exact title, prefix, substring, composer, then alias", () => {
+    const base = structuredClone(FIXTURE_MANIFEST[0]);
+    const entries = [
+      { ...base, id: "alias", title: "Study", composer: "Writer, Ada", aliases: ["prelude nickname"] },
+      { ...base, id: "composer", title: "Nocturne", composer: "Prelude, Ada", aliases: [] },
+      { ...base, id: "substring", title: "Evening Prelude", composer: "Writer, Ada", aliases: [] },
+      { ...base, id: "prefix", title: "Prelude in G", composer: "Writer, Ada", aliases: [] },
+      { ...base, id: "exact", title: "Prelude", composer: "Writer, Ada", aliases: [] },
+    ];
+
+    expect(searchCatalog(entries, "prelude").map((entry) => entry.id)).toEqual([
+      "exact",
+      "prefix",
+      "substring",
+      "composer",
+      "alias",
+    ]);
+  });
+
+  it("[T03d AC2] ships only non-redundant aliases of at least four characters", () => {
+    for (const row of shippedManifest) {
+      const foldedTitle = row.title
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9 ]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      for (const alias of row.aliases) {
+        expect(alias.length, `${row.id}: ${alias}`).toBeGreaterThanOrEqual(4);
+        expect(foldedTitle.includes(alias), `${row.id}: ${alias}`).toBe(false);
+      }
+    }
+  });
+
+  it("[T03d AC1] returns the expected top five for Bach, Chopin, and Scriabin", () => {
+    expect(searchCatalog(shippedManifest, "bach").slice(0, 5).map((entry) => entry.title)).toEqual([
+      "Fugue sur le nom de Bach",
+      "Rondo in E-flat Major",
+      "Ach, was soll ich Sünder machen",
+      "Air — BWV Anh. 131",
+      "Applicatio",
+    ]);
+    expect(searchCatalog(shippedManifest, "chopin").slice(0, 5).map((entry) => entry.title)).toEqual([
+      "Ballade number 4",
+      "Etüde a-moll",
+      "Etüde As-Dur",
+      "Etüde C-Dur",
+      "Etüde c-moll",
+    ]);
+    expect(searchCatalog(shippedManifest, "scriabin").slice(0, 5).map((entry) => entry.title)).toEqual([
+      "Prelude — Op. 11",
+      "Prelude — Op. 59, No. 2",
+      "Préludes opus 16 - 1.",
+      "Préludes opus 16 - 2.",
+      "Préludes opus 16 - 3.",
+    ]);
+  });
+
+  it("[T03d AC3] ships BWV 846 and finds it through all required names", () => {
+    const bwv846 = shippedManifest.find((entry) => entry.mutopiaId === "5");
+    expect(bwv846).toBeDefined();
+    for (const query of ["prelude in c", "bwv 846", "well tempered"]) {
+      expect(searchCatalog(shippedManifest, query)).toContainEqual(bwv846);
+    }
+    expect(readFileSync(resolve("catalog/BUILD_LOG.md"), "utf8")).toContain(
+      "Mutopia 5: accepted solo-keyboard declaration `Harpsichord, Piano`; the former exact-`Piano` filter excluded it.",
+    );
+  });
+
+  it("[T03d AC4] uses only known canonical composers and preserves every raw spelling", () => {
+    const knownComposers = new Set(Object.values(composerAliases));
+    for (const row of shippedManifest) {
+      expect(knownComposers.has(row.composer), row.composer).toBe(true);
+      expect(row.rawComposer.trim()).not.toBe("");
+    }
+    const chopinRows = shippedManifest.filter((entry) => entry.composer === "Chopin, Frédéric");
+    expect(chopinRows).toHaveLength(47);
+    expect(searchCatalog(shippedManifest, "chopin")).toEqual(chopinRows.sort((left, right) =>
+      left.title.localeCompare(right.title) || left.id.localeCompare(right.id),
+    ));
+  });
+
+  it("[T03d AC5] has no duplicate visible title and composer pairs", () => {
+    const visiblePairs = shippedManifest.map((entry) => `${entry.title}\u0000${entry.composer}`);
+    expect(new Set(visiblePairs).size).toBe(visiblePairs.length);
   });
 
   it("[T03c AC4] drops a row with invalid manifest fields and warns", async () => {
@@ -165,7 +257,7 @@ describe("CatalogRepository", () => {
   });
 
   it("[T03a AC4] [T03b AC2, AC3] [T03c AC5] validates all shipped rows and exact checksums", () => {
-    expect(shippedManifest).toHaveLength(460);
+    expect(shippedManifest.length).toBeGreaterThanOrEqual(460);
     for (const row of shippedManifest) {
       expect(validateCatalogEntry(row)).not.toBeNull();
       const bytes = readFileSync(resolve("catalog/scores", row.asset));

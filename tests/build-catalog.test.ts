@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCatalog,
   extractMidiEntries,
+  isSoloKeyboardInstrument,
   parsePieceSource,
 } from "../scripts/build-catalog.mjs";
 
@@ -98,6 +99,7 @@ describe("catalog ingestion", () => {
       outputDir,
       cacheDir: join(root, "cache"),
       aliases: { 42: ["famous study"] },
+      composerAliases: { "Example Composer": "Composer, Example" },
       revision: "fixture-revision",
       fetchDirectory: async (url: string) =>
         `<a href="${new URL("valid.mid", url)}">MIDI</a>`,
@@ -112,6 +114,8 @@ describe("catalog ingestion", () => {
     expect(second.manifest).toEqual(first.manifest);
     expect(await treeDigest(outputDir)).toBe(firstDigest);
     expect(first.manifest).toHaveLength(1);
+    expect(first.manifest[0].composer).toBe("Composer, Example");
+    expect(first.manifest[0].rawComposer).toBe("Example Composer");
     expect(first.manifest[0].aliases).toContain("famous study");
     expect(first.manifest[0].licence.creator).toBe("Careful Typesetter");
     expect(first.manifest[0].licence.sha256).toBe(
@@ -126,6 +130,9 @@ describe("catalog ingestion", () => {
     );
     expect(await readFile(join(outputDir, "BUILD_LOG.md"), "utf8")).toContain(
       "licence cannot be determined",
+    );
+    expect(await readFile(join(outputDir, "BUILD_LOG.md"), "utf8")).toContain(
+      "`Example Composer` → **Composer, Example**",
     );
   });
 
@@ -168,6 +175,13 @@ describe("catalog ingestion", () => {
     );
 
     expect(parsed.licenceText).toBe("Creative Commons Attribution-ShareAlike 2.5");
+  });
+
+  it("[T03d AC3] accepts solo keyboard alternatives but rejects ensemble piano scores", () => {
+    expect(isSoloKeyboardInstrument("Harpsichord, Piano")).toBe(true);
+    expect(isSoloKeyboardInstrument("Harpsichord, Piano, Clavichord")).toBe(true);
+    expect(isSoloKeyboardInstrument("Voice and Piano")).toBe(false);
+    expect(isSoloKeyboardInstrument("Cello, Piano")).toBe(false);
   });
 
   it("[T03b AC1, AC3] extracts exact MIDI members from a generated-score ZIP", () => {

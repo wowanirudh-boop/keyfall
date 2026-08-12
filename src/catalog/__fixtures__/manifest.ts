@@ -10,7 +10,8 @@ export const FIXTURE_MANIFEST: CatalogEntry[] = [
   {
     id: "fur-elise",
     title: "Für Elise",
-    composer: "Ludwig van Beethoven",
+    composer: "Beethoven, Ludwig van",
+    rawComposer: "Ludwig van Beethoven",
     aliases: ["bagatelle no 25", "woo 59"],
     asset: "fur-elise.mid",
     format: "midi",
@@ -25,7 +26,8 @@ export const FIXTURE_MANIFEST: CatalogEntry[] = [
   {
     id: "gymnopedie-no-1",
     title: "Gymnopédie No. 1",
-    composer: "Erik Satie",
+    composer: "Satie, Erik",
+    rawComposer: "Erik Satie",
     aliases: ["first gymnopedie"],
     asset: "gymnopedie-no-1.mid",
     format: "midi",
@@ -40,7 +42,8 @@ export const FIXTURE_MANIFEST: CatalogEntry[] = [
   {
     id: "arranged-study",
     title: "Catalog Study",
-    composer: "Example Composer",
+    composer: "Composer, Example",
+    rawComposer: "Example Composer",
     arranger: "Example Arranger",
     aliases: ["teaching arrangement"],
     asset: "arranged-study.mid",

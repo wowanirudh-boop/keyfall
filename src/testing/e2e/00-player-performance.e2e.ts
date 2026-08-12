@@ -34,7 +34,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("[AC12] transport scrub hitch gate stays below 50 ms with under one percent slow frames", async ({ page }) => {
+test("[AC12, T07a fill AC8] transport scrub hitch gate stays below 50 ms with under one percent slow frames", async ({ page }) => {
   test.setTimeout(30_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/src/testing/e2e/player-harness.html?mode=scrub");
@@ -57,11 +57,16 @@ test("[AC12] transport scrub hitch gate stays below 50 ms with under one percent
   await page.mouse.up();
   await page.waitForFunction(() => window.__scrubMetrics?.done);
   const metrics = await page.evaluate(() => window.__scrubMetrics);
+  const fillCounts = await page.evaluate(() => ({
+    fills: document.querySelectorAll("[data-countdown-fill]").length,
+    preparedKeys: document.querySelectorAll('[data-state="prepare"]').length,
+  }));
 
   expect(metrics?.elapsedSeconds).toBeGreaterThanOrEqual(10);
   expect(metrics?.longestFrameIntervalMs).toBeLessThan(50);
   expect((metrics?.framesOver32Ms ?? Number.POSITIVE_INFINITY) / (metrics?.frameCount ?? 1)).toBeLessThan(0.01);
   expect(metrics?.noteCount).toBeLessThan(400);
+  expect(fillCounts.fills).toBe(fillCounts.preparedKeys);
 });
 
 test("[T07 AC8] highlighting sustains 58 fps with stable memory for 60 seconds", async ({ page }) => {

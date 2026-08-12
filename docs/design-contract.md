@@ -58,6 +58,9 @@ Route → components → design section. Build in this order within each task.
 | `CatalogUnavailableBanner` | §3 | amber; sits **above** the search field; results hidden, library + upload stay live |
 | `MyPieces` / `SavedPieceRow` | §1 My pieces | delete button turns `error` on hover |
 | `EmptyLibrary` | §1 empty library | dashed border, exact copy from the README |
+| `UploadControl` (My pieces) | — (D-021) | ghost button in the My pieces heading row; one upload implementation, two entry points |
+| `CatalogBrowse` | §1 results list, unfiltered | empty query shows the sorted, paginated catalog |
+| `AboutPanel` | — (D-023) | `Modal`; carries the sampler + Mutopia attribution moved off Home |
 
 ### `/pieces/:pieceId` — Player
 | Component | Handoff section | Notes |
@@ -71,6 +74,8 @@ Route → components → design section. Build in this order within each task.
 | `SeekBar` + `LoopRegion` + `LoopMarker` | §4 seek bar, loop region | 34px hit area, `touch-action: none`, pointer capture |
 | `TransportRow2` | §4 transport row 2 | speed selector, loop controls, shortcut hint; **wraps** |
 | `TransientNotice` | §4 notice strip | auto-dismiss 4200ms |
+| `VolumeSlider` | — (D-020) | beside the mute toggle; seek-bar styling; perceptual `p²` gain |
+| Countdown fill | §4 prepare state (D-022) | fill height = imminence; chords fill identically |
 | `ListenSetupModal` / `MidiDeviceRow` | §5 | footnote about Chrome/Edge, pedals, A–B |
 | `MidiUnsupportedError` | §5 no-device error | concrete recovery steps |
 

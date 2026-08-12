@@ -55,12 +55,17 @@ const initialLoop: PlaybackLoop =
       : { a: null, b: null };
 
 const visualNotes: NoteEvent[] = [
-  { id: "visual-right", midi: 60, start: 4, end: 5, velocity: 100, hand: "right" },
   { id: "visual-left", midi: 48, start: 3.5, end: 4.5, velocity: 100, hand: "left" },
-  { id: "visual-upcoming", midi: 67, start: 6, end: 6.75, velocity: 100, hand: "right" },
-  { id: "visual-upcoming-left", midi: 61, start: 6, end: 6.75, velocity: 100, hand: "left" },
+  { id: "visual-right", midi: 60, start: 4, end: 5, velocity: 100, hand: "right" },
   { id: "visual-error", midi: 64, start: 4, end: 4.75, velocity: 100, hand: "right" },
   { id: "visual-black", midi: 66, start: 4, end: 5, velocity: 100, hand: "right" },
+  { id: "visual-upcoming", midi: 67, start: 6, end: 6.75, velocity: 100, hand: "right" },
+  { id: "visual-upcoming-left", midi: 61, start: 6, end: 6.75, velocity: 100, hand: "left" },
+  { id: "visual-run-1", midi: 57, start: 7, end: 7.4, velocity: 100, hand: "left" },
+  { id: "visual-run-2", midi: 60, start: 7.2, end: 7.6, velocity: 100, hand: "right" },
+  { id: "visual-run-3", midi: 64, start: 7.4, end: 7.8, velocity: 100, hand: "right" },
+  { id: "visual-run-4", midi: 69, start: 7.6, end: 8, velocity: 100, hand: "right" },
+  { id: "visual-run-5", midi: 71, start: 7.8, end: 8.2, velocity: 100, hand: "right" },
 ];
 
 const visualPiece: PieceDocument = {

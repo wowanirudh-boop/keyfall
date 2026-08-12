@@ -95,6 +95,8 @@ export const alpha = {
   prepareInset: '22',
   prepareBorder: '88',
   toggleOnBg: '18',
+  /** Countdown fill on a prepared key (D-022). */
+  prepareFill: '66',
   /** A–B loop region fill over the seek bar. */
   loopFill: '1F',
   /** A–B loop region border. */

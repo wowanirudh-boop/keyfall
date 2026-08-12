@@ -1,8 +1,13 @@
 import { expect, test, chromium, type BrowserContext, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import midiPackage from "@tonejs/midi";
 import { build, preview, type PreviewServer } from "vite";
+
+const shippedManifest = JSON.parse(
+  readFileSync(resolve("catalog/manifest.json"), "utf8"),
+) as unknown[];
 
 const { Midi } = midiPackage;
 const IMPORT_ERROR_MESSAGES = {
@@ -110,7 +115,7 @@ test.beforeEach(async ({ context }) => {
 async function findFurElise(page: Page) {
   await page.goto("/");
   await page.getByRole("textbox", { name: "Search catalog" }).fill("fur elise");
-  const result = page.getByRole("button", { name: /^Für Elise Ludwig van Beethoven/ });
+  const result = page.getByRole("button", { name: /^Für Elise Beethoven, Ludwig van/ });
   await expect(result).toBeVisible();
   return result;
 }
@@ -133,7 +138,7 @@ test("[T03c AC1, AC2] Home requests no score until one piece is opened exactly o
   await expect(page.getByRole("heading", { name: "Für Elise" })).toBeVisible();
   await expect(
     page.getByText(
-      "LUDWIG VAN BEETHOVEN · MUTOPIA CATALOG · STELIOS SAMELIS",
+      "BEETHOVEN, LUDWIG VAN · MUTOPIA CATALOG · STELIOS SAMELIS",
     ),
   ).toBeVisible();
   expect(scoreRequests).toHaveLength(1);
@@ -199,7 +204,7 @@ test("[T03a AC1, AC5] catalog is searchable from a non-localhost plain-HTTP orig
 
     await page.getByRole("textbox", { name: "Search catalog" }).fill("fur elise");
     await expect(
-      page.getByRole("button", { name: /^Für Elise Ludwig van Beethoven/ }),
+      page.getByRole("button", { name: /^Für Elise Beethoven, Ludwig van/ }),
     ).toBeVisible();
     await expect(page.getByText("1 MATCH · PUBLIC DOMAIN & CC SOURCES")).toBeVisible();
     await expect(page.getByText("Catalog search is unavailable right now.")).toHaveCount(0);
@@ -207,6 +212,37 @@ test("[T03a AC1, AC5] catalog is searchable from a non-localhost plain-HTTP orig
     await context.close();
     await browser.close();
   }
+});
+
+test("[T03d AC1, AC7, AC8] browse and composer search work at the iPad viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto("/");
+
+  const browse = page.getByRole("region", { name: "Browse catalog" });
+  const pageCount = Math.ceil(shippedManifest.length / 25);
+  await expect(
+    browse.getByText(`${shippedManifest.length} PIECES · BROWSE A–Z BY COMPOSER`),
+  ).toBeVisible();
+  await expect(browse.getByText(`PAGE 1 OF ${pageCount}`)).toBeVisible();
+  await expect(browse.locator(":scope > button")).toHaveCount(25);
+  await browse.getByRole("button", { name: "Next" }).click();
+  await expect(browse.getByText(`PAGE 2 OF ${pageCount}`)).toBeVisible();
+
+  await page.getByRole("textbox", { name: "Search catalog" }).fill("chopin");
+  const results = page.getByText(/MATCHES · PUBLIC DOMAIN & CC SOURCES/).locator("..");
+  await expect(results.getByRole("button")).toHaveCount(47);
+  const firstFive = results.getByRole("button").filter({ hasText: "Chopin, Frédéric" });
+  await expect(firstFive).toHaveCount(47);
+  for (let index = 0; index < 5; index += 1) {
+    await expect(results.getByRole("button").nth(index)).toContainText("Chopin, Frédéric");
+  }
+  const layout = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(layout.scrollWidth).toBe(layout.clientWidth);
 });
 
 test("[T03b AC8] a real manifest-fetch failure keeps upload and My Pieces working", async ({
@@ -291,7 +327,7 @@ test("search opens, practices offline, reloads from library without parsing, and
   });
   await page.reload();
   await expect(page.getByText("1 SAVED LOCALLY")).toBeVisible();
-  await page.getByRole("button", { name: /^Für Elise LUDWIG VAN BEETHOVEN/ }).click();
+  await page.getByRole("button", { name: /^Für Elise BEETHOVEN, LUDWIG VAN/ }).click();
   await expect(page.getByRole("heading", { name: "Für Elise" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
   expect(workerRequests).toBe(0);
@@ -309,7 +345,7 @@ test("library reopens a piece after a full browser restart", async () => {
   let page = context.pages()[0] ?? (await context.newPage());
   await page.goto("http://127.0.0.1:4181/");
   await page.getByRole("textbox", { name: "Search catalog" }).fill("fur elise");
-  await page.getByRole("button", { name: /^Für Elise Ludwig van Beethoven/ }).click();
+  await page.getByRole("button", { name: /^Für Elise Beethoven, Ludwig van/ }).click();
   await expect(page.getByRole("heading", { name: "Für Elise" })).toBeVisible();
   await context.close();
 
@@ -322,7 +358,7 @@ test("library reopens a piece after a full browser restart", async () => {
   });
   await page.goto("http://127.0.0.1:4181/");
   await expect(page.getByText("1 SAVED LOCALLY")).toBeVisible();
-  await page.getByRole("button", { name: /^Für Elise LUDWIG VAN BEETHOVEN/ }).click();
+  await page.getByRole("button", { name: /^Für Elise BEETHOVEN, LUDWIG VAN/ }).click();
   await expect(page.getByRole("heading", { name: "Für Elise" })).toBeVisible();
   expect(workerRequests).toBe(0);
   await context.close();
@@ -406,7 +442,7 @@ test("[T03c AC1, AC3] a score outage is deferred to open while upload and librar
 
   await expect(page.getByText("Catalog search is unavailable right now.")).toHaveCount(0);
   await page.getByRole("textbox", { name: "Search catalog" }).fill("fur elise");
-  await page.getByRole("button", { name: /^Für Elise Ludwig van Beethoven/ }).click();
+  await page.getByRole("button", { name: /^Für Elise Beethoven, Ludwig van/ }).click();
   await expect(page.getByRole("alert")).toContainText("Für Elise");
 
   const input = page.getByLabel("Upload a MIDI or MusicXML file", { exact: true });
@@ -438,11 +474,66 @@ test("[T03a AC2] [T03c AC3] checksum mismatch on open renders the D-006 upload c
   await expect(page).toHaveURL(/\/$/);
 });
 
+test("[T05c AC1, AC2, AC3, AC4, AC6] about and header are clean at both required viewports", async ({
+  page,
+}) => {
+  await mkdir(resolve("test-results/visual"), { recursive: true });
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    const about = page.getByRole("button", { name: "About" });
+    await expect(page.getByText("Piano Practice Player")).toBeVisible();
+    await expect(about).toBeVisible();
+    await expect(page.getByText("LOCAL LIBRARY · NO ACCOUNT")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Salamander Grand Piano/ })).toHaveCount(0);
+    await page.locator("header").screenshot({
+      path: resolve("test-results/visual", `home-header-${viewport.width}x${viewport.height}.png`),
+    });
+
+    await about.click();
+    const dialog = page.getByRole("dialog", { name: "About" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("link", { name: /Salamander Grand Piano/ })).toHaveAttribute(
+      "href",
+      "https://creativecommons.org/licenses/by/3.0/",
+    );
+    await expect(dialog.getByRole("link", { name: "Mutopia Project" })).toHaveAttribute(
+      "href",
+      "https://www.mutopiaproject.org/legal.html",
+    );
+    const layout = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+    expect(layout.scrollWidth).toBe(layout.clientWidth);
+    await page.screenshot({
+      path: resolve("test-results/visual", `home-about-${viewport.width}x${viewport.height}.png`),
+    });
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(about).toBeFocused();
+    await about.click();
+    await page.getByTestId("modal-backdrop").click({ position: { x: 5, y: 5 } });
+    await expect(page.getByRole("dialog", { name: "About" })).toHaveCount(0);
+    await expect(about).toBeFocused();
+  }
+});
+
 test("[T05b AC7] Home upload visual state inventory is saved at both required viewports", async ({
   page,
 }) => {
   const states = [
-    "empty",
+      "empty",
+      "browse",
     "populated",
     "results",
     "no-results",

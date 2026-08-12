@@ -122,6 +122,7 @@ export function HomeRoute() {
   return (
     <HomeView
       query={query}
+      catalogEntries={catalogEntries}
       results={results}
       searched={searched}
       catalogUnavailable={catalogUnavailable}

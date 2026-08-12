@@ -313,6 +313,48 @@ upload component so there is one implementation behind two entry points.
 The §2 card keeps its primary blue button; it is the main offer in that state,
 whereas in My pieces it is a secondary action. No new visual language.
 
+### D-022 — Prepared keys use a countdown fill to encode order
+**2026-08-12 · Decided — supersedes F5's uniform prepare outline**
+
+The prepare state outlined every key with a note arriving inside the lead window
+identically. With an arpeggio or a dense passage that means five or six keys lit
+at once, and the highlight says *soon* but never *next*. In real practice this
+was the single biggest comprehension failure — the learner can see which keys are
+coming and not the order to press them.
+
+Four encodings were mocked up and compared side by side on the same passage:
+countdown fill, fade-by-imminence, ordinal numbers, and next-note-only.
+**Countdown fill wins** because it carries order and timing in one continuous
+signal: the key fills from the bottom as its note approaches, so the fullest key
+is next and the fill depth *is* the time remaining. Nothing new appears on
+screen — the fill lives inside the existing key.
+
+It also degrades honestly. Simultaneous notes fill at the same rate and look
+identical, which is true; an ordinal scheme would have to invent an order for a
+chord that has none.
+
+Rejected, with reasons worth keeping: **ordinal numbers** are clearest for a
+beginner but add a second thing to read while the hands are busy and churn on
+every note; **fade-by-imminence** costs nothing but four levels of dimness is
+about the limit of peripheral discrimination; **next-only** is unambiguous and
+discards the preparation time the lead exists to provide.
+
+### D-023 — Sampler attribution moves off Home, behind About
+**2026-08-12 · Decided — the nearest legal reading of "remove it"**
+
+The request was to remove the "Salamander Grand Piano by Alexander Holm · CC BY
+3.0" line. It cannot simply be deleted: the samples ship with the app, CC-BY 3.0
+requires attribution on redistribution, and the app is deployed publicly.
+
+The line moves off the Home screen into a small **About** affordance, where it is
+present, findable and out of the way. The alternative — switching to a CC0 sample
+set and dropping the credit entirely — was rejected because it means a
+worse-sounding piano, and the piano is the reference the learner plays against.
+
+Same treatment applies to catalogue creator credits: they stay on result rows and
+the player header, where they identify the edition, which is useful as well as
+required.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation

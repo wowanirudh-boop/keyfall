@@ -1,6 +1,8 @@
 export {
   CatalogAssetError,
   CatalogRepository,
+  browseCatalog,
+  compareCatalogEntries,
   fold,
   searchCatalog,
   sha256,

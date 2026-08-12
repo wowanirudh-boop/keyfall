@@ -214,7 +214,7 @@ describe("transport controls", () => {
     );
   });
 
-  it("[AC8] scopes shortcuts to its mounted player and ignores text inputs", () => {
+  it("[AC8] [T05c AC5] keeps the player shortcuts unchanged and scoped", () => {
     const onTogglePlay = vi.fn();
     const onSeek = vi.fn();
     const view = render(
@@ -252,6 +252,22 @@ describe("transport controls", () => {
       />,
     );
     expect(screen.getByTestId("transport-row-2").className).toContain("flex-wrap");
+  });
+
+  it("[T05c AC5] renders only the plain-language skip hint", () => {
+    render(
+      <TransportRow2
+        playback={basePlayback}
+        onSpeedChange={() => undefined}
+        onLoopChange={() => undefined}
+      />,
+    );
+
+    const hint = screen.getByText("← → SKIP 5 SECONDS");
+    expect(hint.className).toContain("font-mono");
+    expect(hint.className).toContain("text-mono-label");
+    expect(hint.className).toContain("text-mono-dim-3");
+    expect(screen.queryByText(/SPACE PLAY|DRAG BAR TO SCRUB/)).toBeNull();
   });
 
   it("renders the loop label with formatted marker times", () => {

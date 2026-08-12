@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -6,7 +9,7 @@ import { FIXTURE_MANIFEST } from "../catalog/__fixtures__/manifest";
 import type { SavedPieceSummary } from "../library";
 import { IMPORT_ERROR_MESSAGES } from "../music";
 import { SALAMANDER_ATTRIBUTION, SALAMANDER_LICENSE_URL } from "../playback";
-import { HomeView, type HomeViewProps } from "./HomeView";
+import { CATALOG_PAGE_SIZE, HomeView, type HomeViewProps } from "./HomeView";
 
 const savedPiece: SavedPieceSummary = {
   id: "saved",
@@ -20,6 +23,7 @@ const savedPiece: SavedPieceSummary = {
 function props(overrides: Partial<HomeViewProps> = {}): HomeViewProps {
   return {
     query: "",
+    catalogEntries: [],
     results: [],
     searched: false,
     catalogUnavailable: false,
@@ -95,7 +99,7 @@ describe("HomeView", () => {
     expect(onClear).toHaveBeenCalledOnce();
   });
 
-  it("[AC9, AC11] renders the exact empty state and sampler attribution", () => {
+  it("[AC9] renders the exact empty state", () => {
     render(<HomeView {...props()} />);
 
     expect(
@@ -103,9 +107,61 @@ describe("HomeView", () => {
         "Nothing saved yet. Every piece you open — searched or uploaded — is kept here for tomorrow.",
       ),
     ).toBeTruthy();
+  });
+
+  it("[T05c AC1, AC2, AC4] moves both credits and the local-data reassurance into About", async () => {
+    const user = userEvent.setup();
+    render(<HomeView {...props()} />);
+
+    expect(screen.getByText("Piano Practice Player")).toBeTruthy();
+    expect(screen.queryByText("LOCAL LIBRARY · NO ACCOUNT")).toBeNull();
+    expect(screen.queryByRole("link", { name: SALAMANDER_ATTRIBUTION })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "About" }));
+
+    expect(screen.getByRole("dialog", { name: "About" })).toBeTruthy();
+    expect(screen.getByText(/turns piano scores into falling notes/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Everything stays on this device. There is no account, and nothing is uploaded.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("link", { name: SALAMANDER_ATTRIBUTION }).getAttribute("href")).toBe(
       SALAMANDER_LICENSE_URL,
     );
+    expect(screen.getByRole("link", { name: "Mutopia Project" }).getAttribute("href")).toBe(
+      "https://www.mutopiaproject.org/legal.html",
+    );
+  });
+
+  it("[T05c AC3] closes About by Escape and backdrop, returning focus each time", async () => {
+    const user = userEvent.setup();
+    render(<HomeView {...props()} />);
+    const about = screen.getByRole("button", { name: "About" });
+
+    await user.click(about);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Close About" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "About" })).toBeNull();
+    expect(document.activeElement).toBe(about);
+
+    await user.click(about);
+    await user.click(screen.getByTestId("modal-backdrop"));
+    expect(screen.queryByRole("dialog", { name: "About" })).toBeNull();
+    expect(document.activeElement).toBe(about);
+  });
+
+  it("[T05c AC7] keeps the catalogue and sampler licence text in the repository", () => {
+    const catalogLicences = readFileSync(resolve("catalog/LICENCES.md"), "utf8");
+    const samplerAttribution = readFileSync(
+      resolve("public/audio/salamander/ATTRIBUTION.md"),
+      "utf8",
+    );
+
+    expect(catalogLicences).toContain("# Catalog licence audit");
+    expect(catalogLicences).toContain("Mutopia");
+    expect(samplerAttribution).toContain("Salamander Grand Piano V3 by Alexander Holm");
+    expect(samplerAttribution).toContain("CC BY 3.0");
   });
 
   it("[AC10] [T03b AC9] renders title, composer, arranger, source, licence, creator, and duration", () => {
@@ -116,7 +172,7 @@ describe("HomeView", () => {
     );
 
     expect(screen.getByText("Catalog Study")).toBeTruthy();
-    expect(screen.getByText("Example Composer · Example Arranger")).toBeTruthy();
+    expect(screen.getByText("Composer, Example · Example Arranger")).toBeTruthy();
     expect(screen.getByText("EXAMPLE · CC0-1.0 · EXAMPLE TYPESETTER")).toBeTruthy();
     expect(screen.getByText("1:05")).toBeTruthy();
   });
@@ -213,5 +269,26 @@ describe("HomeView", () => {
 
     await user.click(screen.getByRole("button", { name: "Delete Saved piece" }));
     expect(onDelete).toHaveBeenCalledWith(savedPiece);
+  });
+
+  it("[T03d AC7, AC8] browses a composer-sorted page without rendering the whole catalog", async () => {
+    const user = userEvent.setup();
+    const entries = Array.from({ length: CATALOG_PAGE_SIZE + 2 }, (_, index) => ({
+      ...structuredClone(FIXTURE_MANIFEST[index % FIXTURE_MANIFEST.length]),
+      id: `browse-${index}`,
+      title: `Piece ${String(index).padStart(2, "0")}`,
+      composer: index === CATALOG_PAGE_SIZE + 1 ? "Aardvark, Ada" : "Zulu, Zoe",
+    }));
+    render(<HomeView {...props({ catalogEntries: entries })} />);
+
+    const browse = screen.getByRole("region", { name: "Browse catalog" });
+    expect(within(browse).getByText(`${entries.length} PIECES · BROWSE A–Z BY COMPOSER`)).toBeTruthy();
+    expect(within(browse).getByText(/Aardvark, Ada/)).toBeTruthy();
+    expect(within(browse).getAllByRole("button")).toHaveLength(CATALOG_PAGE_SIZE + 2);
+    expect(within(browse).queryByText("Piece 25")).toBeNull();
+
+    await user.click(within(browse).getByRole("button", { name: "Next" }));
+    expect(within(browse).getByText("PAGE 2 OF 2")).toBeTruthy();
+    expect(within(browse).getAllByRole("button")).toHaveLength(4);
   });
 });

@@ -351,8 +351,8 @@ export function TransportRow2({
         onLoopChange={onLoopChange}
       />
       <div className="min-w-0 flex-1" />
-      <div className="font-mono text-mono-label leading-[normal] tracking-[0.06em] text-mono-dim-3">
-        SPACE PLAY · ← → 5s · DRAG BAR TO SCRUB
+      <div className="text-right font-mono text-mono-label leading-[normal] tracking-[0.06em] text-mono-dim-3">
+        ← → SKIP 5 SECONDS
       </div>
     </div>
   );

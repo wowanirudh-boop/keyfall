@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  DESIGN REFERENCE — not production code, not a pixel spec.
+
+  Four candidate encodings for "which prepared key comes next", animated on the
+  same passage. Countdown fill was chosen (docs/decisions.md D-022).
+
+  The NORMATIVE spec is docs/algorithms.md section 4 ("Countdown fill on prepared
+  keys") plus src/design/tokens.ts. This file exists to show the INTENT and to let
+  the three rejected options be re-examined later. Do not copy its markup, its
+  class names, or its inline colour literals into src/.
+
+  Open directly in a browser: no server needed.
+-->
+<title>Which key next? — four ways to show order</title>
+</head>
+<body>
+<style>
+  :root{
+    --bg:#0B0C0E; --stage:#0A0B0D; --card:#101216; --raised:#14161A;
+    --line:#1A1D22; --line2:#23262C; --line3:#2C3037;
+    --ink:#E8EAED; --dim:#8A9099; --dimmer:#5B626B; --faint:#3E444C;
+    --right:#4CC2FF; --left:#FF7A45; --amber:#FFB25E;
+    --keyW:#151821; --keyB:#0C0E11; --keyWb:#252A32; --keyBb:#20242B;
+    --onAccent:#06121A;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 96px;display:flex;flex-direction:column;gap:30px}
+
+  header h1{font-size:26px;font-weight:700;letter-spacing:-0.02em;margin:0 0 8px;text-wrap:balance}
+  header p{margin:0;color:var(--dim);font-size:14px;max-width:66ch}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;color:var(--dimmer);margin:0 0 10px}
+
+  .bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;
+       background:var(--card);border:1px solid var(--line2);border-radius:8px}
+  button{font:inherit;cursor:pointer;border-radius:5px;border:1px solid var(--line2);
+         background:transparent;color:var(--dim);font-size:12px;padding:7px 11px}
+  button:hover{color:var(--ink);border-color:var(--line3)}
+  button[aria-pressed="true"]{border-color:var(--right);background:#0E2331;color:var(--right)}
+  button:focus-visible{outline:2px solid var(--right);outline-offset:2px}
+  .play{width:40px;height:40px;border-radius:50%;border:none;background:var(--right);
+        color:var(--onAccent);font-size:14px;display:grid;place-items:center;padding:0}
+  .play[data-on="1"]{background:#1D2026;color:var(--ink)}
+  .barlabel{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--dimmer)}
+  .clock{font-family:var(--mono);font-size:12px;color:var(--dim);margin-left:auto;font-variant-numeric:tabular-nums}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:18px}
+  .opt{background:var(--card);border:1px solid var(--line2);border-radius:8px;
+       padding:20px;display:flex;flex-direction:column;gap:14px}
+  .opt.pick{border-color:#34576B}
+  .opt h2{margin:0;font-size:15px;font-weight:500;display:flex;align-items:center;gap:10px}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;color:var(--dimmer);
+       border:1px solid var(--line2);border-radius:3px;padding:2px 6px}
+  .tag.rec{color:var(--right);border-color:#34576B}
+  .how{margin:0;font-size:13px;color:var(--dim)}
+
+  .stage{position:relative;height:88px;border-radius:6px;overflow:hidden;
+         background:linear-gradient(#0A0B0D,#0D0F13);border:1px solid var(--line)}
+  .layer{position:absolute;inset:0}
+  .note{position:absolute;border-radius:3px}
+  .strike{position:absolute;left:0;right:0;bottom:0;height:1px;background:#2A2F36}
+
+  .kb{position:relative;height:104px;background:var(--stage);border:1px solid var(--line);
+      border-top:none;border-radius:0 0 6px 6px;padding:0 3px}
+  .k{position:absolute;top:0;display:flex;align-items:flex-end;justify-content:center;
+     padding-bottom:6px;transition:background 40ms linear,box-shadow 40ms linear;overflow:hidden}
+  .k.w{height:100%;border-radius:0 0 4px 4px;background:var(--keyW);border:1px solid var(--keyWb);z-index:1}
+  .k.b{height:62%;border-radius:0 0 3px 3px;background:var(--keyB);border:1px solid var(--keyBb);z-index:2}
+  .lab{font-family:var(--mono);font-size:8px;color:#5E6672;position:relative;z-index:3;
+       transition:font-size 60ms linear,color 40ms linear}
+  .k.b .lab{font-size:7px;color:#4A515A}
+  .fill{position:absolute;left:0;right:0;bottom:0;z-index:0;opacity:.85}
+  .num{position:absolute;top:5px;left:50%;transform:translateX(-50%);z-index:4;
+       font-family:var(--mono);font-size:9px;line-height:1;padding:2px 4px;border-radius:2px;
+       font-variant-numeric:tabular-nums}
+
+  .cost{margin:0;font-size:12px;color:var(--dimmer);line-height:1.5;
+        border-top:1px solid var(--line);padding-top:12px}
+  .cost b{color:var(--dim);font-weight:500}
+
+  footer{border-top:1px solid var(--line);padding-top:22px;color:var(--dim);font-size:13px;max-width:70ch}
+  footer h3{margin:0 0 8px;font-size:14px;color:var(--ink);font-weight:500}
+  footer p{margin:0 0 10px}
+  @media (max-width:520px){.wrap{padding:26px 16px 60px}.grid{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">PIANO PRACTICE PLAYER · KEYBOARD HIGHLIGHTING</p>
+    <h1>Six keys are lit. Which one do I press first?</h1>
+    <p>Every key with a note arriving in the next second is outlined identically, so the highlight
+      says <em>soon</em> but never <em>next</em>. Below, the same passage — a five-note run, then a
+      four-note chord — drives four ways of encoding order. Watch them together.</p>
+  </header>
+
+  <div class="bar">
+    <button class="play" id="play" data-on="0" aria-label="Play">▶</button>
+    <span class="barlabel">SPEED</span>
+    <button data-speed="1" aria-pressed="true">1x</button>
+    <button data-speed="0.5" aria-pressed="false">0.5x</button>
+    <button data-speed="0.25" aria-pressed="false">0.25x</button>
+    <span class="clock" id="clock">0.00s</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    <h3>What I'd pick</h3>
+    <p><b>Countdown fill</b>, on its own. It encodes order and timing in one continuous signal — the
+      fullest key is next, and how full it is tells you how long you have. It degrades honestly on
+      chords, because simultaneous notes fill at the same rate and therefore look identical, which
+      is true.</p>
+    <p>Ordinal numbers are the clearest for a beginner but add a second thing to read while your
+      hands are busy, and they churn constantly. Fade-by-imminence is elegant and costs nothing, but
+      four levels of dimness is near the limit of what's distinguishable in peripheral vision.
+      Next-only is unambiguous and throws away the preparation time the lead exists to give you.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const LOW = 48, HIGH = 71, LEAD = 1.0, LOOP = 4.6;
+  const BLACK = new Set([1,3,6,8,10]);
+  const NAMES = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+  const label = m => NAMES[m%12] + (Math.floor(m/12)-1);
+
+  const NOTES = [
+    {m:57,s:0.00,d:0.40,h:"r"}, {m:60,s:0.45,d:0.40,h:"r"},
+    {m:64,s:0.90,d:0.40,h:"r"}, {m:69,s:1.35,d:0.40,h:"r"},
+    {m:71,s:1.80,d:0.55,h:"r"},
+    {m:48,s:2.80,d:0.90,h:"l"}, {m:64,s:2.80,d:0.90,h:"r"},
+    {m:68,s:2.80,d:0.90,h:"r"}, {m:71,s:2.80,d:0.90,h:"r"}
+  ].sort((a,b)=>a.s-b.s);
+
+  const OPTS = [
+    {id:"fill", name:"Countdown fill", tag:"RECOMMENDED", rec:true,
+     how:"The key fills from the bottom as its note approaches. Fullest key is next; the fill height is literally the time you have left.",
+     cost:"<b>Costs:</b> one extra element per key. Reads at a glance, and chords fill together — which is honest, because they are simultaneous."},
+    {id:"fade", name:"Fade by imminence", tag:"SUBTLEST",
+     how:"All upcoming keys share one outline, but brightness scales with how soon. Brightest is next; distant notes barely glow.",
+     cost:"<b>Costs:</b> nothing new on screen. But four levels of dimness is about the limit of what the eye separates peripherally."},
+    {id:"num", name:"Ordinal numbers", tag:"CLEAREST",
+     how:"Each upcoming key carries its position in the queue. Simultaneous notes share a number.",
+     cost:"<b>Costs:</b> a second thing to read while your hands are busy, and the digits churn on every note."},
+    {id:"next", name:"Next note only", tag:"STRICTEST",
+     how:"Only the immediately next note — or chord — is lit. Everything else stays idle until its turn.",
+     cost:"<b>Costs:</b> zero ambiguity, but throws away the preparation time the 1-second lead exists to provide."}
+  ];
+
+  // ---- geometry, mirroring the app: white keys evenly split, blacks straddling
+  const whites=[], blacks=[];
+  let w=0;
+  for(let m=LOW;m<=HIGH;m++){
+    if(BLACK.has(m%12)) blacks.push({m, i:w});
+    else { whites.push({m, i:w}); w++; }
+  }
+  const WW = 100/whites.length, BW = WW*0.62;
+  const geom = new Map();
+  whites.forEach(k=>geom.set(k.m,{left:k.i*WW,width:WW,black:false}));
+  blacks.forEach(k=>geom.set(k.m,{left:k.i*WW-BW/2,width:BW,black:true}));
+
+  const hue = h => h==="l" ? "#FF7A45" : "#4CC2FF";
+
+  const grid = document.getElementById("grid");
+  const panels = OPTS.map(o => {
+    const el = document.createElement("section");
+    el.className = "opt" + (o.rec ? " pick" : "");
+    el.innerHTML =
+      `<h2>${o.name}<span class="tag${o.rec?" rec":""}">${o.tag}</span></h2>
+       <p class="how">${o.how}</p>
+       <div class="stage"><div class="layer"></div><div class="strike"></div></div>
+       <div class="kb"></div>
+       <p class="cost">${o.cost}</p>`;
+    grid.appendChild(el);
+
+    const kb = el.querySelector(".kb");
+    const keys = new Map();
+    for(const [m,g] of geom){
+      const k = document.createElement("div");
+      k.className = "k " + (g.black ? "b" : "w");
+      k.style.left = g.left+"%"; k.style.width = g.width+"%";
+      k.innerHTML = `<div class="fill"></div><div class="num"></div><span class="lab">${label(m)}</span>`;
+      kb.appendChild(k);
+      keys.set(m,{k, fill:k.querySelector(".fill"), num:k.querySelector(".num"), lab:k.querySelector(".lab"), black:g.black});
+    }
+
+    // falling notes — identical in every panel, so the panels differ only on the keyboard
+    const layer = el.querySelector(".layer");
+    const H = 88, PPS = H/LEAD;
+    const noteEls = NOTES.map(n=>{
+      const g = geom.get(n.m), d = document.createElement("div");
+      d.className="note";
+      d.style.left=g.left+"%"; d.style.width=(g.width*0.86)+"%"; d.style.marginLeft=(g.width*0.07)+"%";
+      d.style.bottom=(n.s*PPS)+"px"; d.style.height=Math.max(4,n.d*PPS)+"px";
+      d.style.background=hue(n.h); d.style.boxShadow=`0 0 12px ${hue(n.h)}55`;
+      layer.appendChild(d); return d;
+    });
+    return {o, keys, layer, PPS};
+  });
+
+  function paint(t){
+    // rank upcoming notes by start time; ties (chords) share a rank
+    const upcoming = NOTES.filter(n => n.s > t && n.s <= t+LEAD);
+    const starts = [...new Set(upcoming.map(n=>n.s))].sort((a,b)=>a-b);
+    const rankOf = s => starts.indexOf(s);
+
+    for(const p of panels){
+      p.layer.style.transform = `translateY(${t*p.PPS}px)`;
+      for(const [m,K] of p.keys){
+        K.k.style.background = K.black ? "var(--keyB)" : "var(--keyW)";
+        K.k.style.borderColor = K.black ? "var(--keyBb)" : "var(--keyWb)";
+        K.k.style.boxShadow = "none";
+        K.fill.style.height = "0"; K.num.textContent = ""; K.num.style.background="transparent";
+        K.lab.style.color = K.black ? "#4A515A" : "#5E6672";
+        K.lab.style.fontSize = K.black ? "7px" : "8px";
+      }
+      const sounding = NOTES.filter(n => t >= n.s && t < n.s+n.d);
+      for(const n of upcoming){
+        const K = p.keys.get(n.m); if(!K) continue;
+        if(sounding.some(s=>s.m===n.m)) continue;
+        const c = hue(n.h), r = rankOf(n.s);
+        const near = 1 - (n.s - t)/LEAD;           // 0 far → 1 imminent
+        if(p.o.id==="fill"){
+          K.k.style.borderColor = c+"88";
+          K.fill.style.height = Math.round(near*100)+"%";
+          K.fill.style.background = c+"66";
+          K.lab.style.color = c;
+        } else if(p.o.id==="fade"){
+          const a = Math.round(30 + near*130).toString(16).padStart(2,"0");
+          K.k.style.borderColor = c+a;
+          K.k.style.boxShadow = `inset 0 -8px 14px ${c}${Math.round(near*40).toString(16).padStart(2,"0")}`;
+          K.lab.style.color = c;
+        } else if(p.o.id==="num"){
+          K.k.style.borderColor = c+"88";
+          K.num.textContent = r+1;
+          K.num.style.background = c; K.num.style.color = "#06121A";
+          K.lab.style.color = c;
+        } else if(p.o.id==="next" && r===0){
+          K.k.style.borderColor = c+"88";
+          K.k.style.boxShadow = `inset 0 -8px 14px ${c}22`;
+          K.lab.style.color = c;
+        }
+      }
+      for(const n of sounding){
+        const K = p.keys.get(n.m); if(!K) continue;
+        const c = hue(n.h);
+        K.fill.style.height="0";
+        K.k.style.background = c; K.k.style.borderColor = c;
+        K.k.style.boxShadow = `0 -2px 20px ${c}66`;
+        K.lab.style.color = "#06121A"; K.lab.style.fontSize = K.black ? "9px" : "11px";
+        K.num.textContent = "";
+      }
+    }
+  }
+
+  let t=0, speed=1, playing=false, last=0;
+  const clock=document.getElementById("clock"), playBtn=document.getElementById("play");
+  function frame(now){
+    if(!playing) return;
+    const dt=Math.min(0.05,(now-last)/1000); last=now;
+    t += dt*speed; if(t>LOOP) t=0;
+    clock.textContent = t.toFixed(2)+"s";
+    paint(t); requestAnimationFrame(frame);
+  }
+  playBtn.addEventListener("click",()=>{
+    playing=!playing; playBtn.dataset.on=playing?"1":"0";
+    playBtn.textContent = playing?"❚❚":"▶";
+    playBtn.setAttribute("aria-label", playing?"Pause":"Play");
+    if(playing){ last=performance.now(); requestAnimationFrame(frame); }
+  });
+  document.querySelectorAll("[data-speed]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      speed=parseFloat(b.dataset.speed);
+      document.querySelectorAll("[data-speed]").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+    });
+  });
+
+  paint(0);
+  if(!matchMedia("(prefers-reduced-motion: reduce)").matches) playBtn.click();
+})();
+</script>
+
+</body>
+</html>

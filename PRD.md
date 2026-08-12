@@ -1,9 +1,17 @@
 # PRD — Piano Practice Player
 
 **Working name:** Piano Practice Player
-**Version:** 1.0 (finalized — ready as tech-spec source)
+**Version:** 1.1 — revised after the MVP shipped and was used on real hardware
 **Author:** Anirudh (with Claude)
-**Date:** 2026-08-10
+**Date:** 2026-08-10 (v1.0) · 2026-08-12 (v1.1)
+
+> **v1.1 changes are marked inline.** They come from a week of building and, more
+> importantly, from actually practising on the thing. Nothing here was changed on
+> theory. The binding record of *why* each change happened is `docs/decisions.md`
+> (D-001 … D-023); this document states *what* the product does.
+>
+> There is no separate tech spec. `docs/algorithms.md` carries the algorithms and
+> `docs/decisions.md` the engineering decisions — together they are the tech spec.
 
 ---
 
@@ -70,13 +78,17 @@ Ordered by priority.
 
 The home screen has a search box and a "My pieces" list.
 
-- [ ] User types a piece name; the system searches its catalog of legally redistributable scores (public-domain / CC-licensed sources such as Mutopia, IMSLP, MuseScore public-domain sets — final source list is a tech-spec decision).
-- [ ] The MVP ships with a **seeded catalog focused on common classical repertoire** (the user's stated repertoire). Catalog breadth grows over time and is not an MVP gate, but the seed must cover well-known teaching pieces (e.g., Für Elise, Gymnopédie No. 1, Clair de Lune tier).
+- [ ] **The catalog is bundled at build time, not searched live (v1.1, D-019).** The original ask said "public sources", which read as live fetching; browsers cannot do that — Mutopia and IMSLP send no CORS headers and expose no search API, so live search needs a proxy backend this product does not have. Instead the **full Mutopia solo-piano collection (460 pieces) ships with the app**, licence-verified per asset. Search is local, instant, and works offline. Upload covers anything modern or copyrighted, which could never be auto-fetched legally regardless.
 - [ ] Search tolerates diacritics and common alternate titles ("Fur Elise" finds "Für Elise"; "Moonlight Sonata" finds "Piano Sonata No. 14") — classical naming is messy and the catalog path fails without this.
+- [ ] **Search matches composer as well as title (v1.1).** "chopin" must return Chopin. Aliases must never be short enough to match by accident — a one-character alias matched every query containing that letter and made composer search useless in practice.
+- [ ] **Composer names are normalised (v1.1).** The upstream archive carries eight spellings of one person ("F. Chopin", "Frédéric Chopin", "Fr.Chopin (1810-1849),Op.23"). One canonical name per composer, or grouping and browsing are impossible.
+- [ ] **Titles are self-distinguishing (v1.1).** Four pieces titled exactly "Prelude" is not a usable result list; a title that collides carries its key/opus, and every row shows its composer.
+- [ ] **Discovery without searching (v1.1).** A search box over an empty list is a dead end at 460 pieces. Home offers a browsable, sorted, paginated view of the catalog so the learner can see what exists.
 - [ ] Results show title, composer, arranger (if any), source, and duration where available; multiple matches/arrangements are listed for the user to choose.
 - [ ] No results → the UI says so plainly and offers the upload path (F2) in the same view.
 - [ ] Catalog search unavailable (offline, service down) → a clear message; the upload path and My pieces remain fully usable.
 - [ ] Every successfully opened piece (searched or uploaded) is auto-saved to a local "My pieces" library; reopening is one click/tap. Pieces can be deleted from the library.
+- [ ] **Upload is reachable at all times (v1.1, D-021).** It originally lived only inside the no-results card, so a learner holding a MIDI file had to first search for something that did not exist. A permanent upload control sits in the My pieces header.
 
 #### F2 — Music acquisition (P0)
 
@@ -93,7 +105,9 @@ The home screen has a search box and a "My pieces" list.
 - [ ] Falling notes (Rousseau/Synthesia style) descend from the top; a note reaches the keyboard exactly when it sounds; note length = held duration; the corresponding key visually depresses/lights while sounding.
 - [ ] Upcoming notes are visible at least **3 seconds of musical time** before they sound (musical time = time at 1x; at 0.25x this means 12 s of wall-clock preview). The visible window is constant in musical time across speeds.
 - [ ] **Hand coloring**: when the source distinguishes hands (MusicXML staves, or a 2-track MIDI), left and right hand notes/keys use two distinct colors; otherwise a single color. No user setting needed in MVP.
-- [ ] Synthesized piano audio plays in sync with the visualization; a mute toggle exists (practice while playing yourself). Volume slider is P1.
+- [ ] Synthesized piano audio plays in sync with the visualization; a mute toggle exists (practice while playing yourself).
+- [ ] **Volume control (v1.1, promoted from P1 — D-020).** Playing along needs the reference audio *quieter than your own piano*, which mute cannot express and device volume cannot isolate. A slider sits beside the mute toggle; gain is perceptual (`position²`), persisted, and independent of mute — volume 0 and muted are different states.
+- [ ] Sample attribution required by the piano library's CC-BY licence is present but **off the Home screen**, behind an About affordance (v1.1, D-023).
 
 #### F4 — Transport controls (P0)
 
@@ -113,6 +127,7 @@ The home screen has a search box and a "My pieces" list.
 - [ ] Keys for upcoming notes are highlighted on the keyboard in a "prepare" color starting a fixed lead time before they sound. The lead time is defined in **musical time** (default 1.0 s at 1x; tunable in tech spec) — so slower speeds automatically give more wall-clock preparation (4.0 s at 0.25x).
 - [ ] At the moment the note must sound, the key switches to a "press now" state: stronger color and the key's name label enlarges noticeably (the user's "font goes bigger" cue), reverting when the note ends.
 - [ ] Multiple simultaneous/overlapping upcoming notes all highlight; hand colors are preserved in both prepare and press states.
+- [ ] **Order is legible when several keys are prepared at once (v1.1, D-022).** A uniform outline says *soon* but never *next*, which real use showed to be the single biggest comprehension failure. Each prepared key **fills from the bottom** in its hand colour as its note approaches: fill height = fraction of the lead time elapsed, so the fullest key is next and its fill depth is the time remaining. Notes that genuinely sound together fill at the same rate and therefore look identical — the cue must not imply an order that does not exist.
 
 #### F6 — Listen mode with mistake analysis (P0 for V1)
 
@@ -144,7 +159,8 @@ The home screen has a search box and a "My pieces" list.
 
 ## 9. Constraints & Principles
 
-- **Reuse-first:** do not build a playback engine or MIDI parser from scratch. Candidates: Tone.js (transport: play/pause/seek/rate), @tonejs/midi (MIDI parsing), an existing MusicXML **parser** for parsing only — there is no notation rendering in this product — and html-midi-player as a reference implementation. Custom code is limited to the waterfall + keyboard canvas and the mistake-matching logic. Final selections are tech-spec decisions.
+- **Stack (v1.1, settled — D-001):** Vite + React 19 + TypeScript + Tailwind 4, deployed as a static SPA on Cloudflare Pages. Tone.js for transport and the sampled piano, @tonejs/midi for MIDI, Verovio as a lazy MusicXML-only converter, Dexie over IndexedDB. No backend, no accounts, no API routes.
+- **Reuse-first:** do not build a playback engine or MIDI parser from scratch. Custom code is limited to the waterfall + keyboard rendering and the mistake-matching logic.
 - **Browsers:** Chrome and Edge fully supported (Web MIDI requirement for V1); MVP playback should also work in Firefox/Safari but they are not V1 targets.
 - **Offline-tolerant:** once a piece is open, playback and (V1) listen mode work without network.
 - **Local-first:** all pieces, settings, and reports live in browser storage; no backend account system. (A backend may exist solely for catalog search.)
@@ -168,7 +184,13 @@ Personal-tool scale — measured by instrumentation or honest self-report:
 | R2 | **MusicXML→performance fidelity**: repeats, voltas, tempo changes, ornaments must play back as they'd actually be performed. MIDI files sidestep this; MusicXML needs care. | Tech spec | No — MIDI is the fallback |
 | R5 | **Timing tolerance tuning**: ±300 ms default may mis-grade at 0.25x practice speeds; matching algorithm needs real-world tuning against actual playing. | Tech spec | No |
 | R6 | **Web MIDI permission UX** in Chrome (permission prompt, device sleep/wake) needs verification on the RP302 specifically. | Tech spec | No |
-| R7 | **Per-source license verification**: each seeded catalog source's redistribution terms must be checked individually before ingestion (IMSLP in particular mixes licenses). | Tech spec | Yes — before catalog ingestion |
+| O-6 | **Hand colours are fixed at cyan/orange.** Raised in use as a wish. Blue/orange is already the standard colour-blind-safe pair, so the case is aesthetic rather than accessibility — and the PRD's "no settings screen" non-goal would have to give. Undecided. | User | No |
+| O-7 | **Deep links only resolve for saved pieces.** `/pieces/:id` for a catalog piece not yet opened renders not-found. Correct for a local-first app, mildly surprising if you bookmark one. | T10 | No |
+
+**Closed since v1.0:**
+
+- ~~R7~~ **Per-asset licence verification: done.** All 460 shipped pieces carry a verified licence name, URL, source URL and SHA-256 matching their committed bytes; 195 non-public-domain pieces each carry a creator credit. This also closes the CC-BY-SA attribution gate ahead of any public deploy.
+- ~~R2~~ **MusicXML fidelity: measured.** Verovio preserves staff→hand mapping at 99.873% across 1,578 attacks on three real scores, and expands repeats, voltas, D.C., D.S., To Coda and Fine correctly. The structural-fallback warning is for genuinely unsupported input only.
 
 **Resolved during the critique loop (user decisions):**
 
@@ -189,3 +211,4 @@ Personal-tool scale — measured by instrumentation or honest self-report:
 | 0.2 | Critique pass 1 fixes + user decisions | **Fixed:** search-unavailable failure state (F1); seeded-catalog scoping so catalog breadth can't balloon the MVP (F1); percussion/out-of-range note handling for messy real-world MIDIs (F2); musical-time vs wall-clock ambiguity in lookahead (F3) and highlight lead time (F5); player opens paused (F4); listen-mode attempt-ending rules for seek/speed-change/disconnect (F6); MusicXML parser wording that implied a notation view (§9); added R7 per-source license check. **User decisions applied:** classical repertoire (§2, F1), A–B loop in MVP (F4), subtle live + report feedback (F6). **Flagged, judged not worth solving:** duplicate-piece dedup rules (tech-spec detail), piece rename (P1 nicety at most), first-run onboarding (single self-explanatory screen), accessibility beyond browser defaults (personal tool). |
 | 0.3 | Critique pass 2 fixes | Defined the A–B-loop × listen-mode interaction (mutually exclusive in V1; pass-by-pass loop grading noted as P2); defined end-of-piece behavior; added title-alias/diacritic tolerance to search (classical naming makes the catalog path fail without it); pinned down the accuracy formula (early/late excluded from headline accuracy, pitch accuracy shown alongside). |
 | 1.0 | Finalized | Critique pass 3 (verification): all 6 original features trace to requirements with acceptance criteria; MVP/V1 split matches the user's instruction; all locked decisions present; zero remaining issues judged worth solving. Ready as tech-spec source. |
+| 1.1 | Revised after real use | The MVP shipped and was practised on, and using it found what specifying it could not. **F1:** the catalog is bundled, not live-searched — an implicit narrowing from v1.0 now stated plainly (D-019); composer search, composer-name normalisation, title disambiguation and browsable discovery added after 460 pieces made the old search unusable. **F2:** upload given a permanent entry point (D-021). **F3:** volume control promoted from P1 after playing along proved mute-or-nothing insufficient (D-020); sampler attribution moved off Home (D-023). **F5:** countdown fill added — a uniform prepare outline says *soon* but never *next*, which was the biggest comprehension failure in use (D-022). **§9:** stack settled. **§11:** R2 and R7 closed with measurements; O-6 and O-7 opened. Six defects found by use rather than by 156 passing tests are recorded in `docs/decisions.md`. |

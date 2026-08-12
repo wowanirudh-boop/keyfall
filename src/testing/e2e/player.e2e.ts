@@ -169,7 +169,7 @@ test("[T05a AC3, AC4, AC5, AC7, AC8] volume and header states persist and fit", 
   }
 });
 
-test("[T07 highlight] prepare and press cues render at both required sizes", async ({ page }) => {
+test("[T07 highlight, T07a fill AC1-AC7] countdown fill and press cues render at both required sizes", async ({ page }) => {
   await mkdir(resolve("test-results/visual"), { recursive: true });
 
   for (const viewport of [
@@ -184,10 +184,50 @@ test("[T07 highlight] prepare and press cues render at both required sizes", asy
     await expect(rightPrepare).toHaveAttribute("data-hand", "right");
     await expect(leftPrepare).toHaveAttribute("data-state", "prepare");
     await expect(leftPrepare).toHaveAttribute("data-hand", "left");
-    await expect(rightPrepare.locator("span")).toHaveCSS("font-size", "9px");
-    await expect(leftPrepare.locator("span")).toHaveCSS("font-size", "7px");
+    await expect(rightPrepare.locator("span:not([data-countdown-fill])")).toHaveCSS("font-size", "9px");
+    await expect(leftPrepare.locator("span:not([data-countdown-fill])")).toHaveCSS("font-size", "7px");
+    const chordFill = await page.evaluate(() =>
+      [67, 61].map((midi) => {
+        const key = document.querySelector<HTMLElement>(`[data-midi="${midi}"]`)!;
+        const fill = key.querySelector<HTMLElement>("[data-countdown-fill]")!;
+        const label = key.querySelector<HTMLElement>("span:not([data-countdown-fill])")!;
+        return {
+          height: fill.style.height,
+          imminence: Number(fill.dataset.imminence),
+          fillBeforeLabel: Boolean(fill.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING),
+          labelZIndex: getComputedStyle(label).zIndex,
+        };
+      }),
+    );
+    expect(chordFill.map((fill) => fill.height)).toEqual(["25%", "25%"]);
+    expect(chordFill.map((fill) => fill.imminence)).toEqual([0.25, 0.25]);
+    expect(chordFill.every((fill) => fill.fillBeforeLabel && fill.labelZIndex === "3")).toBe(true);
     await page.screenshot({
       path: resolve("test-results/visual", `player-highlight-prepare-${viewport.width}x${viewport.height}.png`),
+    });
+    await page.screenshot({
+      path: resolve("test-results/visual", `player-countdown-fill-chord-${viewport.width}x${viewport.height}.png`),
+    });
+
+    await page.goto("/src/testing/e2e/player-harness.html?position=6.8");
+    const runMidi = [57, 60, 64, 69, 71];
+    const runFill = await page.evaluate((midiValues) =>
+      midiValues.map((midi) => {
+        const key = document.querySelector<HTMLElement>(`[data-midi="${midi}"]`)!;
+        const fill = key.querySelector<HTMLElement>("[data-countdown-fill]")!;
+        return {
+          state: key.dataset.state,
+          height: Number.parseFloat(fill.style.height) / 100,
+        };
+      }), runMidi);
+    expect(runFill.map((fill) => fill.state)).toEqual(runMidi.map(() => "prepare"));
+    runFill.forEach((fill, index) => {
+      expect(fill.height).toBeCloseTo([0.8, 0.6, 0.4, 0.2, 0][index], 6);
+    });
+    await expect(page.getByTestId("piano-key-57").locator("span:not([data-countdown-fill])")).toBeVisible();
+    await expect(page.getByTestId("piano-key-71").locator("span:not([data-countdown-fill])")).toBeVisible();
+    await page.screenshot({
+      path: resolve("test-results/visual", `player-countdown-fill-run-${viewport.width}x${viewport.height}.png`),
     });
 
     await page.goto("/src/testing/e2e/player-harness.html?position=4");
@@ -195,9 +235,11 @@ test("[T07 highlight] prepare and press cues render at both required sizes", asy
     const blackPress = page.getByTestId("piano-key-66");
     await expect(whitePress).toHaveAttribute("data-state", "pressed");
     await expect(blackPress).toHaveAttribute("data-state", "pressed");
-    await expect(whitePress.locator("span")).toHaveCSS("font-size", "13px");
-    await expect(blackPress.locator("span")).toHaveCSS("font-size", "10px");
-    await expect(whitePress.locator("span")).toHaveCSS("font-weight", "500");
+    await expect(whitePress.locator("span:not([data-countdown-fill])")).toHaveCSS("font-size", "13px");
+    await expect(blackPress.locator("span:not([data-countdown-fill])")).toHaveCSS("font-size", "10px");
+    await expect(whitePress.locator("span:not([data-countdown-fill])")).toHaveCSS("font-weight", "500");
+    await expect(whitePress.locator("[data-countdown-fill]")).toHaveCount(0);
+    await expect(blackPress.locator("[data-countdown-fill]")).toHaveCount(0);
     await page.screenshot({
       path: resolve("test-results/visual", `player-highlight-press-${viewport.width}x${viewport.height}.png`),
     });
@@ -205,6 +247,14 @@ test("[T07 highlight] prepare and press cues render at both required sizes", asy
     await page.goto("/src/testing/e2e/player-harness.html?position=5.25&hand=none");
     await expect(page.getByTestId("piano-key-67")).toHaveAttribute("data-hand", "right");
     await expect(page.getByTestId("piano-key-61")).toHaveAttribute("data-hand", "right");
+    const singleColourFills = await page.evaluate(() =>
+      [67, 61].map((midi) =>
+        getComputedStyle(
+          document.querySelector(`[data-midi="${midi}"] [data-countdown-fill]`)!,
+        ).backgroundColor,
+      ),
+    );
+    expect(singleColourFills[0]).toBe(singleColourFills[1]);
     const layout = await page.evaluate(() => ({
       clientHeight: document.documentElement.clientHeight,
       clientWidth: document.documentElement.clientWidth,
@@ -221,7 +271,7 @@ test("[T07 highlight] prepare and press cues render at both required sizes", asy
   }
 });
 
-test("transport, loop, scrub, and shortcut states work at both required sizes", async ({ page }) => {
+test("transport hint, loop, scrub, and shortcut states work at both required sizes", async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 1024, height: 768 },
@@ -229,6 +279,12 @@ test("transport, loop, scrub, and shortcut states work at both required sizes", 
     await page.setViewportSize(viewport);
     await page.goto("/src/testing/e2e/player-harness.html?position=0");
     await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+    await expect(page.getByText("0:00 / 2:00")).toBeVisible();
+    await expect(page.getByText("← → SKIP 5 SECONDS", { exact: true })).toBeVisible();
+    await expect(page.getByText(/SPACE PLAY|DRAG BAR TO SCRUB/)).toHaveCount(0);
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByText("0:05 / 2:00")).toBeVisible();
+    await page.keyboard.press("ArrowLeft");
     await expect(page.getByText("0:00 / 2:00")).toBeVisible();
     await page.keyboard.press("Space");
     await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();

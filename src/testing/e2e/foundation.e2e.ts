@@ -39,7 +39,7 @@ test('direct deep links and the fallback route render through the SPA', async ({
   await expect(page.getByText('Not found')).toBeVisible();
 });
 
-test('all UI and mono font weights load locally with external network blocked', async ({ page }) => {
+test('[T05c AC1] header and all UI font weights load locally with external network blocked', async ({ page }) => {
   const fontRequests: string[] = [];
   page.on('request', (request) => {
     if (request.url().endsWith('.woff2')) fontRequests.push(request.url());
@@ -65,19 +65,18 @@ test('all UI and mono font weights load locally with external network blocked', 
     const wordmark = [...document.querySelectorAll('span')].find(
       (element) => element.textContent === 'Piano Practice Player',
     );
-    const metadata = [...document.querySelectorAll('span')].find(
-      (element) => element.textContent?.trim() === 'LOCAL LIBRARY · NO ACCOUNT',
+    const about = [...document.querySelectorAll('button')].find(
+      (element) => element.textContent?.trim() === 'About',
     );
     const dot = document.querySelector('[aria-hidden="true"]');
     const dotStyle = dot ? getComputedStyle(dot) : null;
-    const metadataStyle = metadata ? getComputedStyle(metadata) : null;
+    const aboutStyle = about ? getComputedStyle(about) : null;
     const wordmarkStyle = wordmark ? getComputedStyle(wordmark) : null;
 
     return {
       dotHeight: dotStyle?.height,
       dotWidth: dotStyle?.width,
-      metadataFontFamily: metadataStyle?.fontFamily,
-      metadataFontSize: metadataStyle?.fontSize,
+      aboutBorderStyle: aboutStyle?.borderStyle,
       wordmarkFontFamily: wordmarkStyle?.fontFamily,
       wordmarkFontSize: wordmarkStyle?.fontSize,
       wordmarkFontWeight: wordmarkStyle?.fontWeight,
@@ -89,8 +88,8 @@ test('all UI and mono font weights load locally with external network blocked', 
   expect(headerStyles.wordmarkFontFamily).toContain('Space Grotesk');
   expect(headerStyles.wordmarkFontSize).toBe('19px');
   expect(headerStyles.wordmarkFontWeight).toBe('700');
-  expect(headerStyles.metadataFontFamily).toContain('IBM Plex Mono');
-  expect(headerStyles.metadataFontSize).toBe('11px');
+  expect(headerStyles.aboutBorderStyle).toBe('solid');
+  await expect(page.getByText('LOCAL LIBRARY · NO ACCOUNT')).toHaveCount(0);
 });
 
 test('route shells have no horizontal page scroll at both required viewports', async ({ page }) => {

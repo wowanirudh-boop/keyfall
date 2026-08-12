@@ -116,6 +116,7 @@ export function PianoKeyboard({
   const renderKey = (geometry: KeyGeometry) => {
     const state = states.get(geometry.midi) ?? { kind: "idle" as const, hand: "unknown" as const };
     const resolvedHand = hasHandData && state.hand === "left" ? "left" : "right";
+    const activeColor = handColor(state.hand, hasHandData);
 
     return (
       <div
@@ -124,7 +125,7 @@ export function PianoKeyboard({
         data-midi={geometry.midi}
         data-state={state.kind}
         data-hand={resolvedHand}
-        className={`absolute top-0 flex items-end justify-center ${
+        className={`absolute top-0 flex items-end justify-center overflow-hidden ${
           geometry.black
             ? "rounded-b-[3px] pb-[5px]"
             : "rounded-b-key-white pb-[7px]"
@@ -134,8 +135,20 @@ export function PianoKeyboard({
           transition: `background ${motion.keyBackgroundMs}ms linear`,
         }}
       >
+        {state.kind === "prepare" ? (
+          <span
+            aria-hidden="true"
+            data-countdown-fill=""
+            data-imminence={state.imminence}
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: `${state.imminence * 100}%`,
+              background: `${activeColor}${alpha.prepareFill}`,
+            }}
+          />
+        ) : null}
         <span
-          className="font-mono tracking-[0.02em]"
+          className="relative z-[3] font-mono tracking-[0.02em]"
           style={labelStyle(geometry, state, hasHandData)}
         >
           {keyLabel(geometry.midi)}

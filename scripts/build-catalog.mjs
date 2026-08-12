@@ -24,6 +24,23 @@ const MUTOPIA_ORIGIN = "https://www.mutopiaproject.org";
 const PUBLIC_DOMAIN_URL = `${MUTOPIA_ORIGIN}/legal.html`;
 const REQUEST_INTERVAL_MS = 1_000;
 const MAX_DURATION_SECONDS = 30 * 60;
+export const MIN_ALIAS_LENGTH = 4;
+export const ALIAS_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "by",
+  "for",
+  "from",
+  "in",
+  "of",
+  "on",
+  "the",
+  "to",
+  "with",
+]);
 
 const LICENCES = new Map([
   ["Public Domain", { name: "Public Domain", url: PUBLIC_DOMAIN_URL }],
@@ -125,6 +142,16 @@ function cleanComposer(value, composerCode) {
   return composerCode?.replace(/[A-Z]+$/, "").replaceAll(/([a-z])([A-Z])/g, "$1 $2");
 }
 
+export function isSoloKeyboardInstrument(value) {
+  if (!value) return false;
+  const instruments = value
+    .split(",")
+    .map((instrument) => fold(instrument))
+    .filter(Boolean);
+  const soloKeyboardNames = new Set(["piano", "pianoforte", "harpsichord", "clavichord"]);
+  return instruments.includes("piano") && instruments.every((instrument) => soloKeyboardNames.has(instrument));
+}
+
 export function fold(value) {
   return value
     .toLowerCase()
@@ -144,7 +171,8 @@ function publicationDirectory(sourceDir, sourcePath) {
 
 export function parsePieceSource(source, sourcePath, sourceDir) {
   const fields = sourceFields(source);
-  if (fields.get("mutopiainstrument")?.toLowerCase() !== "piano") return null;
+  const instrument = fields.get("mutopiainstrument");
+  if (!isSoloKeyboardInstrument(instrument)) return null;
   const publicationId = source.match(/Mutopia-\d{4}\/\d{2}\/\d{2}-(\d+)/)?.[1];
   if (!publicationId) {
     const relativePath = relative(sourceDir, sourcePath).replaceAll("\\", "/");
@@ -157,8 +185,13 @@ export function parsePieceSource(source, sourcePath, sourceDir) {
     sourcePath,
     publicationDirectory: publicationDirectory(sourceDir, sourcePath),
     title: fields.get("mutopiatitle") ?? fields.get("title"),
+    rawComposer: fields.get("composer") ?? fields.get("mutopiacomposer"),
     composer: cleanComposer(fields.get("composer"), fields.get("mutopiacomposer")),
     composerCode: fields.get("mutopiacomposer"),
+    instrument,
+    recoveredInstrument: fold(instrument) !== "piano",
+    opus: fields.get("mutopiaopus") ?? fields.get("opus"),
+    subtitle: fields.get("subtitle"),
     arranger: fields.get("arranger"),
     creator: fields.get("maintainer"),
     licenceText: LICENCES.has(fieldLicence) ? fieldLicence : (explicitLicence ?? fieldLicence),
@@ -184,7 +217,12 @@ function mergePublication(records) {
       .sort((left, right) => left.length - right.length || left.localeCompare(right))[0],
     sourcePaths: preferred.map((record) => record.sourcePath),
     title: value("title"),
+    rawComposer: value("rawComposer"),
     composer: value("composer"),
+    instrument: value("instrument"),
+    recoveredInstrument: preferred.some((record) => record.recoveredInstrument),
+    opus: value("opus"),
+    subtitle: value("subtitle"),
     arranger: value("arranger"),
     creator: value("creator"),
     licenceText: value("licenceText"),
@@ -200,10 +238,47 @@ function baselineAliases(piece, curated) {
       " ",
     ),
   );
-  const surname = fold(piece.composer.split(/\s+/).at(-1) ?? "");
+  const surname = fold(piece.composer.split(",")[0] ?? "");
   return [...new Set([withoutParentheses, withoutCatalogue, surname, ...(curated ?? [])].map(fold))]
-    .filter((alias) => alias && alias !== foldedTitle)
+    .filter(
+      (alias) =>
+        alias.length >= MIN_ALIAS_LENGTH &&
+        !ALIAS_STOP_WORDS.has(alias) &&
+        alias !== foldedTitle &&
+        !foldedTitle.includes(alias),
+    )
     .sort();
+}
+
+function disambiguateTitles(publications) {
+  const groups = new Map();
+  for (const piece of publications) {
+    const key = fold(piece.title ?? "");
+    const group = groups.get(key) ?? [];
+    group.push(piece);
+    groups.set(key, group);
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const metadataCounts = new Map();
+    for (const piece of group) {
+      const metadata = piece.opus ?? piece.subtitle;
+      const key = fold(metadata ?? "");
+      metadataCounts.set(key, (metadataCounts.get(key) ?? 0) + 1);
+    }
+    for (const piece of group) {
+      const metadata = piece.opus ?? piece.subtitle;
+      const metadataKey = fold(metadata ?? "");
+      const distinguishing =
+        metadata &&
+        metadataKey &&
+        !fold(piece.title).includes(metadataKey) &&
+        metadataCounts.get(metadataKey) === 1
+          ? metadata
+          : `Mutopia ${piece.publicationId}`;
+      piece.title = `${piece.title} — ${distinguishing}`;
+    }
+  }
 }
 
 function slug(value) {
@@ -358,11 +433,32 @@ ${rows.join("\n")}
 `;
 }
 
-function buildLogDocument(revision, dropped) {
+function buildLogDocument(revision, dropped, composerMappings, recovered) {
   const rows = dropped.length > 0 ? dropped.map((reason) => `- ${reason}`).join("\n") : "- None";
+  const mappings = composerMappings
+    .map(({ raw, canonical }) => `- \`${markdownCell(raw)}\` → **${markdownCell(canonical)}**`)
+    .join("\n");
+  const recoveredRows = recovered.length > 0 ? recovered.map((reason) => `- ${reason}`).join("\n") : "- None";
   return `# Catalog ingestion log
 
 Source revision: \`${revision}\`
+
+## Normalisation rules
+
+- Solo-keyboard declarations may list piano with harpsichord, clavichord, or pianoforte. The former exact-\`Piano\` test incorrectly excluded these rows.
+- Aliases are folded, must contain at least ${MIN_ALIAS_LENGTH} characters, cannot be a stop word, and cannot be a strict substring of the folded visible title.
+- Composer spellings are mapped through \`scripts/catalog-composers.json\`; the original upstream composer remains in each manifest row as \`rawComposer\`.
+- Folded title collisions gain upstream opus/subtitle metadata, falling back to the Mutopia catalogue number when that metadata is not distinguishing.
+
+## Recovered candidates
+
+${recoveredRows}
+
+## Composer mappings
+
+${mappings || "- None"}
+
+## Dropped candidates
 
 Dropped candidates: **${dropped.length}**
 
@@ -375,6 +471,7 @@ export async function buildCatalog({
   outputDir,
   cacheDir,
   aliases,
+  composerAliases,
   revision,
   fetchDirectory,
   fetchAsset,
@@ -383,6 +480,8 @@ export async function buildCatalog({
   const sourceFiles = (await walk(join(sourceDir, "ftp"))).filter((path) => extname(path) === ".ly");
   const groups = new Map();
   const dropped = [];
+  const composerMappings = new Map();
+  const recovered = [];
 
   for (const sourcePath of sourceFiles) {
     const parsed = parsePieceSource(await readFile(sourcePath, "utf8"), sourcePath, sourceDir);
@@ -397,6 +496,20 @@ export async function buildCatalog({
   }
 
   const publications = [...groups.values()].map(mergePublication);
+  for (const piece of publications) {
+    const canonicalComposer = composerAliases?.[piece.composer];
+    piece.composerMapped = Boolean(canonicalComposer);
+    if (canonicalComposer) {
+      piece.composer = canonicalComposer;
+      composerMappings.set(piece.rawComposer, canonicalComposer);
+    }
+    if (piece.recoveredInstrument) {
+      recovered.push(
+        `Mutopia ${piece.publicationId}: accepted solo-keyboard declaration \`${piece.instrument}\`; the former exact-\`Piano\` filter excluded it.`,
+      );
+    }
+  }
+  disambiguateTitles(publications);
   const slugCounts = new Map();
   for (const publication of publications) {
     const base = slug(publication.title ?? `mutopia-${publication.publicationId}`);
@@ -418,6 +531,10 @@ export async function buildCatalog({
     }
     if (!piece.composer) {
       fail("missing composer");
+      continue;
+    }
+    if (!piece.composerMapped) {
+      fail(`composer is not mapped (${piece.rawComposer})`);
       continue;
     }
     const licence = licenceFor(piece.licenceText);
@@ -479,6 +596,7 @@ export async function buildCatalog({
       mutopiaId: piece.publicationId,
       title: piece.title,
       composer: piece.composer,
+      rawComposer: piece.rawComposer,
       ...(piece.arranger ? { arranger: piece.arranger } : {}),
       aliases: baselineAliases(piece, aliases[piece.publicationId]),
       asset,
@@ -503,6 +621,7 @@ export async function buildCatalog({
       left.id.localeCompare(right.id),
   );
   dropped.sort();
+  recovered.sort();
   const sizes = await Promise.all(
     manifest.map(async (entry) => (await stat(join(outputDir, "scores", entry.asset))).size),
   );
@@ -510,7 +629,17 @@ export async function buildCatalog({
 
   await writeFile(join(outputDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   await writeFile(join(outputDir, "LICENCES.md"), licenceDocument(manifest, revision, totalBytes));
-  await writeFile(join(outputDir, "BUILD_LOG.md"), buildLogDocument(revision, dropped));
+  await writeFile(
+    join(outputDir, "BUILD_LOG.md"),
+    buildLogDocument(
+      revision,
+      dropped,
+      [...composerMappings].map(([raw, canonical]) => ({ raw, canonical })).sort((left, right) =>
+        left.raw.localeCompare(right.raw),
+      ),
+      recovered,
+    ),
+  );
   await writeFile(join(outputDir, "index.ts"), "export {};\n");
   for (const reason of dropped) log(`DROP: ${reason}`);
   log(`Shipped ${manifest.length} pieces (${totalBytes} bytes); dropped ${dropped.length}.`);
@@ -528,12 +657,16 @@ async function main() {
   const aliases = JSON.parse(
     await readFile(join(ROOT, "scripts", "catalog-aliases.json"), "utf8"),
   );
+  const composerAliases = JSON.parse(
+    await readFile(join(ROOT, "scripts", "catalog-composers.json"), "utf8"),
+  );
   const cachedFetch = createCachedFetcher(cacheDir);
   await buildCatalog({
     sourceDir,
     outputDir,
     cacheDir,
     aliases,
+    composerAliases,
     revision,
     fetchDirectory: async (url, piece) =>
       String(await cachedFetch(url, `listings/${piece.publicationId}.html`)),

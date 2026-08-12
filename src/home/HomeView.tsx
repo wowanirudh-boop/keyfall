@@ -1,8 +1,20 @@
-import type { ChangeEvent, KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
 
-import type { CatalogEntry } from "../catalog";
+import { browseCatalog, type CatalogEntry } from "../catalog";
 import { AppHeader } from "../design/AppHeader";
-import { ErrorPanel, GHOST_BUTTON_CLASS_NAME, StatusBanner } from "../design/primitives";
+import {
+  ErrorPanel,
+  GHOST_BUTTON_CLASS_NAME,
+  Modal,
+  StatusBanner,
+} from "../design/primitives";
 import type { SavedPieceSummary } from "../library";
 import { relativeOpened } from "../library";
 import { SALAMANDER_ATTRIBUTION, SALAMANDER_LICENSE_URL } from "../playback";
@@ -12,6 +24,58 @@ const EMPTY_LIBRARY_COPY =
   "Nothing saved yet. Every piece you open — searched or uploaded — is kept here for tomorrow.";
 const CATALOG_UNAVAILABLE_COPY =
   "Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.";
+const MUTOPIA_LICENCE_URL = "https://www.mutopiaproject.org/legal.html";
+
+export function AboutPanel({ onClose }: { onClose: () => void }) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
+
+  return (
+    <Modal title="About" onClose={onClose}>
+      <div className="flex flex-col gap-[14px] text-body-sm leading-[1.55] text-secondary">
+        <p>Piano Practice Player turns piano scores into falling notes for practising at your own pace.</p>
+        <p>Everything stays on this device. There is no account, and nothing is uploaded.</p>
+        <p>
+          Piano sound: {" "}
+          <a
+            className="text-text underline hover:text-hand-right"
+            href={SALAMANDER_LICENSE_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {SALAMANDER_ATTRIBUTION}
+          </a>
+          .
+        </p>
+        <p>
+          Catalogue scores come from the {" "}
+          <a
+            className="text-text underline hover:text-hand-right"
+            href={MUTOPIA_LICENCE_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Mutopia Project
+          </a>{" "}
+          under their individual licences.
+        </p>
+      </div>
+      <div className="flex justify-end">
+        <button
+          ref={closeButtonRef}
+          type="button"
+          className={GHOST_BUTTON_CLASS_NAME}
+          onClick={onClose}
+        >
+          Close About
+        </button>
+      </div>
+    </Modal>
+  );
+}
 
 function sourceName(entry: CatalogEntry) {
   const hostname = new URL(entry.licence.sourceUrl).hostname.replace(/^www\./, "");
@@ -130,10 +194,40 @@ export function CatalogSearch({ query, onQueryChange, onClear }: CatalogSearchPr
   );
 }
 
-export function SearchResults({
-  entries,
+export function SearchResultRow({
+  entry,
   onOpen,
 }: {
+  entry: CatalogEntry;
+  onOpen: (entry: CatalogEntry) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="grid cursor-pointer grid-cols-[1fr_auto] items-center gap-[18px] rounded-card border border-border-2 bg-card px-[18px] py-[16px] text-left hover:border-result-hover-border hover:bg-result-hover-bg"
+      onClick={() => onOpen(entry)}
+    >
+      <span className="flex min-w-0 flex-col gap-[6px]">
+        <span className="text-[16px] font-medium tracking-[-0.01em]">{entry.title}</span>
+        <span className="text-body-sm text-secondary">
+          {entry.composer}
+          {entry.arranger ? ` · ${entry.arranger}` : ""}
+        </span>
+        <span className="font-mono text-mono-meta tracking-[0.04em] text-mono-dim-2">
+          {sourceName(entry)} · {entry.licence.name.toUpperCase()}
+          {entry.licence.creator ? ` · ${entry.licence.creator.toUpperCase()}` : ""}
+        </span>
+      </span>
+      {entry.durationSeconds !== undefined ? (
+        <span className="font-mono text-mono-time text-hand-right">
+          {formatTime(entry.durationSeconds)}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+export function SearchResults({ entries, onOpen }: {
   entries: readonly CatalogEntry[];
   onOpen: (entry: CatalogEntry) => void;
 }) {
@@ -143,30 +237,56 @@ export function SearchResults({
         {entries.length} {entries.length === 1 ? "MATCH" : "MATCHES"} · PUBLIC DOMAIN &amp; CC SOURCES
       </div>
       {entries.map((entry) => (
-        <button
-          key={entry.id}
-          type="button"
-          className="grid cursor-pointer grid-cols-[1fr_auto] items-center gap-[18px] rounded-card border border-border-2 bg-card px-[18px] py-[16px] text-left hover:border-result-hover-border hover:bg-result-hover-bg"
-          onClick={() => onOpen(entry)}
-        >
-          <span className="flex min-w-0 flex-col gap-[6px]">
-            <span className="text-[16px] font-medium tracking-[-0.01em]">{entry.title}</span>
-            <span className="text-body-sm text-secondary">
-              {entry.composer}
-              {entry.arranger ? ` · ${entry.arranger}` : ""}
-            </span>
-            <span className="font-mono text-mono-meta tracking-[0.04em] text-mono-dim-2">
-              {sourceName(entry)} · {entry.licence.name.toUpperCase()}
-              {entry.licence.creator ? ` · ${entry.licence.creator.toUpperCase()}` : ""}
-            </span>
-          </span>
-          {entry.durationSeconds !== undefined ? (
-            <span className="font-mono text-mono-time text-hand-right">
-              {formatTime(entry.durationSeconds)}
-            </span>
-          ) : null}
-        </button>
+        <SearchResultRow key={entry.id} entry={entry} onOpen={onOpen} />
       ))}
+    </section>
+  );
+}
+
+export const CATALOG_PAGE_SIZE = 25;
+
+export function CatalogBrowse({ entries, onOpen }: {
+  entries: readonly CatalogEntry[];
+  onOpen: (entry: CatalogEntry) => void;
+}) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const sortedEntries = useMemo(() => browseCatalog(entries), [entries]);
+  const pageCount = Math.max(1, Math.ceil(sortedEntries.length / CATALOG_PAGE_SIZE));
+  const page = Math.min(currentPage, pageCount - 1);
+  const pageEntries = sortedEntries.slice(
+    page * CATALOG_PAGE_SIZE,
+    (page + 1) * CATALOG_PAGE_SIZE,
+  );
+
+  return (
+    <section aria-label="Browse catalog" className="flex flex-col gap-[8px]">
+      <div className="flex flex-wrap items-center justify-between gap-[8px] pl-[2px] font-mono text-mono-meta tracking-[0.06em] text-mono-dim-1">
+        <span>{sortedEntries.length} PIECES · BROWSE A–Z BY COMPOSER</span>
+        <span>PAGE {page + 1} OF {pageCount}</span>
+      </div>
+      {pageEntries.map((entry) => (
+        <SearchResultRow key={entry.id} entry={entry} onOpen={onOpen} />
+      ))}
+      {pageCount > 1 ? (
+        <nav aria-label="Catalog pages" className="mt-[6px] flex items-center justify-end gap-[10px]">
+          <button
+            type="button"
+            className={GHOST_BUTTON_CLASS_NAME}
+            disabled={page === 0}
+            onClick={() => setCurrentPage((current) => Math.max(0, current - 1))}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className={GHOST_BUTTON_CLASS_NAME}
+            disabled={page === pageCount - 1}
+            onClick={() => setCurrentPage((current) => Math.min(pageCount - 1, current + 1))}
+          >
+            Next
+          </button>
+        </nav>
+      ) : null}
     </section>
   );
 }
@@ -240,6 +360,7 @@ export function MyPieces({
 
 export interface HomeViewProps {
   query: string;
+  catalogEntries: readonly CatalogEntry[];
   results: readonly CatalogEntry[];
   searched: boolean;
   catalogUnavailable: boolean;
@@ -261,6 +382,7 @@ export type UploadOrigin = "search" | "library";
 
 export function HomeView({
   query,
+  catalogEntries,
   results,
   searched,
   catalogUnavailable,
@@ -277,56 +399,72 @@ export function HomeView({
   onOpenSaved,
   onDelete,
 }: HomeViewProps) {
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const aboutButtonRef = useRef<HTMLButtonElement>(null);
   const showUpload = catalogUnavailable || (searched && results.length === 0);
 
+  function closeAbout() {
+    setAboutOpen(false);
+    aboutButtonRef.current?.focus();
+  }
+
   return (
-    <main className="min-h-screen overflow-x-hidden px-[32px] pb-[120px] pt-[40px]">
-      <div className="mx-auto flex max-w-[880px] flex-col gap-[36px]">
-        <AppHeader />
-        {catalogUnavailable ? <StatusBanner>{CATALOG_UNAVAILABLE_COPY}</StatusBanner> : null}
-        {storageWarning ? <StatusBanner>{storageWarning}</StatusBanner> : null}
-        <div className="flex flex-col gap-[14px]">
-          <CatalogSearch query={query} onQueryChange={onQueryChange} onClear={onClear} />
-          {!catalogUnavailable && searched && results.length > 0 ? (
-            <SearchResults entries={results} onOpen={onOpenResult} />
-          ) : null}
-          {showUpload ? (
-            <NoResultsUpload
-              query={query}
-              uploadError={uploadErrorOrigin === "search" ? uploadError : null}
-              assetError={assetError}
-              catalogUnavailable={catalogUnavailable}
-              onUpload={(file) => onUpload(file, "search")}
-            />
-          ) : null}
-          {!showUpload && (assetError || (uploadError && uploadErrorOrigin === "search")) ? (
-            <div className="flex flex-col gap-[18px]">
-              {assetError ? <ErrorPanel>{assetError}</ErrorPanel> : null}
-              <UploadControl onUpload={(file) => onUpload(file, "search")} />
-              {uploadError && uploadErrorOrigin === "search" ? (
-                <ErrorPanel>{uploadError}</ErrorPanel>
-              ) : null}
-            </div>
-          ) : null}
+    <>
+      <main className="min-h-screen overflow-x-hidden px-[32px] pb-[120px] pt-[40px]">
+        <div className="mx-auto flex max-w-[880px] flex-col gap-[36px]">
+          <AppHeader
+            action={
+              <button
+                ref={aboutButtonRef}
+                type="button"
+                className={GHOST_BUTTON_CLASS_NAME}
+                onClick={() => setAboutOpen(true)}
+              >
+                About
+              </button>
+            }
+          />
+          {catalogUnavailable ? <StatusBanner>{CATALOG_UNAVAILABLE_COPY}</StatusBanner> : null}
+          {storageWarning ? <StatusBanner>{storageWarning}</StatusBanner> : null}
+          <div className="flex flex-col gap-[14px]">
+            <CatalogSearch query={query} onQueryChange={onQueryChange} onClear={onClear} />
+            {!catalogUnavailable && !searched && catalogEntries.length > 0 ? (
+              <CatalogBrowse entries={catalogEntries} onOpen={onOpenResult} />
+            ) : null}
+            {!catalogUnavailable && searched && results.length > 0 ? (
+              <SearchResults entries={results} onOpen={onOpenResult} />
+            ) : null}
+            {showUpload ? (
+              <NoResultsUpload
+                query={query}
+                uploadError={uploadErrorOrigin === "search" ? uploadError : null}
+                assetError={assetError}
+                catalogUnavailable={catalogUnavailable}
+                onUpload={(file) => onUpload(file, "search")}
+              />
+            ) : null}
+            {!showUpload && (assetError || (uploadError && uploadErrorOrigin === "search")) ? (
+              <div className="flex flex-col gap-[18px]">
+                {assetError ? <ErrorPanel>{assetError}</ErrorPanel> : null}
+                <UploadControl onUpload={(file) => onUpload(file, "search")} />
+                {uploadError && uploadErrorOrigin === "search" ? (
+                  <ErrorPanel>{uploadError}</ErrorPanel>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          <MyPieces
+            pieces={library}
+            now={now}
+            onOpen={onOpenSaved}
+            onDelete={onDelete}
+            onUpload={(file) => onUpload(file, "library")}
+            uploadError={uploadErrorOrigin === "library" ? uploadError : null}
+            showUpload={!catalogUnavailable}
+          />
         </div>
-        <MyPieces
-          pieces={library}
-          now={now}
-          onOpen={onOpenSaved}
-          onDelete={onDelete}
-          onUpload={(file) => onUpload(file, "library")}
-          uploadError={uploadErrorOrigin === "library" ? uploadError : null}
-          showUpload={!catalogUnavailable}
-        />
-        <a
-          className="font-mono text-mono-meta text-mono-dim-2 hover:text-secondary"
-          href={SALAMANDER_LICENSE_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {SALAMANDER_ATTRIBUTION}
-        </a>
-      </div>
-    </main>
+      </main>
+      {aboutOpen ? <AboutPanel onClose={closeAbout} /> : null}
+    </>
   );
 }

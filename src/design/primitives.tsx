@@ -1,4 +1,4 @@
-import { useId, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useId, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
 import { alpha, color } from './tokens';
 
 export const GHOST_BUTTON_CLASS_NAME =
@@ -82,11 +82,35 @@ export function ErrorPanel({ className = '', children, ...props }: HTMLAttribute
   );
 }
 
-export function Modal({ children, title }: { children: ReactNode; title: string }) {
+export function Modal({
+  children,
+  onClose,
+  title,
+}: {
+  children: ReactNode;
+  onClose?: () => void;
+  title: string;
+}) {
   const titleId = useId();
 
+  useEffect(() => {
+    if (!onClose) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 grid place-items-center bg-backdrop p-[26px]">
+    <div
+      data-testid="modal-backdrop"
+      role="presentation"
+      className="fixed inset-0 z-50 grid place-items-center bg-backdrop p-[26px]"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      }}
+    >
       <section
         role="dialog"
         aria-modal="true"

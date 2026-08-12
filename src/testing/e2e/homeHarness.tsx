@@ -14,7 +14,7 @@ const saved: SavedPieceSummary[] = [
   {
     id: "saved-fixture",
     title: "Für Elise",
-    composer: "Ludwig van Beethoven",
+    composer: "Beethoven, Ludwig van",
     duration: 130,
     lastOpened: 0,
     lastSpeed: 0.5,
@@ -32,6 +32,7 @@ const query =
 createRoot(document.getElementById("root")!).render(
   <HomeView
     query={query}
+    catalogEntries={FIXTURE_MANIFEST}
     results={
       state === "results"
         ? FIXTURE_MANIFEST.slice(0, 2)

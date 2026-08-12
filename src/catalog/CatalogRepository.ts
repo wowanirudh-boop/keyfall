@@ -4,6 +4,7 @@ export interface CatalogEntry {
   id: string;
   title: string;
   composer: string;
+  rawComposer: string;
   arranger?: string;
   aliases: string[];
   asset: string;
@@ -36,18 +37,35 @@ export function fold(value: string) {
     .trim();
 }
 
+const foldedEntryCache = new WeakMap<CatalogEntry, { title: string; composer: string }>();
+
+function foldedEntry(entry: CatalogEntry) {
+  const cached = foldedEntryCache.get(entry);
+  if (cached) return cached;
+  const fields = { title: fold(entry.title), composer: fold(entry.composer) };
+  foldedEntryCache.set(entry, fields);
+  return fields;
+}
+
 export function searchCatalog(entries: readonly CatalogEntry[], query: string) {
   const foldedQuery = fold(query);
   if (!foldedQuery) return [];
   const rank = (entry: CatalogEntry) => {
-    const title = fold(entry.title);
-    const composer = fold(entry.composer);
+    const { title, composer } = foldedEntry(entry);
     if (title === foldedQuery) return 0;
-    if (entry.aliases.includes(foldedQuery)) return 1;
-    if (title.startsWith(foldedQuery)) return 2;
-    if (title.includes(foldedQuery)) return 3;
-    if (entry.aliases.some((alias) => alias.includes(foldedQuery))) return 4;
-    if (composer.includes(foldedQuery)) return 5;
+    if (title.startsWith(foldedQuery)) return 1;
+    if (title.includes(foldedQuery)) return 2;
+    if (composer.includes(foldedQuery)) return 3;
+    if (
+      entry.aliases.some(
+        (alias) =>
+          alias === foldedQuery ||
+          alias.includes(foldedQuery) ||
+          (alias.length >= 4 && foldedQuery.includes(alias)),
+      )
+    ) {
+      return 4;
+    }
     return null;
   };
   return entries
@@ -55,8 +73,25 @@ export function searchCatalog(entries: readonly CatalogEntry[], query: string) {
     .filter((match): match is { entry: CatalogEntry; index: number; rank: number } =>
       match.rank !== null,
     )
-    .sort((left, right) => left.rank - right.rank || left.index - right.index)
+    .sort(
+      (left, right) =>
+        left.rank - right.rank ||
+        compareCatalogEntries(left.entry, right.entry) ||
+        left.index - right.index,
+    )
     .map((match) => match.entry);
+}
+
+export function compareCatalogEntries(left: CatalogEntry, right: CatalogEntry) {
+  return (
+    left.composer.localeCompare(right.composer) ||
+    left.title.localeCompare(right.title) ||
+    left.id.localeCompare(right.id)
+  );
+}
+
+export function browseCatalog(entries: readonly CatalogEntry[]) {
+  return [...entries].sort(compareCatalogEntries);
 }
 
 function isWebUrl(value: string) {
@@ -78,6 +113,7 @@ export function validateCatalogEntry(value: unknown): CatalogEntry | null {
     !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(row.id as string) ||
     !nonEmpty(row.title) ||
     !nonEmpty(row.composer) ||
+    !nonEmpty(row.rawComposer) ||
     (row.arranger !== undefined && !nonEmpty(row.arranger)) ||
     !Array.isArray(row.aliases) ||
     !row.aliases.every((alias) => nonEmpty(alias) && alias === fold(alias as string)) ||
@@ -151,6 +187,7 @@ export class CatalogRepository {
         this.#warn(`Catalog row ${index} was dropped: invalid manifest fields.`);
         continue;
       }
+      foldedEntry(entry);
       entries.push(entry);
     }
     if (manifest.length > 0 && entries.length === 0) {

@@ -16,6 +16,23 @@ One file per unit of work. Execute **one at a time, in order**. Do not batch.
 | 10 | [T09](T09-reports.md) | T08 | Report, history | F6 |
 | 11 | [T10](T10-offline-deploy.md) | T09 | Service worker, deployment | §9 |
 
+## Post-MVP work (v1.1)
+
+Written after the MVP shipped and was used. Run in this order; all are independent
+of T08–T10.
+
+| Order | Task | Fixes |
+|---|---|---|
+| A | [T04a](T04a-velocity-fix.md) ✅ | Audio 42 dB too quiet |
+| B | [T03a](T03a-secure-context-fix.md) ✅ | Catalog dead off localhost |
+| C | [T03c](T03c-lazy-catalog-validation.md) ✅ | Every score downloaded at startup |
+| D | [T05b](T05b-upload-entry-point.md) ✅ | Upload unreachable without a failed search |
+| E | [T05a](T05a-volume-control.md) ✅ | No volume control |
+| F | [T03b](T03b-catalog-expansion.md) ✅ | 12 pieces → 460 |
+| G | [T03d](T03d-catalog-quality.md) | Search broken by junk aliases; BWV 846 missing; composer names unnormalised; no browse |
+| H | [T07a](T07a-countdown-fill.md) | Prepared keys give no order — the biggest comprehension failure |
+| I | [T05c](T05c-chrome-cleanup.md) | Attribution off Home, header jargon, transport hints |
+
 **T03 moved after T06.** Its acceptance criteria ("opening a piece lands on the
 player paused at 0:00", "reopens and plays without re-parsing") need a working
 player, so it cannot precede one. The MVP gate now sits at the end of T03, where

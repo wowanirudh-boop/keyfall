@@ -3,10 +3,9 @@ import type { NoteEvent, NoteHand } from "../music/types";
 
 export type VisibleKeyStateKind = "idle" | "prepare" | "pressed" | "error";
 
-export interface VisibleKeyState {
-  kind: VisibleKeyStateKind;
-  hand: NoteHand;
-}
+export type VisibleKeyState =
+  | { kind: "idle" | "pressed" | "error"; hand: NoteHand }
+  | { kind: "prepare"; hand: NoteHand; imminence: number };
 
 export interface LiveVerdict {
   kind: "correct" | "wrong" | "missed" | "early" | "late";
@@ -78,7 +77,7 @@ export class KeyStateScanner {
     this.lastSeekRevision = seekRevision;
 
     const pressed = new Map<number, NoteHand>();
-    const preparing = new Map<number, NoteHand>();
+    const preparing = new Map<number, { hand: NoteHand; imminence: number }>();
     const errors = new Map<number, NoteHand>();
 
     for (let index = this.cursor; index < this.notes.length; index += 1) {
@@ -90,9 +89,17 @@ export class KeyStateScanner {
       } else if (
         position >= note.start - tunables.highlightLeadTimeSeconds &&
         position < note.start &&
-        !pressed.has(note.midi)
+        !pressed.has(note.midi) &&
+        !preparing.has(note.midi)
       ) {
-        preparing.set(note.midi, note.hand);
+        const imminence = Math.min(
+          1,
+          Math.max(
+            0,
+            1 - (note.start - position) / tunables.highlightLeadTimeSeconds,
+          ),
+        );
+        preparing.set(note.midi, { hand: note.hand, imminence });
       }
 
       const verdict = options.liveVerdicts?.get(note.id);
@@ -108,7 +115,9 @@ export class KeyStateScanner {
     }
 
     const states = new Map<number, VisibleKeyState>();
-    for (const [midi, hand] of preparing) states.set(midi, { kind: "prepare", hand });
+    for (const [midi, prepare] of preparing) {
+      states.set(midi, { kind: "prepare", ...prepare });
+    }
     for (const [midi, hand] of pressed) states.set(midi, { kind: "pressed", hand });
     for (const [midi, hand] of errors) states.set(midi, { kind: "error", hand });
     return states;

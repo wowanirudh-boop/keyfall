@@ -145,6 +145,33 @@ for (const n of notesSortedByStart) {
 
 Precedence is strict: **error > press > prepare > idle**.
 
+### Countdown fill on prepared keys (D-022)
+
+A prepared key is not just "on" — it carries how soon its note arrives, so the
+order is readable off the keyboard when several keys are lit at once.
+
+```ts
+// For each prepared key, publish an imminence fraction alongside the hand:
+//   0 = just entered the lead window,  1 = sounding now.
+const imminence = Math.min(1, Math.max(0, 1 - (n.start - t) / leadTime));
+prepare[n.midi] = { hand: n.hand, imminence };
+```
+
+Rendered as a fill rising from the bottom of the key, `height = imminence * 100%`,
+in the hand colour at `alpha.prepareFill`. The fullest key is next; the fill depth
+is the remaining lead time.
+
+Two properties that must hold:
+
+1. **Notes sharing a `start` produce the same `imminence`**, so a chord's keys fill
+   identically. The cue must never imply an order a chord does not have.
+2. Where a key has several upcoming notes inside the window, keep the **soonest**.
+   The scan runs in `start` order, so the first write for a midi wins — do not
+   overwrite it.
+
+The fill sits behind the key label and disappears the instant the key enters the
+press state, which owns the whole key face.
+
 **What feeds `error[]` in production.** The prototype reads a precomputed fake
 verdict array. In the app the error map is fed by the *live* grading pass
 (§10), which publishes a provisional verdict per expected note:

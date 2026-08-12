@@ -5,10 +5,11 @@ import { ErrorPanel, GhostButton, Modal, MonoLabel, StatusBanner, TogglePill } f
 
 describe('design foundation components', () => {
   it('renders the handoff header typography and cyan mark', () => {
-    const { container } = render(<AppHeader />);
+    const { container } = render(<AppHeader action={<button type="button">About</button>} />);
 
     expect(screen.getByText('Piano Practice Player').className).toContain('text-title');
-    expect(screen.getByText('LOCAL LIBRARY · NO ACCOUNT').className).toContain('font-mono');
+    expect(screen.getByRole('button', { name: 'About' })).toBeTruthy();
+    expect(screen.queryByText('LOCAL LIBRARY · NO ACCOUNT')).toBeNull();
     expect(container.querySelector('[aria-hidden="true"]')?.className).toContain('bg-hand-right');
   });
 
