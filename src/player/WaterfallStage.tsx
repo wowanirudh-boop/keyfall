@@ -3,7 +3,13 @@ import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { color, shadow, tunables, waterfall } from "../design/tokens";
 import type { NoteEvent } from "../music/types";
 import type { PlaybackSpeed } from "../playback";
+import { displayHand, useHandColors, type HandDisplayMode } from "./handColors";
 import { KEY_GEOMETRY_BY_MIDI } from "./keyboardGeometry";
+import {
+  FULL_KEYBOARD_WINDOW,
+  keyboardWindowStyle,
+  type KeyboardWindow,
+} from "./keyboardWindow";
 
 const WINDOW_MARGIN_SECONDS = 2;
 const WINDOW_REBUILD_THRESHOLD_SECONDS = 1;
@@ -35,17 +41,23 @@ interface WaterfallNoteProps {
   note: NoteEvent;
   pixelsPerSecond: number;
   hasHandData: boolean;
+  mode: HandDisplayMode;
+  rightColor: string;
+  leftColor: string;
 }
 
 const WaterfallNote = memo(function WaterfallNote({
   note,
   pixelsPerSecond,
   hasHandData,
+  mode,
+  rightColor,
+  leftColor,
 }: WaterfallNoteProps) {
   const geometry = KEY_GEOMETRY_BY_MIDI.get(note.midi);
   if (!geometry) return null;
-  const hand = hasHandData && note.hand === "left" ? "left" : "right";
-  const handColor = hand === "left" ? color.handLeft : color.handRight;
+  const hand = displayHand(note.hand, hasHandData, mode);
+  const handColor = hand === "left" ? leftColor : rightColor;
 
   return (
     <div
@@ -75,6 +87,7 @@ export interface WaterfallStageProps {
   hasHandData: boolean;
   listeningDevice?: string | null;
   onMeasure?: (pixelsPerSecond: number) => void;
+  keyboardWindow?: KeyboardWindow;
 }
 
 export function WaterfallStage({
@@ -84,7 +97,9 @@ export function WaterfallStage({
   hasHandData,
   listeningDevice,
   onMeasure,
+  keyboardWindow = FULL_KEYBOARD_WINDOW,
 }: WaterfallStageProps) {
+  const { right: rightColor, left: leftColor, mode } = useHandColors();
   const stageRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   const windowAnchor = Math.floor(position / WINDOW_REBUILD_THRESHOLD_SECONDS);
@@ -134,14 +149,20 @@ export function WaterfallStage({
         className="absolute bottom-0 left-0 right-0 h-full will-change-transform"
         style={layerStyle}
       >
-        {windowNotes.map((note) => (
-          <WaterfallNote
-            key={note.id}
-            note={note}
-            pixelsPerSecond={pixelsPerSecond}
-            hasHandData={hasHandData}
-          />
-        ))}
+        {/* Same window as the keyboard below, so a note lands on its own key. */}
+        <div className="absolute inset-y-0" style={keyboardWindowStyle(keyboardWindow)}>
+          {windowNotes.map((note) => (
+            <WaterfallNote
+              key={note.id}
+              note={note}
+              pixelsPerSecond={pixelsPerSecond}
+              hasHandData={hasHandData}
+              mode={mode}
+              rightColor={rightColor}
+              leftColor={leftColor}
+            />
+          ))}
+        </div>
       </div>
       <div
         data-testid="strike-line"

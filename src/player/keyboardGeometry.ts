@@ -44,6 +44,29 @@ export const KEY_GEOMETRY_BY_MIDI = new Map(
   KEYBOARD_GEOMETRY.all.map((key) => [key.midi, key]),
 );
 
+/** Position of each white key in the 52-key run, for windowing the keyboard. */
+export const WHITE_INDEX_BY_MIDI = new Map(
+  KEYBOARD_GEOMETRY.whites.map((key, index) => [key.midi, index]),
+);
+
+/** Nearest white key at or below `midi` — black keys have no white index. */
+export function whiteIndexAtOrBelow(midi: number) {
+  for (let candidate = midi; candidate >= keyboard.midiLow; candidate -= 1) {
+    const index = WHITE_INDEX_BY_MIDI.get(candidate);
+    if (index !== undefined) return index;
+  }
+  return 0;
+}
+
+/** Nearest white key at or above `midi`. */
+export function whiteIndexAtOrAbove(midi: number) {
+  for (let candidate = midi; candidate <= keyboard.midiHigh; candidate += 1) {
+    const index = WHITE_INDEX_BY_MIDI.get(candidate);
+    if (index !== undefined) return index;
+  }
+  return keyboard.whiteCount - 1;
+}
+
 export function keyLabel(midi: number) {
   return `${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`;
 }

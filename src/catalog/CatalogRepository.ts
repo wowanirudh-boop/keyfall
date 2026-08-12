@@ -47,7 +47,11 @@ function foldedEntry(entry: CatalogEntry) {
   return fields;
 }
 
-export function searchCatalog(entries: readonly CatalogEntry[], query: string) {
+export function searchCatalog(
+  entries: readonly CatalogEntry[],
+  query: string,
+  sort: CatalogSort = "composer",
+) {
   const foldedQuery = fold(query);
   if (!foldedQuery) return [];
   const rank = (entry: CatalogEntry) => {
@@ -76,22 +80,73 @@ export function searchCatalog(entries: readonly CatalogEntry[], query: string) {
     .sort(
       (left, right) =>
         left.rank - right.rank ||
-        compareCatalogEntries(left.entry, right.entry) ||
+        compareCatalogEntries(left.entry, right.entry, sort) ||
         left.index - right.index,
     )
     .map((match) => match.entry);
 }
 
-export function compareCatalogEntries(left: CatalogEntry, right: CatalogEntry) {
-  return (
-    left.composer.localeCompare(right.composer) ||
-    left.title.localeCompare(right.title) ||
-    left.id.localeCompare(right.id)
-  );
+/**
+ * Numeric-aware and accent-insensitive. Plain `localeCompare` sorts string-wise,
+ * which put "Invention 15" before "Invention 2" and "Prelude Op. 23, No. 10"
+ * before "No. 2" — 24 such pairs across the shipped catalog (D-028).
+ */
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+export type CatalogSort = "composer" | "title" | "shortest" | "longest";
+
+export const CATALOG_SORTS: ReadonlyArray<{ id: CatalogSort; label: string }> = Object.freeze([
+  { id: "composer", label: "Composer A–Z" },
+  { id: "title", label: "Title A–Z" },
+  { id: "shortest", label: "Shortest first" },
+  { id: "longest", label: "Longest first" },
+]);
+
+export function isCatalogSort(value: unknown): value is CatalogSort {
+  return CATALOG_SORTS.some((sort) => sort.id === value);
 }
 
-export function browseCatalog(entries: readonly CatalogEntry[]) {
-  return [...entries].sort(compareCatalogEntries);
+/** Entries with no declared duration sort last in both duration orders. */
+function compareDuration(left: CatalogEntry, right: CatalogEntry, longestFirst: boolean) {
+  const leftDuration = left.durationSeconds;
+  const rightDuration = right.durationSeconds;
+  if (leftDuration === undefined && rightDuration === undefined) return 0;
+  if (leftDuration === undefined) return 1;
+  if (rightDuration === undefined) return -1;
+  return longestFirst ? rightDuration - leftDuration : leftDuration - rightDuration;
+}
+
+export function compareCatalogEntries(
+  left: CatalogEntry,
+  right: CatalogEntry,
+  sort: CatalogSort = "composer",
+) {
+  const byComposer = () => collator.compare(left.composer, right.composer);
+  const byTitle = () => collator.compare(left.title, right.title);
+  const tieBreak = byTitle() || byComposer() || collator.compare(left.id, right.id);
+
+  if (sort === "title") return byTitle() || byComposer() || collator.compare(left.id, right.id);
+  if (sort === "shortest") return compareDuration(left, right, false) || tieBreak;
+  if (sort === "longest") return compareDuration(left, right, true) || tieBreak;
+  return byComposer() || byTitle() || collator.compare(left.id, right.id);
+}
+
+export function browseCatalog(
+  entries: readonly CatalogEntry[],
+  sort: CatalogSort = "composer",
+) {
+  return [...entries].sort((left, right) => compareCatalogEntries(left, right, sort));
+}
+
+/** Composer name -> number of pieces, in the browse order composers appear. */
+export function composerIndex(entries: readonly CatalogEntry[]) {
+  const counts = new Map<string, number>();
+  for (const entry of entries) {
+    counts.set(entry.composer, (counts.get(entry.composer) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([composer, count]) => ({ composer, count }))
+    .sort((left, right) => collator.compare(left.composer, right.composer));
 }
 
 function isWebUrl(value: string) {

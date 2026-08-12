@@ -19,6 +19,25 @@ export function ImportNoticeStrip({ notices }: { notices: readonly ImportNotice[
   );
 }
 
+/**
+ * The audio context exists but the browser is not running it — iOS after a
+ * screen lock or an interruption, or a tab that never got its gesture. Any tap
+ * resumes it (see keepContextRunning), so the strip explains rather than acts.
+ */
+export function AudioBlockedNotice({ blocked }: { blocked: boolean }) {
+  if (!blocked) return null;
+  return (
+    <div
+      role="status"
+      data-testid="audio-blocked-notice"
+      className="shrink-0 border-b border-amber-border-dim bg-amber-bg px-[14px] py-[9px] font-mono text-mono-meta text-amber-text-dim md:px-[22px]"
+    >
+      Audio is paused by the browser — tap the screen to bring it back. On iPhone, check the
+      side switch is not set to silent.
+    </div>
+  );
+}
+
 export interface TransientNoticeProps {
   message: string | null;
   onDismiss?: () => void;

@@ -16,6 +16,7 @@ const basePlayback: PlaybackSnapshot = {
   speed: 1,
   loop: { a: null, b: null },
   muted: false,
+  audioBlocked: false,
   volume: 1,
 };
 

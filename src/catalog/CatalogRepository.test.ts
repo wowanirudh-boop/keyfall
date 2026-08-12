@@ -8,8 +8,11 @@ import shippedManifestJson from "../../catalog/manifest.json";
 import composerAliases from "../../scripts/catalog-composers.json";
 import { FIXTURE_ASSETS, FIXTURE_MANIFEST } from "./__fixtures__/manifest";
 import {
+  browseCatalog,
   CatalogAssetError,
   CatalogRepository,
+  compareCatalogEntries,
+  composerIndex,
   searchCatalog,
   type CatalogEntry,
   validateCatalogEntry,
@@ -180,9 +183,58 @@ describe("CatalogRepository", () => {
     }
     const chopinRows = shippedManifest.filter((entry) => entry.composer === "Chopin, Frédéric");
     expect(chopinRows).toHaveLength(47);
-    expect(searchCatalog(shippedManifest, "chopin")).toEqual(chopinRows.sort((left, right) =>
-      left.title.localeCompare(right.title) || left.id.localeCompare(right.id),
-    ));
+    expect(searchCatalog(shippedManifest, "chopin")).toEqual(
+      chopinRows.sort((left, right) => compareCatalogEntries(left, right)),
+    );
+  });
+
+  it("[D-028] orders numbered titles numerically, not string-wise", () => {
+    const titlesFor = (composer: string) =>
+      browseCatalog(shippedManifest.filter((entry) => entry.composer === composer)).map(
+        (entry) => entry.title,
+      );
+
+    const bach = titlesFor("Bach, Johann Sebastian");
+    expect(bach.indexOf("Invention 2")).toBeLessThan(bach.indexOf("Invention 15"));
+
+    const rachmaninoff = titlesFor("Rachmaninoff, Sergei");
+    expect(rachmaninoff.indexOf("Prelude Op. 23, No. 2")).toBeLessThan(
+      rachmaninoff.indexOf("Prelude Op. 23, No. 10"),
+    );
+
+    // Nothing in the shipped catalog may sort out of numeric order any more.
+    const numeric = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+    const browsed = browseCatalog(shippedManifest);
+    for (let index = 1; index < browsed.length; index += 1) {
+      const previous = browsed[index - 1];
+      const current = browsed[index];
+      if (previous.composer !== current.composer) continue;
+      expect(
+        numeric.compare(previous.title, current.title),
+        `${previous.title} before ${current.title}`,
+      ).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it("[D-028] sorts by title and by duration on request", () => {
+    const byTitle = browseCatalog(shippedManifest, "title").map((entry) => entry.title);
+    const numeric = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+    expect([...byTitle].sort(numeric.compare)).toEqual(byTitle);
+
+    const shortest = browseCatalog(shippedManifest, "shortest");
+    const longest = browseCatalog(shippedManifest, "longest");
+    expect(shortest[0].durationSeconds).toBeLessThan(shortest.at(-1)!.durationSeconds!);
+    expect(longest[0].durationSeconds).toBeGreaterThan(shortest[0].durationSeconds!);
+  });
+
+  it("[D-029] indexes composers alphabetically with piece counts", () => {
+    const index = composerIndex(shippedManifest);
+    expect(index).toHaveLength(new Set(shippedManifest.map((entry) => entry.composer)).size);
+    expect(index.reduce((total, row) => total + row.count, 0)).toBe(shippedManifest.length);
+    expect(index.map((row) => row.composer)).toEqual(
+      [...index.map((row) => row.composer)].sort((left, right) => left.localeCompare(right)),
+    );
+    expect(index.find((row) => row.composer === "Chopin, Frédéric")?.count).toBe(47);
   });
 
   it("[T03d AC5] has no duplicate visible title and composer pairs", () => {

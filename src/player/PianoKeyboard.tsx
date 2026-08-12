@@ -8,8 +8,14 @@ import {
   motion,
   shadow,
 } from "../design/tokens";
-import type { NoteEvent, NoteHand } from "../music/types";
+import type { NoteEvent } from "../music/types";
+import { displayHand, useHandColors } from "./handColors";
 import { KEYBOARD_GEOMETRY, keyLabel, type KeyGeometry } from "./keyboardGeometry";
+import {
+  FULL_KEYBOARD_WINDOW,
+  keyboardWindowStyle,
+  type KeyboardWindow,
+} from "./keyboardWindow";
 import {
   KeyStateScanner,
   type LiveVerdict,
@@ -23,18 +29,14 @@ export interface PianoKeyboardProps {
   listening?: boolean;
   liveVerdicts?: ReadonlyMap<string, LiveVerdict>;
   seekRevision?: number;
-}
-
-function handColor(hand: NoteHand, hasHandData: boolean) {
-  return hasHandData && hand === "left" ? color.handLeft : color.handRight;
+  keyboardWindow?: KeyboardWindow;
 }
 
 function keyStyle(
   geometry: KeyGeometry,
   state: VisibleKeyState,
-  hasHandData: boolean,
+  activeColor: string,
 ) {
-  const activeColor = handColor(state.hand, hasHandData);
   const idleBackground = geometry.black ? color.keyBlackFace : color.keyWhiteFace;
   const idleBorder = geometry.black ? color.keyBlackBorder : color.keyWhiteBorder;
   const style: CSSProperties = {
@@ -67,9 +69,8 @@ function keyStyle(
 function labelStyle(
   geometry: KeyGeometry,
   state: VisibleKeyState,
-  hasHandData: boolean,
+  activeColor: string,
 ) {
-  const activeColor = handColor(state.hand, hasHandData);
   const enlarged = state.kind === "pressed" || state.kind === "error";
   const colorValue =
     state.kind === "error"
@@ -106,7 +107,9 @@ export function PianoKeyboard({
   listening = false,
   liveVerdicts,
   seekRevision = 0,
+  keyboardWindow = FULL_KEYBOARD_WINDOW,
 }: PianoKeyboardProps) {
+  const handColors = useHandColors();
   const scanner = useMemo(() => new KeyStateScanner(notes), [notes]);
   const states = scanner.derive(position, {
     listening,
@@ -115,8 +118,8 @@ export function PianoKeyboard({
   });
   const renderKey = (geometry: KeyGeometry) => {
     const state = states.get(geometry.midi) ?? { kind: "idle" as const, hand: "unknown" as const };
-    const resolvedHand = hasHandData && state.hand === "left" ? "left" : "right";
-    const activeColor = handColor(state.hand, hasHandData);
+    const resolvedHand = displayHand(state.hand, hasHandData, handColors.mode);
+    const activeColor = handColors.colorFor(state.hand, hasHandData);
 
     return (
       <div
@@ -131,7 +134,7 @@ export function PianoKeyboard({
             : "rounded-b-key-white pb-[7px]"
         }`}
         style={{
-          ...keyStyle(geometry, state, hasHandData),
+          ...keyStyle(geometry, state, activeColor),
           transition: `background ${motion.keyBackgroundMs}ms linear`,
         }}
       >
@@ -149,7 +152,7 @@ export function PianoKeyboard({
         ) : null}
         <span
           className="relative z-[3] font-mono tracking-[0.02em]"
-          style={labelStyle(geometry, state, hasHandData)}
+          style={labelStyle(geometry, state, activeColor)}
         >
           {keyLabel(geometry.midi)}
         </span>
@@ -160,11 +163,18 @@ export function PianoKeyboard({
   return (
     <div
       data-testid="piano-keyboard"
-      className="relative shrink-0 border-t border-border-1 bg-stage px-[4px]"
+      className="relative shrink-0 overflow-hidden border-t border-border-1 bg-stage px-[4px]"
       style={{ height: keyboard.heightCss }}
     >
-      {KEYBOARD_GEOMETRY.whites.map(renderKey)}
-      {KEYBOARD_GEOMETRY.blacks.map(renderKey)}
+      <div
+        data-testid="keyboard-window"
+        data-visible-white-keys={keyboardWindow.visibleWhiteKeys}
+        className="absolute inset-y-0"
+        style={keyboardWindowStyle(keyboardWindow)}
+      >
+        {KEYBOARD_GEOMETRY.whites.map(renderKey)}
+        {KEYBOARD_GEOMETRY.blacks.map(renderKey)}
+      </div>
     </div>
   );
 }

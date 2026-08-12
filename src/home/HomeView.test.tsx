@@ -239,7 +239,8 @@ describe("HomeView", () => {
     const input = inputs[0];
     expect(input).not.toBeNull();
     await user.upload(input!, new File(["score"], "score.mid"));
-    await user.click(screen.getByText("Saved piece").closest("button")!);
+    const savedRows = screen.getByRole("region", { name: "My pieces" });
+    await user.click(within(savedRows).getByText("Saved piece").closest("button")!);
     expect(onUpload).toHaveBeenCalledOnce();
     expect(onUpload).toHaveBeenCalledWith(expect.any(File), "search");
     expect(onOpenSaved).toHaveBeenCalledWith(savedPiece);
@@ -282,13 +283,73 @@ describe("HomeView", () => {
     render(<HomeView {...props({ catalogEntries: entries })} />);
 
     const browse = screen.getByRole("region", { name: "Browse catalog" });
-    expect(within(browse).getByText(`${entries.length} PIECES · BROWSE A–Z BY COMPOSER`)).toBeTruthy();
-    expect(within(browse).getByText(/Aardvark, Ada/)).toBeTruthy();
+    expect(within(browse).getByText(`${entries.length} PIECES · COMPOSER A–Z`)).toBeTruthy();
+    expect(
+      within(browse)
+        .getAllByRole("button")
+        .some((button) => button.textContent?.includes("Aardvark, Ada")),
+    ).toBe(true);
     expect(within(browse).getAllByRole("button")).toHaveLength(CATALOG_PAGE_SIZE + 2);
     expect(within(browse).queryByText("Piece 25")).toBeNull();
 
     await user.click(within(browse).getByRole("button", { name: "Next" }));
     expect(within(browse).getByText("PAGE 2 OF 2")).toBeTruthy();
     expect(within(browse).getAllByRole("button")).toHaveLength(4);
+  });
+
+  it("[D-029] puts the most recent piece and My pieces above the catalog", () => {
+    const older: SavedPieceSummary = { ...savedPiece, id: "older", title: "Older piece" };
+    render(<HomeView {...props({ library: [savedPiece, older] })} />);
+
+    const continueCard = screen.getByTestId("continue-card");
+    expect(continueCard.textContent).toContain("Saved piece");
+    expect(continueCard.textContent).toContain("0.5x");
+
+    const order = [
+      screen.getByRole("region", { name: "My pieces" }),
+      screen.getByRole("textbox", { name: "Search catalog" }),
+    ];
+    expect(
+      continueCard.compareDocumentPosition(order[0]) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(order[0].compareDocumentPosition(order[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("[D-029] opens the piece behind the continue card", async () => {
+    const user = userEvent.setup();
+    const onOpenSaved = vi.fn();
+    render(<HomeView {...props({ library: [savedPiece], onOpenSaved })} />);
+
+    await user.click(screen.getByTestId("continue-card"));
+    expect(onOpenSaved).toHaveBeenCalledWith(savedPiece);
+  });
+
+  it("[D-028] re-sorts and filters the browse list from its own controls", async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    const entries = [
+      { ...structuredClone(FIXTURE_MANIFEST[0]), id: "b", title: "Track 10", composer: "Zulu, Zoe" },
+      { ...structuredClone(FIXTURE_MANIFEST[0]), id: "a", title: "Track 2", composer: "Zulu, Zoe" },
+      { ...structuredClone(FIXTURE_MANIFEST[0]), id: "c", title: "Solo", composer: "Aardvark, Ada" },
+    ];
+    render(<HomeView {...props({ catalogEntries: entries, onSortChange })} />);
+
+    const browse = screen.getByRole("region", { name: "Browse catalog" });
+    const titles = () =>
+      within(browse)
+        .getAllByRole("button")
+        .filter((button) => button.textContent?.includes("Track") || button.textContent?.includes("Solo"))
+        .map((button) => button.textContent);
+
+    // Numeric ordering: "Track 2" must precede "Track 10".
+    expect(titles()[1]).toContain("Track 2");
+    expect(titles()[2]).toContain("Track 10");
+
+    await user.selectOptions(within(browse).getByLabelText("Sort"), "title");
+    expect(onSortChange).toHaveBeenCalledWith("title");
+
+    await user.selectOptions(within(browse).getByLabelText("Composer"), "Aardvark, Ada");
+    expect(within(browse).getByText("1 PIECES · COMPOSER A–Z")).toBeTruthy();
+    expect(within(browse).queryByText(/Track/)).toBeNull();
   });
 });

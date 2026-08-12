@@ -21,6 +21,8 @@ export interface PlaybackSnapshot {
   loop: PlaybackLoop;
   muted: boolean;
   volume: number;
+  /** The browser is holding audio back — suspended or interrupted (D-024). */
+  audioBlocked: boolean;
 }
 
 export interface PlaybackEngineOptions {
@@ -208,7 +210,13 @@ export class PlaybackEngine {
       loop: { ...this.loop },
       muted: this.muted,
       volume: this.volume,
+      audioBlocked: this.audioBlocked(),
     };
+  }
+
+  private audioBlocked() {
+    const state = this.runtime?.getAudioState?.();
+    return state !== undefined && state !== "running";
   }
 
   async dispose() {

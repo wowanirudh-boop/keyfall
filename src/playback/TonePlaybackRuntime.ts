@@ -1,5 +1,11 @@
 import * as Tone from "tone";
 
+import {
+  claimPlaybackAudioSession,
+  createSilentSessionKeeper,
+  keepContextRunning,
+  needsSilentSessionKeeper,
+} from "./audioSession";
 import type { PlaybackRuntime, ScheduledPlaybackNote } from "./runtime";
 import { TONE_SAMPLER_OPTIONS } from "./sampler";
 
@@ -11,7 +17,15 @@ export async function createTonePlaybackRuntime(): Promise<PlaybackRuntime> {
     Tone.setContext(context);
   }
 
+  // Both of these must happen inside the gesture, before the first await.
+  const silence =
+    claimPlaybackAudioSession() || !needsSilentSessionKeeper()
+      ? null
+      : createSilentSessionKeeper();
+  silence?.start();
+
   await Tone.start();
+  const stopKeepingAlive = keepContextRunning(context);
 
   const output = new Tone.Gain(1).toDestination();
   const synth = new Tone.PolySynth(Tone.Synth).connect(output);
@@ -62,6 +76,7 @@ export async function createTonePlaybackRuntime(): Promise<PlaybackRuntime> {
     },
     cancelScheduledNotes,
     getScheduledNoteCount: () => noteTimeouts.size,
+    getAudioState: () => context.state,
     setOutputGain(gain) {
       output.gain.setValueAtTime(gain, context.now());
     },
@@ -81,6 +96,8 @@ export async function createTonePlaybackRuntime(): Promise<PlaybackRuntime> {
     async dispose() {
       if (disposed) return;
       disposed = true;
+      stopKeepingAlive();
+      silence?.stop();
       cancelScheduledNotes();
       for (const intervalId of intervalIds) {
         context.clearInterval(intervalId);

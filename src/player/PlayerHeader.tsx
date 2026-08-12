@@ -2,25 +2,30 @@ import { type PointerEvent as ReactPointerEvent } from "react";
 
 import { GhostButton, TogglePill } from "../design/primitives";
 import type { PieceDocument } from "../music/types";
+import { useHandColors } from "./handColors";
+import { HandColorButton } from "./HandColorControl";
 
 export interface HandLegendProps {
   hasHandData: boolean;
 }
 
 export function HandLegend({ hasHandData }: HandLegendProps) {
-  if (!hasHandData) return null;
+  const { mode } = useHandColors();
+  if (!hasHandData || mode === "single") return null;
+  const rightLabel = mode === "swapped" ? "LEFT" : "RIGHT";
+  const leftLabel = mode === "swapped" ? "RIGHT" : "LEFT";
   return (
     <div
       data-testid="hand-legend"
-      className="flex items-center gap-[16px] font-mono text-mono-meta text-mono-dim-2"
+      className="hidden items-center gap-[16px] font-mono text-mono-meta text-mono-dim-2 lg:flex"
     >
       <span className="flex items-center gap-[7px]">
         <span aria-hidden="true" className="h-[8px] w-[8px] rounded-chip bg-hand-right" />
-        RIGHT
+        {rightLabel}
       </span>
       <span className="flex items-center gap-[7px]">
         <span aria-hidden="true" className="h-[8px] w-[8px] rounded-chip bg-hand-left" />
-        LEFT
+        {leftLabel}
       </span>
     </div>
   );
@@ -117,9 +122,18 @@ export function PlayerHeader({
     .join(" · ");
 
   return (
-    <header data-testid="player-header" className="flex shrink-0 items-center gap-[18px] border-b border-border-1 bg-panel px-[22px] py-[14px]">
+    <header
+      data-testid="player-header"
+      className="flex shrink-0 flex-wrap items-center gap-x-[14px] gap-y-[8px] border-b border-border-1 bg-panel px-[14px] py-[10px] md:gap-x-[18px] md:px-[22px] md:py-[14px]"
+    >
       <GhostButton className="shrink-0 whitespace-nowrap" onClick={onLibrary}>← Library</GhostButton>
-      <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+      {/*
+        The controls carry `w-full` below md so they wrap onto their own row
+        instead of being pushed past the right edge — at 375px the old single
+        row overflowed by 156px, which put the mute toggle and Listen mode
+        off-screen with no way to scroll to them (D-027).
+      */}
+      <div className="flex min-w-0 flex-1 basis-[140px] flex-col gap-[3px]">
         <h1 className="m-0 truncate text-subheading font-medium tracking-[-0.01em]">
           {piece.title}
         </h1>
@@ -127,16 +141,30 @@ export function PlayerHeader({
           {metadata}
         </div>
       </div>
-      <HandLegend hasHandData={piece.hasHandData} />
-      <div data-testid="header-audio-controls" className="flex shrink-0 items-center gap-[10px]">
-        <VolumeSlider volume={volume} onVolumeChange={onVolumeChange} />
-        <TogglePill className="whitespace-nowrap" on={!muted} onClick={() => onMutedChange(!muted)}>
-          {muted ? "Muted" : "Audio on"}
+      <div className="flex w-full items-center justify-end gap-[10px] md:w-auto md:justify-start md:gap-[14px]">
+        <HandLegend hasHandData={piece.hasHandData} />
+        <HandColorButton />
+        <div data-testid="header-audio-controls" className="flex shrink-0 items-center gap-[10px]">
+          <VolumeSlider volume={volume} onVolumeChange={onVolumeChange} />
+          <TogglePill className="whitespace-nowrap" on={!muted} onClick={() => onMutedChange(!muted)}>
+            {muted ? "Muted" : "Audio on"}
+          </TogglePill>
+        </div>
+        {/*
+          Listen mode is inert until T08 lands, so it renders disabled rather
+          than as a button that silently does nothing when tapped.
+        */}
+        <TogglePill
+          className={`shrink-0 whitespace-nowrap ${onListenToggle ? "" : "cursor-not-allowed opacity-50"}`.trim()}
+          accent="listening"
+          on={listening}
+          disabled={!onListenToggle}
+          title={onListenToggle ? undefined : "Connect a MIDI keyboard to use listen mode"}
+          onClick={onListenToggle}
+        >
+          {listening ? "Stop listening" : "Listen mode"}
         </TogglePill>
       </div>
-      <TogglePill className="shrink-0 whitespace-nowrap" accent="listening" on={listening} onClick={onListenToggle}>
-        {listening ? "Stop listening" : "Listen mode"}
-      </TogglePill>
     </header>
   );
 }

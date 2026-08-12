@@ -18,6 +18,12 @@ export interface PlaybackRuntime {
   setOutputGain(gain: number): void;
   startSamplerLoad(): void;
   dispose(): void | Promise<void>;
+  /**
+   * Underlying audio context state. Optional: fakes in tests are always
+   * running, so only the Tone runtime implements it. Anything other than
+   * "running" means the browser is holding audio back (D-024).
+   */
+  getAudioState?(): string;
 }
 
 export type PlaybackRuntimeFactory = () =>

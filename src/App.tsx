@@ -11,6 +11,7 @@ import { HomeRoute, libraryRepository } from './home';
 import type { StoredPiece } from './library';
 import { PlaybackEngine, type PlaybackSnapshot } from './playback';
 import {
+  HandColorProvider,
   PlayerView,
   readAudioPreferences,
   writeMutedPreference,
@@ -37,6 +38,7 @@ function LoadedPieceRoute({ pieceId }: { pieceId: string }) {
     loop: { a: null, b: null },
     muted: false,
     volume: 1,
+    audioBlocked: false,
   });
 
   useEffect(() => {
@@ -144,8 +146,10 @@ export function AppRoutes() {
 
 export function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <HandColorProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </HandColorProvider>
   );
 }

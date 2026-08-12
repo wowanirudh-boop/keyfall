@@ -355,6 +355,157 @@ Same treatment applies to catalogue creator credits: they stay on result rows an
 the player header, where they identify the edition, which is useful as well as
 required.
 
+### D-024 — Web Audio claims the playback session on iOS
+**2026-08-13 · Decided — fixes "no sound on my phone"**
+
+Reported symptom: the app is audible on the iPad it is used on daily, silent on
+an iPhone. The difference is hardware. iOS puts Web Audio in the *ambient* audio
+session by default, and an ambient session is silenced by the physical
+Ring/Silent switch — no error, no state change, `context.state` still
+`"running"`. Modern iPads have no such switch; iPhones do.
+
+`src/playback/audioSession.ts` sets `navigator.audioSession.type = "playback"`
+(Safari 16.4+) inside the gesture that starts playback, which outranks the
+switch. Where that API is missing *and* the device is touch-capable, a silent
+looping `<audio>` element is attached instead — an HTMLMediaElement pulls the
+page into the media session on older iOS. Desktop browsers get neither: they
+have no ringer switch, and a permanently looping decoder would be pure cost.
+
+The same module re-resumes the context on `visibilitychange`, `pageshow`,
+`focus` and `pointerdown`. iOS suspends or interrupts the context on screen
+lock, on a call and on backgrounding, and never resumes it by itself.
+`PlaybackSnapshot.audioBlocked` surfaces a non-running context as a strip in the
+player rather than leaving the transport ticking in silence.
+
+Not verifiable from this machine: it needs an iPhone with the switch set to
+silent. The fix is the standard one for this failure and is unit-tested at the
+seams, but the acceptance test is the device.
+
+### D-025 — MIDI hand assignment covers any track count
+**2026-08-13 · Decided — supersedes the "exactly two tracks" rule**
+
+`midiHands` returned nothing unless a file had exactly two note-bearing tracks,
+so **27 of the 596 shipped catalog pieces rendered entirely in the right-hand
+colour** — fugues split a track per voice, four-hand arrangements have four, and
+some engravers emit three. That is not "no hand data available"; it is hand data
+the reader threw away.
+
+Tracks are now ranked by median pitch and cut at the widest gap between
+consecutive medians, which is the staff break when there is one. Two tracks
+behave exactly as before. Evenly spaced voices leave every gap equal, so ties
+break toward the middle rather than lopping off the bass alone. Single-track
+files stay `unknown`: there is no second voice to split against, and inventing a
+split point inside one track fabricates information the file does not carry.
+Three pieces remain uncoloured on that basis.
+
+For a five- or six-voice fugue there is no true two-hand answer — the hands
+share voices constantly. Those pieces get a defensible split rather than a
+correct one; "One colour" in D-026 is the honest way out.
+
+### D-026 — Hand colours are selectable, and so is the hand mapping
+**2026-08-13 · Decided — closes O-6, additive to the handoff**
+
+O-6 asked whether hand colours should be configurable and leaned no, on the
+grounds that blue/orange is already colour-blind-safe. Two things overrode that.
+
+First, the reported defect: colours "getting mixed" mid-phrase. Investigated on
+Für Elise, and **the colours are correct** — the closing E/D♯ tremolo really is
+written alternating between the staves, two notes each, and the app is painting
+what the score says. Nothing to fix in the renderer. But there is no way for a
+reader to tell that from a broken file, and no way to opt out of it while
+practising the passage.
+
+So the mode, not just the palette, is selectable: `score` (default, paint by
+staff), `swapped` (for files whose staves are reversed) and `single` (one colour,
+ignore hands). The panel says plainly where the colours come from.
+
+Second, the palette itself. `tokens.ts` stays authoritative for the default pair
+— "Sky & ember" *is* `color.handRight`/`color.handLeft`, so an untouched install
+matches the handoff exactly. Four alternative pairs and two custom pickers live
+in `src/design/handPalette.ts`, inside the design layer where colour literals
+belong. Every preset separates by luminance as well as hue, so it survives
+deuteranopia and protanopia. Selection is stamped onto the document root as
+`--color-hand-*`, overriding Tailwind's `@theme` values, so utility classes and
+computed inline styles cannot drift apart.
+
+This does reverse the "no settings screen" non-goal in spirit. It is one modal
+reached from the player header, scoped to note colour, and it exists because the
+default was actively confusing a real user.
+
+### D-027 — The player fits a phone
+**2026-08-13 · Decided — fixes a header that ran off the screen**
+
+At 375px the player header laid out to 531px in a single non-wrapping row. The
+piece title collapsed to zero width, the volume slider and the Audio on/Muted
+toggle were clipped past the right edge, and Listen mode was entirely
+off-screen — with `overflow: hidden` above it, so nothing could be scrolled to.
+An unreachable mute toggle is indistinguishable from broken audio, which is very
+likely part of what the phone report was about.
+
+The controls now carry `w-full` below `md` and wrap onto their own row. The hand
+legend hides below `lg`, where the colour swatches on the picker say the same
+thing in less space. Listen mode renders `disabled` while T08 is unbuilt rather
+than as a control that silently does nothing.
+
+The shell moves from `h-screen` to `100dvh` with `h-screen` as fallback: `100vh`
+on mobile Safari measures the viewport *without* browser chrome, which put the
+speed and loop row underneath the address bar.
+
+### D-028 — Catalog ordering is numeric, and the sort is exposed
+**2026-08-13 · Decided — fixes a real mis-sort**
+
+`compareCatalogEntries` used plain `localeCompare`, which orders string-wise:
+"Invention 15" before "Invention 2", "Prelude Op. 23, No. 10" before "No. 2",
+"Sonata No. 32" before "Sonata No. 5". Twenty-four such pairs in the shipped
+catalog. It now uses `Intl.Collator(undefined, { numeric: true, sensitivity:
+"base" })`, and a test asserts no adjacent pair in the shipped manifest sorts out
+of numeric order.
+
+Sort order was also fixed and invisible. There is now a selector — composer A–Z,
+title A–Z, shortest, longest — applying to both browse and search results.
+Duration sorts push entries with no declared duration last in both directions.
+
+### D-029 — Home leads with the learner's own pieces
+**2026-08-13 · Decided — additive to the handoff**
+
+The handoff's Home is a search box over a catalog. In daily use it opened on
+"Giselle - Pas de deux", and **My pieces sat roughly 3,900px down a phone
+screen**, below 25 catalog rows — about ten screens of scrolling to reach the
+piece you are actually learning. 596 pieces were navigable only through 24
+Previous/Next pages.
+
+Home now opens with a Continue-practising card for the most recently opened
+piece, then My pieces, then search and browse under a heading. Browse gained a
+composer filter alongside the sort, which collapses the 24-page walk into one
+selection. Page position resets when the sort or composer changes, adjusted
+during render rather than in an effect so the new list never paints at the stale
+offset.
+
+### D-030 — Re-opening a piece keeps its practice speed
+**2026-08-13 · Decided — bug fix**
+
+Opening a catalog piece re-imports and re-saves it, and `save()` defaults
+`lastSpeed` to 1. So finding a piece through search rather than through My pieces
+silently discarded the speed the learner had settled on. `saveAndOpen` now reads
+the stored `lastSpeed` first and carries it through.
+
+### D-031 — The keyboard windows to the piece's range on small screens
+**2026-08-13 · Decided — additive to the handoff**
+
+The design specifies all 88 keys, and above roughly 570px of width that is what
+renders — a laptop and an iPad are untouched. At 375px the same row gives each
+white key 7.2px: the labels are unreadable and a falling note is thinner than
+the strike line.
+
+Below 11px per white key the keyboard narrows to the range the piece actually
+uses, never tighter than three octaves. The waterfall applies the identical
+window, so a note still lands on its own key. The window is a pure function of
+the piece's pitches and the available width, which is what keeps the two views
+from disagreeing.
+
+It is a mitigation, not a cure: Für Elise spans A1–E7, so 375px still only buys
+9.4px per key. A piece with a narrower range gains much more.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation
@@ -365,4 +516,5 @@ required.
 | O-2 | Is Verovio's WASM payload justified against the offline budget, versus a lighter MusicXML parser? | `tasks/T00-spikes.md` S-2 |
 | O-3 | Measured clock offset and jitter on the actual Roland RP302 in Chrome and Edge. PRD R6. | `tasks/T08-listen-grading.md` |
 | O-4 | Real-world ±300ms tolerance suitability at 0.25×. PRD R5. | `tasks/T08-listen-grading.md` |
+| O-6 | ~~Should hand colours be configurable?~~ **Closed by D-026** — yes, and the hand *mapping* with them. | Closed 2026-08-13 |
 | O-5 | Per-asset redistribution licence for all 12 seed pieces. PRD R7 — **blocking for the MVP gate**. | `tasks/T03-catalog-home.md`, started day 1 |

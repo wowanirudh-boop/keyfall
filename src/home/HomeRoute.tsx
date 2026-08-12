@@ -6,9 +6,11 @@ import {
   CatalogRepository,
   searchCatalog,
   type CatalogEntry,
+  type CatalogSort,
 } from "../catalog";
 import { LibraryRepository, type SavedPieceSummary } from "../library";
 import { importPiece, type ImportError, type PieceDocument } from "../music";
+import type { PlaybackSpeed } from "../playback";
 import { HomeView, type UploadOrigin } from "./HomeView";
 
 const catalogRepository = new CatalogRepository();
@@ -31,6 +33,7 @@ export function HomeRoute() {
   } | null>(null);
   const [assetError, setAssetError] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const [sort, setSort] = useState<CatalogSort>("composer");
   const [now] = useState(Date.now);
 
   useEffect(() => {
@@ -56,10 +59,28 @@ export function HomeRoute() {
     };
   }, []);
 
-  const results = useMemo(() => searchCatalog(catalogEntries, query), [catalogEntries, query]);
+  const results = useMemo(
+    () => searchCatalog(catalogEntries, query, sort),
+    [catalogEntries, query, sort],
+  );
 
   async function saveAndOpen(piece: PieceDocument, originalName: string, bytes: Uint8Array) {
-    const result = await libraryRepository.save({ piece, originalName, originalBytes: bytes });
+    // Re-opening a piece from search re-imports and re-saves it. Without this
+    // the save reset lastSpeed to 1x and threw away the practice speed the
+    // learner had settled on (D-030).
+    let lastSpeed: PlaybackSpeed | undefined;
+    try {
+      lastSpeed = (await libraryRepository.get(piece.id))?.lastSpeed;
+    } catch {
+      lastSpeed = undefined;
+    }
+
+    const result = await libraryRepository.save({
+      piece,
+      originalName,
+      originalBytes: bytes,
+      lastSpeed,
+    });
     if (!result.saved) {
       setStorageWarning(
         "This piece is usable for this session but was not saved locally because browser storage is full.",
@@ -132,6 +153,8 @@ export function HomeRoute() {
       assetError={assetError}
       storageWarning={storageWarning}
       now={now}
+      sort={sort}
+      onSortChange={setSort}
       onQueryChange={(nextQuery) => {
         setQuery(nextQuery);
         setSearched(nextQuery.length > 0);

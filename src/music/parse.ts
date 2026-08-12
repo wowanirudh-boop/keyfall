@@ -72,22 +72,53 @@ function medianPitch(track: NormalizedTrack) {
     : pitches[middle];
 }
 
+/**
+ * Splits note-bearing tracks into two hands by median pitch.
+ *
+ * Two tracks is the common case and behaves exactly as it always has: lower
+ * median is the left hand. Files with three or more voice tracks — fugues,
+ * four-hand arrangements, engravers who split a staff per voice — used to fall
+ * through to no hand data at all, which painted 27 of the 596 catalog pieces
+ * entirely in the right-hand colour (D-025). They are now cut at the widest gap
+ * between consecutive medians, which is the staff break when there is one.
+ *
+ * A single track stays unknown: there is no second voice to split against, and
+ * guessing a split point inside one track invents information the file lacks.
+ */
 function midiHands(tracks: NormalizedTrack[]) {
   const hands = new Map<number, NoteHand>();
-  if (tracks.length !== 2) {
+  if (tracks.length < 2) {
     return hands;
   }
 
-  const firstMedian = medianPitch(tracks[0]);
-  const secondMedian = medianPitch(tracks[1]);
-  if (firstMedian === secondMedian) {
-    return hands;
+  const ranked = tracks
+    .map((track) => ({ track, median: medianPitch(track) }))
+    .sort(
+      (left, right) =>
+        left.median - right.median || left.track.sourceIndex - right.track.sourceIndex,
+    );
+
+  // Evenly spaced voices — a four-part fugue, say — leave every gap equal, so
+  // ties break toward the middle rather than lopping off the bass alone.
+  const middleBoundary = (ranked.length - 2) / 2;
+  let widestGap = 0;
+  let splitAfter = -1;
+  for (let index = 0; index < ranked.length - 1; index += 1) {
+    const gap = ranked[index + 1].median - ranked[index].median;
+    const closerToMiddle =
+      splitAfter >= 0 && Math.abs(index - middleBoundary) < Math.abs(splitAfter - middleBoundary);
+    if (gap > widestGap || (gap === widestGap && gap > 0 && closerToMiddle)) {
+      widestGap = gap;
+      splitAfter = index;
+    }
   }
 
-  const left = firstMedian < secondMedian ? tracks[0] : tracks[1];
-  const right = left === tracks[0] ? tracks[1] : tracks[0];
-  hands.set(left.sourceIndex, "left");
-  hands.set(right.sourceIndex, "right");
+  // Every track sits at the same median — there is no split to make.
+  if (splitAfter < 0) return hands;
+
+  ranked.forEach(({ track }, index) => {
+    hands.set(track.sourceIndex, index <= splitAfter ? "left" : "right");
+  });
   return hands;
 }
 

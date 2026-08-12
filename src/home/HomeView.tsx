@@ -5,9 +5,16 @@ import {
   useState,
   type ChangeEvent,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
 
-import { browseCatalog, type CatalogEntry } from "../catalog";
+import {
+  browseCatalog,
+  CATALOG_SORTS,
+  composerIndex,
+  type CatalogEntry,
+  type CatalogSort,
+} from "../catalog";
 import { AppHeader } from "../design/AppHeader";
 import {
   ErrorPanel,
@@ -25,6 +32,7 @@ const EMPTY_LIBRARY_COPY =
 const CATALOG_UNAVAILABLE_COPY =
   "Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.";
 const MUTOPIA_LICENCE_URL = "https://www.mutopiaproject.org/legal.html";
+const ALL_COMPOSERS = "";
 
 export function AboutPanel({ onClose }: { onClose: () => void }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -139,7 +147,7 @@ export function NoResultsUpload({
   onUpload,
 }: NoResultsUploadProps) {
   return (
-    <section className="flex flex-col gap-[18px] rounded-card border border-border-2 bg-card p-[26px]">
+    <section className="flex flex-col gap-[18px] rounded-card border border-border-2 bg-card p-[18px] md:p-[26px]">
       <div className="flex flex-col gap-[7px]">
         <h2 className="text-subheading font-medium">
           {catalogUnavailable
@@ -171,7 +179,7 @@ export function CatalogSearch({ query, onQueryChange, onClear }: CatalogSearchPr
   }
 
   return (
-    <div className="flex h-[62px] items-center gap-[12px] rounded-card border border-border-3 bg-raised px-[18px]">
+    <div className="flex h-[62px] items-center gap-[12px] rounded-card border border-border-3 bg-raised px-[14px] md:px-[18px]">
       <span className="font-mono text-small text-mono-dim-1">/</span>
       <input
         aria-label="Search catalog"
@@ -194,6 +202,76 @@ export function CatalogSearch({ query, onQueryChange, onClear }: CatalogSearchPr
   );
 }
 
+const SELECT_CLASS_NAME =
+  "cursor-pointer rounded-button border border-border-3 bg-control px-[10px] py-[7px] text-small text-text hover:border-border-5";
+
+function LabelledSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <label className="flex items-center gap-[8px]">
+      <span className="font-mono text-mono-label uppercase tracking-[0.1em] text-mono-dim-2">
+        {label}
+      </span>
+      <select
+        aria-label={label}
+        className={SELECT_CLASS_NAME}
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value)}
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
+export interface CatalogControlsProps {
+  sort: CatalogSort;
+  onSortChange: (sort: CatalogSort) => void;
+  composer?: string;
+  composers?: ReadonlyArray<{ composer: string; count: number }>;
+  onComposerChange?: (composer: string) => void;
+}
+
+/** The sort and composer selectors — 596 pieces are not navigable without them. */
+export function CatalogControls({
+  sort,
+  onSortChange,
+  composer,
+  composers,
+  onComposerChange,
+}: CatalogControlsProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-[10px]">
+      <LabelledSelect label="Sort" value={sort} onChange={(next) => onSortChange(next as CatalogSort)}>
+        {CATALOG_SORTS.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </LabelledSelect>
+      {composers && onComposerChange ? (
+        <LabelledSelect label="Composer" value={composer ?? ALL_COMPOSERS} onChange={onComposerChange}>
+          <option value={ALL_COMPOSERS}>All composers</option>
+          {composers.map((option) => (
+            <option key={option.composer} value={option.composer}>
+              {option.composer} ({option.count})
+            </option>
+          ))}
+        </LabelledSelect>
+      ) : null}
+    </div>
+  );
+}
+
 export function SearchResultRow({
   entry,
   onOpen,
@@ -204,7 +282,7 @@ export function SearchResultRow({
   return (
     <button
       type="button"
-      className="grid cursor-pointer grid-cols-[1fr_auto] items-center gap-[18px] rounded-card border border-border-2 bg-card px-[18px] py-[16px] text-left hover:border-result-hover-border hover:bg-result-hover-bg"
+      className="grid cursor-pointer grid-cols-[1fr_auto] items-center gap-[18px] rounded-card border border-border-2 bg-card px-[16px] py-[14px] text-left hover:border-result-hover-border hover:bg-result-hover-bg md:px-[18px] md:py-[16px]"
       onClick={() => onOpen(entry)}
     >
       <span className="flex min-w-0 flex-col gap-[6px]">
@@ -227,14 +305,24 @@ export function SearchResultRow({
   );
 }
 
-export function SearchResults({ entries, onOpen }: {
+export function SearchResults({
+  entries,
+  onOpen,
+  sort,
+  onSortChange,
+}: {
   entries: readonly CatalogEntry[];
   onOpen: (entry: CatalogEntry) => void;
+  sort: CatalogSort;
+  onSortChange: (sort: CatalogSort) => void;
 }) {
   return (
-    <section className="flex flex-col gap-[8px]">
-      <div className="pl-[2px] font-mono text-mono-meta tracking-[0.06em] text-mono-dim-1">
-        {entries.length} {entries.length === 1 ? "MATCH" : "MATCHES"} · PUBLIC DOMAIN &amp; CC SOURCES
+    <section aria-label="Search results" className="flex flex-col gap-[8px]">
+      <div className="flex flex-wrap items-center justify-between gap-[10px] pl-[2px]">
+        <span className="font-mono text-mono-meta tracking-[0.06em] text-mono-dim-1">
+          {entries.length} {entries.length === 1 ? "MATCH" : "MATCHES"} · PUBLIC DOMAIN &amp; CC SOURCES
+        </span>
+        <CatalogControls sort={sort} onSortChange={onSortChange} />
       </div>
       {entries.map((entry) => (
         <SearchResultRow key={entry.id} entry={entry} onOpen={onOpen} />
@@ -245,30 +333,67 @@ export function SearchResults({ entries, onOpen }: {
 
 export const CATALOG_PAGE_SIZE = 25;
 
-export function CatalogBrowse({ entries, onOpen }: {
+export function CatalogBrowse({
+  entries,
+  onOpen,
+  sort,
+  onSortChange,
+  composer,
+  onComposerChange,
+}: {
   entries: readonly CatalogEntry[];
   onOpen: (entry: CatalogEntry) => void;
+  sort: CatalogSort;
+  onSortChange: (sort: CatalogSort) => void;
+  composer: string;
+  onComposerChange: (composer: string) => void;
 }) {
   const [currentPage, setCurrentPage] = useState(0);
-  const sortedEntries = useMemo(() => browseCatalog(entries), [entries]);
+  // A changed sort or composer means a different list; page 4 of the old one is
+  // meaningless in the new one. Adjusted during render rather than in an effect
+  // so the new page never paints at the stale offset first.
+  const listKey = `${sort} ${composer}`;
+  const [renderedListKey, setRenderedListKey] = useState(listKey);
+  if (renderedListKey !== listKey) {
+    setRenderedListKey(listKey);
+    setCurrentPage(0);
+  }
+
+  const composers = useMemo(() => composerIndex(entries), [entries]);
+  const sortedEntries = useMemo(() => {
+    const filtered = composer ? entries.filter((entry) => entry.composer === composer) : entries;
+    return browseCatalog(filtered, sort);
+  }, [composer, entries, sort]);
   const pageCount = Math.max(1, Math.ceil(sortedEntries.length / CATALOG_PAGE_SIZE));
   const page = Math.min(currentPage, pageCount - 1);
   const pageEntries = sortedEntries.slice(
     page * CATALOG_PAGE_SIZE,
     (page + 1) * CATALOG_PAGE_SIZE,
   );
+  const sortLabel = CATALOG_SORTS.find((option) => option.id === sort)?.label ?? "";
 
   return (
     <section aria-label="Browse catalog" className="flex flex-col gap-[8px]">
-      <div className="flex flex-wrap items-center justify-between gap-[8px] pl-[2px] font-mono text-mono-meta tracking-[0.06em] text-mono-dim-1">
-        <span>{sortedEntries.length} PIECES · BROWSE A–Z BY COMPOSER</span>
-        <span>PAGE {page + 1} OF {pageCount}</span>
+      <div className="flex flex-wrap items-center justify-between gap-[10px] pl-[2px]">
+        <span className="font-mono text-mono-meta tracking-[0.06em] text-mono-dim-1">
+          {sortedEntries.length} PIECES · {sortLabel.toUpperCase()}
+        </span>
+        <CatalogControls
+          sort={sort}
+          onSortChange={onSortChange}
+          composer={composer}
+          composers={composers}
+          onComposerChange={onComposerChange}
+        />
       </div>
       {pageEntries.map((entry) => (
         <SearchResultRow key={entry.id} entry={entry} onOpen={onOpen} />
       ))}
       {pageCount > 1 ? (
         <nav aria-label="Catalog pages" className="mt-[6px] flex items-center justify-end gap-[10px]">
+          <span className="mr-auto font-mono text-mono-meta tracking-[0.06em] text-mono-dim-1">
+            PAGE {page + 1} OF {pageCount}
+          </span>
           <button
             type="button"
             className={GHOST_BUTTON_CLASS_NAME}
@@ -288,6 +413,40 @@ export function CatalogBrowse({ entries, onOpen }: {
         </nav>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * The one row a returning learner actually came for. It used to sit below 25
+ * catalog rows — roughly 3,900px down on a phone (D-029).
+ */
+export function ContinueCard({
+  piece,
+  now,
+  onOpen,
+}: {
+  piece: SavedPieceSummary;
+  now: number;
+  onOpen: (piece: SavedPieceSummary) => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-testid="continue-card"
+      className="flex cursor-pointer flex-col gap-[12px] rounded-card border border-result-hover-border bg-result-hover-bg px-[18px] py-[16px] text-left hover:border-hand-right md:px-[22px] md:py-[18px]"
+      onClick={() => onOpen(piece)}
+    >
+      <span className="font-mono text-mono-label uppercase tracking-[0.1em] text-hand-right">
+        Continue practising
+      </span>
+      <span className="flex flex-wrap items-baseline gap-x-[14px] gap-y-[4px]">
+        <span className="text-[20px] font-medium tracking-[-0.01em]">{piece.title}</span>
+        <span className="text-body-sm text-secondary">{piece.composer}</span>
+      </span>
+      <span className="font-mono text-mono-meta tracking-[0.04em] text-mono-dim-2">
+        {`LAST PRACTISED ${relativeOpened(piece.lastOpened, now)} · ${piece.lastSpeed}x · ${formatTime(piece.duration)}`}
+      </span>
+    </button>
   );
 }
 
@@ -328,7 +487,7 @@ export function MyPieces({
         pieces.map((piece) => (
           <div
             key={piece.id}
-            className="grid grid-cols-[1fr_auto_auto] items-center gap-[16px] rounded-card border border-border-2 bg-card px-[16px] py-[14px] hover:border-border-4"
+            className="grid grid-cols-[1fr_auto_auto] items-center gap-[10px] rounded-card border border-border-2 bg-card px-[14px] py-[12px] hover:border-border-4 md:gap-[16px] md:px-[16px] md:py-[14px]"
           >
             <button
               type="button"
@@ -370,6 +529,8 @@ export interface HomeViewProps {
   assetError?: string | null;
   storageWarning?: string | null;
   now: number;
+  sort?: CatalogSort;
+  onSortChange?: (sort: CatalogSort) => void;
   onQueryChange: (query: string) => void;
   onClear: () => void;
   onUpload: (file: File, origin: UploadOrigin) => void;
@@ -392,6 +553,8 @@ export function HomeView({
   assetError,
   storageWarning,
   now,
+  sort = "composer",
+  onSortChange = () => undefined,
   onQueryChange,
   onClear,
   onUpload,
@@ -400,8 +563,10 @@ export function HomeView({
   onDelete,
 }: HomeViewProps) {
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [composer, setComposer] = useState(ALL_COMPOSERS);
   const aboutButtonRef = useRef<HTMLButtonElement>(null);
   const showUpload = catalogUnavailable || (searched && results.length === 0);
+  const [mostRecent] = library;
 
   function closeAbout() {
     setAboutOpen(false);
@@ -410,8 +575,8 @@ export function HomeView({
 
   return (
     <>
-      <main className="min-h-screen overflow-x-hidden px-[32px] pb-[120px] pt-[40px]">
-        <div className="mx-auto flex max-w-[880px] flex-col gap-[36px]">
+      <main className="min-h-screen overflow-x-hidden px-[18px] pb-[80px] pt-[26px] md:px-[32px] md:pb-[120px] md:pt-[40px]">
+        <div className="mx-auto flex max-w-[880px] flex-col gap-[26px] md:gap-[36px]">
           <AppHeader
             action={
               <button
@@ -426,13 +591,47 @@ export function HomeView({
           />
           {catalogUnavailable ? <StatusBanner>{CATALOG_UNAVAILABLE_COPY}</StatusBanner> : null}
           {storageWarning ? <StatusBanner>{storageWarning}</StatusBanner> : null}
+
+          {mostRecent ? (
+            <ContinueCard piece={mostRecent} now={now} onOpen={onOpenSaved} />
+          ) : (
+            <p className="max-w-[54ch] text-body leading-[1.6] text-secondary">
+              Search the catalogue or upload your own MIDI or MusicXML file, and the score falls
+              down the screen over a labelled keyboard. Everything you open is kept on this device
+              for tomorrow.
+            </p>
+          )}
+
+          <MyPieces
+            pieces={library}
+            now={now}
+            onOpen={onOpenSaved}
+            onDelete={onDelete}
+            onUpload={(file) => onUpload(file, "library")}
+            uploadError={uploadErrorOrigin === "library" ? uploadError : null}
+            showUpload={!catalogUnavailable}
+          />
+
           <div className="flex flex-col gap-[14px]">
+            <h2 className="text-body font-medium tracking-[0.01em]">Find something to play</h2>
             <CatalogSearch query={query} onQueryChange={onQueryChange} onClear={onClear} />
             {!catalogUnavailable && !searched && catalogEntries.length > 0 ? (
-              <CatalogBrowse entries={catalogEntries} onOpen={onOpenResult} />
+              <CatalogBrowse
+                entries={catalogEntries}
+                onOpen={onOpenResult}
+                sort={sort}
+                onSortChange={onSortChange}
+                composer={composer}
+                onComposerChange={setComposer}
+              />
             ) : null}
             {!catalogUnavailable && searched && results.length > 0 ? (
-              <SearchResults entries={results} onOpen={onOpenResult} />
+              <SearchResults
+                entries={results}
+                onOpen={onOpenResult}
+                sort={sort}
+                onSortChange={onSortChange}
+              />
             ) : null}
             {showUpload ? (
               <NoResultsUpload
@@ -453,15 +652,6 @@ export function HomeView({
               </div>
             ) : null}
           </div>
-          <MyPieces
-            pieces={library}
-            now={now}
-            onOpen={onOpenSaved}
-            onDelete={onDelete}
-            onUpload={(file) => onUpload(file, "library")}
-            uploadError={uploadErrorOrigin === "library" ? uploadError : null}
-            showUpload={!catalogUnavailable}
-          />
         </div>
       </main>
       {aboutOpen ? <AboutPanel onClose={closeAbout} /> : null}

@@ -205,6 +205,7 @@ function Harness() {
     speed,
     loop,
     muted,
+    audioBlocked: false,
     volume,
   };
 

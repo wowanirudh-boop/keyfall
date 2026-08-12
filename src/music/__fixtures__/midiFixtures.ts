@@ -59,6 +59,31 @@ export function twoTrackMidiBytes() {
   return midi.toArray();
 }
 
+/**
+ * Four voice tracks on two staves — a fugue as LilyPond exports it. The widest
+ * median gap sits between the tenor (55) and alto (67), which is the staff
+ * break (D-025).
+ */
+export function fourVoiceMidiBytes() {
+  const midi = midiAtTempo();
+  for (const [index, pitch] of [79, 67, 55, 43].entries()) {
+    const track = midi.addTrack();
+    track.addNote({ midi: pitch, time: index * 0.25, duration: 0.25 });
+    track.addNote({ midi: pitch + 2, time: 1 + index * 0.25, duration: 0.25 });
+  }
+  return midi.toArray();
+}
+
+/** Three note-bearing tracks: melody, inner voice and bass. */
+export function threeTrackMidiBytes() {
+  const midi = midiAtTempo();
+  for (const [index, pitch] of [76, 72, 40].entries()) {
+    const track = midi.addTrack();
+    track.addNote({ midi: pitch, time: index * 0.25, duration: 0.25 });
+  }
+  return midi.toArray();
+}
+
 export function singleTrackMidiBytes() {
   const midi = midiAtTempo();
   const track = midi.addTrack();
