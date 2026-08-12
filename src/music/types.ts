@@ -5,6 +5,7 @@ export interface NoteEvent {
   midi: number;
   start: number;
   end: number;
+  /** Normalized note velocity in the inclusive range [0, 1]. */
   velocity: number;
   hand: NoteHand;
 }
@@ -26,6 +27,7 @@ export interface PieceDocument {
   title: string;
   composer: string;
   source: PieceSource;
+  sourceCreator?: string;
   duration: number;
   notes: NoteEvent[];
   hasHandData: boolean;

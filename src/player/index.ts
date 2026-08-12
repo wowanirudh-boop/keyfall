@@ -8,7 +8,19 @@ export {
 } from "./keyState";
 export { ImportNoticeStrip, TransientNotice } from "./Notices";
 export { PianoKeyboard, type PianoKeyboardProps } from "./PianoKeyboard";
-export { HandLegend, PlayerHeader, type PlayerHeaderProps } from "./PlayerHeader";
+export {
+  HandLegend,
+  PlayerHeader,
+  VolumeSlider,
+  type PlayerHeaderProps,
+  type VolumeSliderProps,
+} from "./PlayerHeader";
+export {
+  readAudioPreferences,
+  writeMutedPreference,
+  writeVolumePreference,
+  type AudioPreferences,
+} from "./audioPreferences";
 export { PlayerView, type PlayerViewProps } from "./PlayerView";
 export {
   lookaheadLabel,

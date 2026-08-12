@@ -36,6 +36,36 @@ function emptyMidiBytes() {
   return midi.toArray();
 }
 
+function uploadFailureCases() {
+  return [
+    {
+      name: "score.pdf",
+      buffer: Buffer.from("pdf"),
+      message: IMPORT_ERROR_MESSAGES["unsupported-extension"],
+    },
+    {
+      name: "too-large.mid",
+      buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
+      message: IMPORT_ERROR_MESSAGES["too-large"],
+    },
+    {
+      name: "too-long.mid",
+      buffer: Buffer.from(longMidiBytes()),
+      message: IMPORT_ERROR_MESSAGES["too-long"],
+    },
+    {
+      name: "broken.mid",
+      buffer: Buffer.from("not midi"),
+      message: IMPORT_ERROR_MESSAGES.unparseable,
+    },
+    {
+      name: "empty.mid",
+      buffer: Buffer.from(emptyMidiBytes()),
+      message: IMPORT_ERROR_MESSAGES["no-notes"],
+    },
+  ];
+}
+
 let server: PreviewServer;
 
 test.beforeAll(async () => {
@@ -52,7 +82,12 @@ test.beforeAll(async () => {
   });
   server = await preview({
     logLevel: "silent",
-    preview: { host: "127.0.0.1", port: 4181, strictPort: true },
+    preview: {
+      host: "127.0.0.1",
+      port: 4181,
+      strictPort: true,
+      allowedHosts: ["piano.test"],
+    },
   });
 });
 
@@ -79,6 +114,125 @@ async function findFurElise(page: Page) {
   await expect(result).toBeVisible();
   return result;
 }
+
+test("[T03c AC1, AC2] Home requests no score until one piece is opened exactly once", async ({
+  page,
+}) => {
+  const scoreRequests: string[] = [];
+  page.on("request", (request) => {
+    if (/\.(?:mid|midi|musicxml|xml|mxl)$/.test(new URL(request.url()).pathname)) {
+      scoreRequests.push(request.url());
+    }
+  });
+
+  const result = await findFurElise(page);
+  expect(scoreRequests).toEqual([]);
+  await expect(page.getByText("MUTOPIAPROJECT · PUBLIC DOMAIN · STELIOS SAMELIS")).toBeVisible();
+
+  await result.click();
+  await expect(page.getByRole("heading", { name: "Für Elise" })).toBeVisible();
+  await expect(
+    page.getByText(
+      "LUDWIG VAN BEETHOVEN · MUTOPIA CATALOG · STELIOS SAMELIS",
+    ),
+  ).toBeVisible();
+  expect(scoreRequests).toHaveLength(1);
+  expect(scoreRequests[0]).toMatch(/\/catalog\/scores\/fur-elise\.mid$/);
+});
+
+test("[T03b AC5] fetches the static manifest outside entry JS and stays inside the first-load budget", async ({
+  page,
+}) => {
+  const responses: Array<Promise<{ url: string; type: string; body: Buffer }>> = [];
+  page.on("response", (response) => {
+    const url = new URL(response.url());
+    if (url.hostname !== "127.0.0.1") return;
+    const type = response.request().resourceType();
+    if (!["document", "script", "stylesheet", "font", "fetch"].includes(type)) return;
+    responses.push(
+      response.body().then((body) => ({ url: response.url(), type, body: Buffer.from(body) })),
+    );
+  });
+
+  await page.goto("/");
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+  await page.waitForLoadState("networkidle");
+  const loaded = await Promise.all(responses);
+  const manifestResponses = loaded.filter(({ url }) =>
+    new URL(url).pathname.endsWith("/catalog/manifest.json"),
+  );
+  const scoreResponses = loaded.filter(({ url }) =>
+    new URL(url).pathname.startsWith("/catalog/scores/"),
+  );
+  const firstLoadBytes = loaded.reduce((total, response) => total + response.body.length, 0);
+  const entryScripts = loaded.filter(({ type }) => type === "script");
+
+  expect(manifestResponses).toHaveLength(1);
+  expect(scoreResponses).toHaveLength(0);
+  expect(firstLoadBytes).toBeLessThanOrEqual(1.5 * 1024 * 1024);
+  expect(entryScripts.every(({ body }) => !body.toString("utf8").includes('"mutopiaId"'))).toBe(
+    true,
+  );
+});
+
+test("[T03a AC1, AC5] catalog is searchable from a non-localhost plain-HTTP origin", async () => {
+  const browser = await chromium.launch({
+    args: ["--host-resolver-rules=MAP piano.test 127.0.0.1", "--no-proxy-server"],
+  });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await page.goto("http://piano.test:4181/");
+    await expect
+      .poll(() =>
+        page.evaluate(() => ({
+          hostname: window.location.hostname,
+          protocol: window.location.protocol,
+          secure: window.isSecureContext,
+          subtle: Boolean(globalThis.crypto?.subtle),
+        })),
+      )
+      .toEqual({ hostname: "piano.test", protocol: "http:", secure: false, subtle: false });
+
+    await page.getByRole("textbox", { name: "Search catalog" }).fill("fur elise");
+    await expect(
+      page.getByRole("button", { name: /^Für Elise Ludwig van Beethoven/ }),
+    ).toBeVisible();
+    await expect(page.getByText("1 MATCH · PUBLIC DOMAIN & CC SOURCES")).toBeVisible();
+    await expect(page.getByText("Catalog search is unavailable right now.")).toHaveCount(0);
+  } finally {
+    await context.close();
+    await browser.close();
+  }
+});
+
+test("[T03b AC8] a real manifest-fetch failure keeps upload and My Pieces working", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Upload", { exact: true }).setInputFiles({
+    name: "known.mid",
+    mimeType: "audio/midi",
+    buffer: Buffer.from(knownMidiBytes()),
+  });
+  await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
+  await page.getByRole("button", { name: "← Library" }).click();
+  await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
+
+  await page.route("**/catalog/manifest.json", (route) => route.abort());
+  await page.reload();
+  await expect(
+    page.getByText(
+      "Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByLabel("Upload a MIDI or MusicXML file", { exact: true })).toBeVisible();
+  await page.getByRole("button").filter({ hasText: "Known timing fixture" }).click();
+  await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
+});
 
 async function indexedDbHasPiece(page: Page, pieceId: string) {
   return page.evaluate(
@@ -174,39 +328,14 @@ test("library reopens a piece after a full browser restart", async () => {
   await context.close();
 });
 
-test("upload shows every specific failure and a valid file joins the library", async ({ page }) => {
+test("[T05b AC3, AC4, AC5] no-results upload shows every failure and saves a valid file", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.getByRole("textbox", { name: "Search catalog" }).fill("not in catalog");
-  const input = page.locator('input[type="file"]');
-  const cases = [
-    {
-      name: "score.pdf",
-      buffer: Buffer.from("pdf"),
-      message: IMPORT_ERROR_MESSAGES["unsupported-extension"],
-    },
-    {
-      name: "too-large.mid",
-      buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
-      message: IMPORT_ERROR_MESSAGES["too-large"],
-    },
-    {
-      name: "too-long.mid",
-      buffer: Buffer.from(longMidiBytes()),
-      message: IMPORT_ERROR_MESSAGES["too-long"],
-    },
-    {
-      name: "broken.mid",
-      buffer: Buffer.from("not midi"),
-      message: IMPORT_ERROR_MESSAGES.unparseable,
-    },
-    {
-      name: "empty.mid",
-      buffer: Buffer.from(emptyMidiBytes()),
-      message: IMPORT_ERROR_MESSAGES["no-notes"],
-    },
-  ];
+  const input = page.getByLabel("Upload a MIDI or MusicXML file", { exact: true });
 
-  for (const upload of cases) {
+  for (const upload of uploadFailureCases()) {
     await input.setInputFiles({ name: upload.name, mimeType: "application/octet-stream", buffer: upload.buffer });
     await expect(page.getByRole("alert")).toContainText(upload.message);
     await expect(page).toHaveURL(/\/$/);
@@ -223,16 +352,64 @@ test("upload shows every specific failure and a valid file joins the library", a
   await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
 });
 
-test("catalog search unavailable keeps upload and library live", async ({ page }) => {
+test("[T05b AC1, AC2, AC3] My pieces upload works with the library empty and populated", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByText("0 SAVED LOCALLY")).toBeVisible();
+  await expect(page.getByText("Upload", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Upload", { exact: true }).setInputFiles({
+    name: "known.mid",
+    mimeType: "audio/midi",
+    buffer: Buffer.from(knownMidiBytes()),
+  });
+  await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
+  await page.getByRole("button", { name: "← Library" }).click();
+
+  await expect(page.getByText("1 SAVED LOCALLY")).toBeVisible();
+  await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
+  await expect(page.getByText("Upload", { exact: true })).toBeVisible();
+});
+
+test("[T05b AC4] My pieces upload keeps all five failures in place", async ({ page }) => {
+  await page.goto("/");
+  const library = page.getByRole("region", { name: "My pieces" });
+  const input = library.getByLabel("Upload", { exact: true });
+
+  for (const upload of uploadFailureCases()) {
+    await input.setInputFiles({
+      name: upload.name,
+      mimeType: "application/octet-stream",
+      buffer: upload.buffer,
+    });
+    await expect(library.getByRole("alert")).toContainText(upload.message);
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("progressbar")).toHaveCount(0);
+  }
+});
+
+test("[T05b AC6] catalog-unavailable keeps only the D-017 upload card", async ({ page }) => {
+  await page.goto("/src/testing/e2e/home-harness.html?state=catalog-unavailable");
+
+  await expect(page.getByText("Open a local score while catalog search is unavailable.")).toBeVisible();
+  await expect(page.getByLabel("Upload a MIDI or MusicXML file", { exact: true })).toHaveCount(1);
+  await expect(page.getByLabel("Upload", { exact: true })).toHaveCount(0);
+  await expect(page.locator('input[type="file"]')).toHaveCount(1);
+});
+
+test("[T03c AC1, AC3] a score outage is deferred to open while upload and library stay live", async ({
+  page,
+}) => {
   await page.route("**/*.mid", (route) => route.abort());
   await page.goto("/");
 
-  await expect(
-    page.getByText(
-      "Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.",
-    ),
-  ).toBeVisible();
-  const input = page.locator('input[type="file"]');
+  await expect(page.getByText("Catalog search is unavailable right now.")).toHaveCount(0);
+  await page.getByRole("textbox", { name: "Search catalog" }).fill("fur elise");
+  await page.getByRole("button", { name: /^Für Elise Ludwig van Beethoven/ }).click();
+  await expect(page.getByRole("alert")).toContainText("Für Elise");
+
+  const input = page.getByLabel("Upload a MIDI or MusicXML file", { exact: true });
   await input.setInputFiles({
     name: "offline.mid",
     mimeType: "audio/midi",
@@ -243,9 +420,17 @@ test("catalog search unavailable keeps upload and library live", async ({ page }
   await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
 });
 
-test("search asset failure renders the D-006 upload card", async ({ page }) => {
+test("[T03a AC2] [T03c AC3] checksum mismatch on open renders the D-006 upload card", async ({
+  page,
+}) => {
   const result = await findFurElise(page);
-  await page.route(/fur-elise-.*\.mid/, (route) => route.abort());
+  await page.route(/\/catalog\/scores\/fur-elise\.mid$/, (route) =>
+    route.fulfill({
+      body: Buffer.from([0]),
+      contentType: "audio/midi",
+      status: 200,
+    }),
+  );
   await result.click();
 
   await expect(page.getByRole("alert")).toContainText("Für Elise");
@@ -253,7 +438,9 @@ test("search asset failure renders the D-006 upload card", async ({ page }) => {
   await expect(page).toHaveURL(/\/$/);
 });
 
-test("Home visual state inventory is saved at both required viewports", async ({ page }) => {
+test("[T05b AC7] Home upload visual state inventory is saved at both required viewports", async ({
+  page,
+}) => {
   const states = [
     "empty",
     "populated",

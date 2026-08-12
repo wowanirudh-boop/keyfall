@@ -4,7 +4,13 @@ import { createRoot } from "react-dom/client";
 import "../../design/globals.css";
 import type { NoteEvent, PieceDocument } from "../../music/types";
 import type { PlaybackLoop, PlaybackSnapshot, PlaybackSpeed } from "../../playback";
-import { PlayerView, type LiveVerdict } from "../../player";
+import {
+  PlayerView,
+  readAudioPreferences,
+  writeMutedPreference,
+  writeVolumePreference,
+  type LiveVerdict,
+} from "../../player";
 import { createDenseFixture } from "../denseFixture";
 
 declare global {
@@ -80,12 +86,22 @@ const visualPiece: PieceDocument = {
 };
 
 function Harness() {
-  const piece = dense ? createDenseFixture() : visualPiece;
+  const piece = dense
+    ? createDenseFixture()
+    : { ...visualPiece, id: parameters.get("piece") ?? visualPiece.id };
+  const audioPreferences = readAudioPreferences();
   const [position, setPosition] = useState(startPosition);
   const [playing, setPlaying] = useState(mode === "dense" || parameters.get("playing") === "1");
   const [speed, setSpeed] = useState(initialSpeed);
   const [loop, setLoop] = useState(initialLoop);
-  const [muted, setMuted] = useState(parameters.get("muted") === "1");
+  const [muted, setMuted] = useState(
+    parameters.has("muted") ? parameters.get("muted") === "1" : audioPreferences.muted,
+  );
+  const [volume, setVolume] = useState(
+    parameters.has("volume")
+      ? Math.min(1, Math.max(0, Number(parameters.get("volume")) / 100))
+      : audioPreferences.volume,
+  );
   const commitCount = useRef(0);
   const listeningDevice = parameters.get("listening") === "1" ? "Roland RP302" : null;
   const verdicts = new Map<string, LiveVerdict>();
@@ -184,6 +200,7 @@ function Harness() {
     speed,
     loop,
     muted,
+    volume,
   };
 
   return (
@@ -191,7 +208,14 @@ function Harness() {
       piece={piece}
       playback={playback}
       onLibrary={() => undefined}
-      onMutedChange={setMuted}
+      onMutedChange={(nextMuted) => {
+        writeMutedPreference(nextMuted);
+        setMuted(nextMuted);
+      }}
+      onVolumeChange={(nextVolume) => {
+        writeVolumePreference(nextVolume);
+        setVolume(nextVolume);
+      }}
       onTogglePlay={() => setPlaying((current) => !current)}
       onSeek={setPosition}
       onSpeedChange={setSpeed}

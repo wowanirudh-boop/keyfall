@@ -16,6 +16,7 @@ const basePlayback: PlaybackSnapshot = {
   speed: 1,
   loop: { a: null, b: null },
   muted: false,
+  volume: 1,
 };
 
 function setSeekBounds(element: HTMLElement) {
@@ -146,6 +147,7 @@ describe("transport controls", () => {
           playback={playback}
           onLibrary={() => undefined}
           onMutedChange={() => undefined}
+          onVolumeChange={() => undefined}
           onSeek={(position) => setPlayback((current) => ({ ...current, position }))}
         />
       );

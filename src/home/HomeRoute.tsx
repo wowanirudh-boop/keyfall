@@ -9,7 +9,7 @@ import {
 } from "../catalog";
 import { LibraryRepository, type SavedPieceSummary } from "../library";
 import { importPiece, type ImportError, type PieceDocument } from "../music";
-import { HomeView } from "./HomeView";
+import { HomeView, type UploadOrigin } from "./HomeView";
 
 const catalogRepository = new CatalogRepository();
 export const libraryRepository = new LibraryRepository();
@@ -25,7 +25,10 @@ export function HomeRoute() {
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
   const [catalogUnavailable, setCatalogUnavailable] = useState(false);
   const [library, setLibrary] = useState<SavedPieceSummary[]>([]);
-  const [currentUploadError, setCurrentUploadError] = useState<string | null>(null);
+  const [currentUploadError, setCurrentUploadError] = useState<{
+    message: string;
+    origin: UploadOrigin;
+  } | null>(null);
   const [assetError, setAssetError] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [now] = useState(Date.now);
@@ -82,6 +85,7 @@ export function HomeRoute() {
           title: entry.title,
           composer: entry.composer,
           source: "catalog",
+          sourceCreator: entry.licence.creator,
         },
         entry.asset,
         bytes,
@@ -93,12 +97,12 @@ export function HomeRoute() {
     }
   }
 
-  async function openUpload(file: File) {
+  async function openUpload(file: File, origin: UploadOrigin) {
     setCurrentUploadError(null);
     setAssetError(null);
     const imported = await importPiece(file);
     if (!imported.ok) {
-      setCurrentUploadError(uploadError(file, imported.error));
+      setCurrentUploadError({ message: uploadError(file, imported.error), origin });
       return;
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
@@ -122,7 +126,8 @@ export function HomeRoute() {
       searched={searched}
       catalogUnavailable={catalogUnavailable}
       library={library}
-      uploadError={currentUploadError}
+      uploadError={currentUploadError?.message}
+      uploadErrorOrigin={currentUploadError?.origin}
       assetError={assetError}
       storageWarning={storageWarning}
       now={now}
@@ -138,7 +143,7 @@ export function HomeRoute() {
         setCurrentUploadError(null);
         setAssetError(null);
       }}
-      onUpload={(file) => void openUpload(file)}
+      onUpload={(file, origin) => void openUpload(file, origin)}
       onOpenResult={(entry) => void openCatalogEntry(entry)}
       onOpenSaved={(piece) => void openSaved(piece)}
       onDelete={(piece) => void deleteSaved(piece)}

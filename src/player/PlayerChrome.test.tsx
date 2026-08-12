@@ -6,7 +6,7 @@ import { motion } from "../design/tokens";
 import type { PieceDocument } from "../music/types";
 import { PlaybackEngine } from "../playback";
 import { ImportNoticeStrip, TransientNotice } from "./Notices";
-import { PlayerHeader } from "./PlayerHeader";
+import { PlayerHeader, VolumeSlider } from "./PlayerHeader";
 import { PlayerView } from "./PlayerView";
 
 const piece: PieceDocument = {
@@ -37,8 +37,10 @@ describe("Player chrome", () => {
       <PlayerHeader
         piece={piece}
         muted={false}
+        volume={1}
         onLibrary={onLibrary}
         onMutedChange={onMutedChange}
+        onVolumeChange={() => undefined}
         onListenToggle={onListenToggle}
       />,
     );
@@ -54,8 +56,10 @@ describe("Player chrome", () => {
       <PlayerHeader
         piece={{ ...piece, hasHandData: false }}
         muted
+        volume={1}
         onLibrary={onLibrary}
         onMutedChange={onMutedChange}
+        onVolumeChange={() => undefined}
       />,
     );
     expect(screen.queryByTestId("hand-legend")).toBeNull();
@@ -74,11 +78,13 @@ describe("Player chrome", () => {
         <PlayerHeader
           piece={piece}
           muted={snapshot.muted}
+          volume={snapshot.volume}
           onLibrary={() => undefined}
           onMutedChange={(muted) => {
             engine.setMuted(muted);
             setSnapshot(engine.getSnapshot());
           }}
+          onVolumeChange={() => undefined}
         />
       );
     }
@@ -89,6 +95,81 @@ describe("Player chrome", () => {
     expect(screen.getByRole("button", { name: "Muted" })).toBeTruthy();
     expect(engine.getSnapshot().muted).toBe(true);
     expect(engine.getSnapshot().position).toBe(before);
+  });
+
+  it("[T03b AC9] shows a catalog creator in the existing player metadata line", () => {
+    render(
+      <PlayerHeader
+        piece={{ ...piece, source: "catalog", sourceCreator: "Careful Typesetter" }}
+        muted={false}
+        volume={1}
+        onLibrary={() => undefined}
+        onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.getByText("J. S. BACH · MUTOPIA CATALOG · CAREFUL TYPESETTER"),
+    ).toBeTruthy();
+  });
+
+  it("[T05a AC5] keeps zero volume visually independent from mute", () => {
+    render(
+      <PlayerHeader
+        piece={piece}
+        muted={false}
+        volume={0}
+        onLibrary={() => undefined}
+        onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Audio on" })).toBeTruthy();
+    expect(screen.getByRole("slider", { name: "Volume" }).getAttribute("value")).toBe("0");
+  });
+
+  it("[T05a AC6] maps mouse and synthetic touch drags identically with pointer capture", () => {
+    const values: number[] = [];
+    const view = render(
+      <VolumeSlider volume={0} onVolumeChange={(volume) => values.push(volume)} />,
+    );
+    let slider = screen.getByRole("slider", { name: "Volume" });
+    const setPointerCapture = vi.fn();
+    Object.defineProperties(slider, {
+      getBoundingClientRect: {
+        value: () => ({ left: 100, right: 172, width: 72, top: 0, bottom: 30, height: 30, x: 100, y: 0, toJSON: () => undefined }),
+      },
+      setPointerCapture: { value: setPointerCapture },
+      hasPointerCapture: { value: () => true },
+      releasePointerCapture: { value: vi.fn() },
+    });
+    fireEvent.pointerDown(slider, { clientX: 100, pointerId: 1, pointerType: "mouse" });
+    fireEvent.pointerMove(slider, { clientX: 154, pointerId: 1, pointerType: "mouse" });
+    fireEvent.pointerUp(slider, { clientX: 154, pointerId: 1, pointerType: "mouse" });
+    const mouseVolume = values.at(-1);
+
+    view.unmount();
+    values.length = 0;
+    render(<VolumeSlider volume={0} onVolumeChange={(volume) => values.push(volume)} />);
+    slider = screen.getByRole("slider", { name: "Volume" });
+    Object.defineProperties(slider, {
+      getBoundingClientRect: {
+        value: () => ({ left: 100, right: 172, width: 72, top: 0, bottom: 30, height: 30, x: 100, y: 0, toJSON: () => undefined }),
+      },
+      setPointerCapture: { value: vi.fn() },
+      hasPointerCapture: { value: () => true },
+      releasePointerCapture: { value: vi.fn() },
+    });
+    fireEvent.pointerDown(slider, { clientX: 100, pointerId: 2, pointerType: "touch" });
+    fireEvent.pointerMove(slider, { clientX: 154, pointerId: 2, pointerType: "touch" });
+    fireEvent.pointerUp(slider, { clientX: 154, pointerId: 2, pointerType: "touch" });
+
+    expect(values.at(-1)).toBe(mouseVolume);
+    expect(mouseVolume).toBe(0.75);
+    expect(setPointerCapture).toHaveBeenCalledWith(1);
+    expect(slider.className).toContain("touch-none");
   });
 
   it("[AC13] keeps every import notice visible and expires a transient at 4200 ms", () => {
@@ -121,9 +202,11 @@ describe("Player chrome", () => {
           speed: 1,
           loop: { a: null, b: null },
           muted: false,
+          volume: 1,
         }}
         onLibrary={() => undefined}
         onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
       />,
     );
 

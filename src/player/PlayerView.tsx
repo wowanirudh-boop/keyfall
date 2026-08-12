@@ -12,6 +12,7 @@ export interface PlayerViewProps {
   playback: PlaybackSnapshot;
   onLibrary: () => void;
   onMutedChange: (muted: boolean) => void;
+  onVolumeChange: (volume: number) => void;
   onTogglePlay?: () => void;
   onSeek?: (position: number) => void;
   onSpeedChange?: (speed: PlaybackSpeed) => void;
@@ -29,6 +30,7 @@ export function PlayerView({
   playback,
   onLibrary,
   onMutedChange,
+  onVolumeChange,
   onTogglePlay = () => undefined,
   onSeek = () => undefined,
   onSpeedChange = () => undefined,
@@ -45,9 +47,11 @@ export function PlayerView({
       <PlayerHeader
         piece={piece}
         muted={playback.muted}
+        volume={playback.volume}
         listening={Boolean(listeningDevice)}
         onLibrary={onLibrary}
         onMutedChange={onMutedChange}
+        onVolumeChange={onVolumeChange}
         onListenToggle={onListenToggle}
       />
       <ImportNoticeStrip notices={piece.notices} />

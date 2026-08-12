@@ -1,6 +1,4 @@
-import bundledManifest from "../../catalog/manifest.json";
-
-import { CATALOG_ASSET_URLS } from "./assets";
+import { catalogAssetUrl } from "./assets";
 
 export interface CatalogEntry {
   id: string;
@@ -16,6 +14,7 @@ export interface CatalogEntry {
     url: string;
     sourceUrl: string;
     sha256: string;
+    creator?: string;
   };
 }
 
@@ -40,14 +39,24 @@ export function fold(value: string) {
 export function searchCatalog(entries: readonly CatalogEntry[], query: string) {
   const foldedQuery = fold(query);
   if (!foldedQuery) return [];
-  return entries.filter(
-    (entry) =>
-      fold(entry.title).includes(foldedQuery) ||
-      fold(entry.composer).includes(foldedQuery) ||
-      entry.aliases.some(
-        (alias) => alias.includes(foldedQuery) || foldedQuery.includes(alias),
-      ),
-  );
+  const rank = (entry: CatalogEntry) => {
+    const title = fold(entry.title);
+    const composer = fold(entry.composer);
+    if (title === foldedQuery) return 0;
+    if (entry.aliases.includes(foldedQuery)) return 1;
+    if (title.startsWith(foldedQuery)) return 2;
+    if (title.includes(foldedQuery)) return 3;
+    if (entry.aliases.some((alias) => alias.includes(foldedQuery))) return 4;
+    if (composer.includes(foldedQuery)) return 5;
+    return null;
+  };
+  return entries
+    .map((entry, index) => ({ entry, index, rank: rank(entry) }))
+    .filter((match): match is { entry: CatalogEntry; index: number; rank: number } =>
+      match.rank !== null,
+    )
+    .sort((left, right) => left.rank - right.rank || left.index - right.index)
+    .map((match) => match.entry);
 }
 
 function isWebUrl(value: string) {
@@ -86,7 +95,9 @@ export function validateCatalogEntry(value: unknown): CatalogEntry | null {
     !nonEmpty(licence.sourceUrl) ||
     !isWebUrl(licence.sourceUrl as string) ||
     typeof licence.sha256 !== "string" ||
-    !/^[a-f0-9]{64}$/.test(licence.sha256)
+    !/^[a-f0-9]{64}$/.test(licence.sha256) ||
+    (licence.name !== "Public Domain" && !nonEmpty(licence.creator)) ||
+    (licence.creator !== undefined && !nonEmpty(licence.creator))
   ) {
     return null;
   }
@@ -100,12 +111,21 @@ export async function sha256(bytes: Uint8Array) {
     .join("");
 }
 
+async function checksumMatches(bytes: Uint8Array, expected: string) {
+  if (!globalThis.crypto?.subtle) return true;
+  return (await sha256(bytes)) === expected;
+}
+
 async function fetchAsset(asset: string) {
-  const url = CATALOG_ASSET_URLS[asset];
-  if (!url) throw new Error(`No bundled asset URL for ${asset}`);
-  const response = await fetch(url);
+  const response = await fetch(catalogAssetUrl(asset));
   if (!response.ok) throw new Error(`Asset request failed with ${response.status}`);
   return new Uint8Array(await response.arrayBuffer());
+}
+
+async function fetchManifest() {
+  const response = await fetch("/catalog/manifest.json");
+  if (!response.ok) throw new Error(`Manifest request failed with ${response.status}`);
+  return response.json() as Promise<unknown>;
 }
 
 export class CatalogRepository {
@@ -115,7 +135,7 @@ export class CatalogRepository {
   readonly #warn: (message: string) => void;
 
   constructor(options: CatalogRepositoryOptions = {}) {
-    this.#loadManifest = options.loadManifest ?? (async () => bundledManifest);
+    this.#loadManifest = options.loadManifest ?? fetchManifest;
     this.#loadAsset = options.loadAsset ?? fetchAsset;
     this.#warn = options.warn ?? console.warn;
   }
@@ -129,16 +149,6 @@ export class CatalogRepository {
       const entry = validateCatalogEntry(value);
       if (!entry) {
         this.#warn(`Catalog row ${index} was dropped: invalid manifest fields.`);
-        continue;
-      }
-      try {
-        const bytes = await this.#loadAsset(entry.asset);
-        if ((await sha256(bytes)) !== entry.licence.sha256) {
-          this.#warn(`Catalog row ${entry.id} was dropped: checksum mismatch.`);
-          continue;
-        }
-      } catch {
-        this.#warn(`Catalog row ${entry.id} was dropped: asset unavailable.`);
         continue;
       }
       entries.push(entry);
@@ -161,7 +171,9 @@ export class CatalogRepository {
   async open(entry: CatalogEntry) {
     try {
       const bytes = await this.#loadAsset(entry.asset);
-      if ((await sha256(bytes)) !== entry.licence.sha256) throw new Error("checksum mismatch");
+      if (!(await checksumMatches(bytes, entry.licence.sha256))) {
+        throw new Error("checksum mismatch");
+      }
       return bytes;
     } catch {
       throw new CatalogAssetError(`The score file for “${entry.title}” could not be opened.`);

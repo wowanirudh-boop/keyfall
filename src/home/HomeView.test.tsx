@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -36,6 +36,53 @@ function props(overrides: Partial<HomeViewProps> = {}): HomeViewProps {
 }
 
 describe("HomeView", () => {
+  it.each([
+    ["empty", []],
+    ["populated", [savedPiece]],
+  ] as const)(
+    "[T05b AC1, AC2] exposes a functional My pieces upload with the library %s",
+    async (_state, library) => {
+      const user = userEvent.setup();
+      const onUpload = vi.fn();
+      render(<HomeView {...props({ library, onUpload })} />);
+
+      const input = within(screen.getByRole("region", { name: "My pieces" })).getByLabelText(
+        "Upload",
+        { exact: true },
+      );
+      const file = new File(["score"], "score.mid");
+      await user.upload(input, file);
+
+      expect(onUpload).toHaveBeenCalledWith(file, "library");
+    },
+  );
+
+  it("[T05b AC3, AC5] reuses one file-input component without changing the primary upload", async () => {
+    const user = userEvent.setup();
+    const onUpload = vi.fn();
+    render(
+      <HomeView
+        {...props({ query: "missing", searched: true, onUpload })}
+      />,
+    );
+
+    const primary = screen.getByLabelText("Upload a MIDI or MusicXML file", { exact: true });
+    const library = within(screen.getByRole("region", { name: "My pieces" })).getByLabelText(
+      "Upload",
+      { exact: true },
+    );
+    expect(primary.getAttribute("accept")).toBe(library.getAttribute("accept"));
+    expect(primary.closest("label")?.className).toContain("bg-hand-right");
+    expect(library.closest("label")?.className).toContain("border-border-3");
+
+    const primaryFile = new File(["primary"], "primary.mid");
+    const libraryFile = new File(["library"], "library.mid");
+    await user.upload(primary, primaryFile);
+    await user.upload(library, libraryFile);
+    expect(onUpload).toHaveBeenNthCalledWith(1, primaryFile, "search");
+    expect(onUpload).toHaveBeenNthCalledWith(2, libraryFile, "library");
+  });
+
   it("[AC1] shows Clear only for a query and Escape clears it", async () => {
     const user = userEvent.setup();
     const onClear = vi.fn();
@@ -61,7 +108,7 @@ describe("HomeView", () => {
     );
   });
 
-  it("[AC10] renders title, composer, arranger, source, licence, and duration", () => {
+  it("[AC10] [T03b AC9] renders title, composer, arranger, source, licence, creator, and duration", () => {
     render(
       <HomeView
         {...props({ query: "study", searched: true, results: [FIXTURE_MANIFEST[2]] })}
@@ -70,7 +117,7 @@ describe("HomeView", () => {
 
     expect(screen.getByText("Catalog Study")).toBeTruthy();
     expect(screen.getByText("Example Composer · Example Arranger")).toBeTruthy();
-    expect(screen.getByText("EXAMPLE · CC0-1.0")).toBeTruthy();
+    expect(screen.getByText("EXAMPLE · CC0-1.0 · EXAMPLE TYPESETTER")).toBeTruthy();
     expect(screen.getByText("1:05")).toBeTruthy();
   });
 
@@ -93,7 +140,25 @@ describe("HomeView", () => {
     },
   );
 
-  it("[AC7] keeps upload and My Pieces interactive when the catalog is unavailable", async () => {
+  it.each(Object.entries(IMPORT_ERROR_MESSAGES))(
+    "[T05b AC4] renders the %s failure inside My pieces when initiated there",
+    (_kind, message) => {
+      render(
+        <HomeView
+          {...props({
+            uploadError: `“score.mid” — ${message}`,
+            uploadErrorOrigin: "library",
+          })}
+        />,
+      );
+
+      const library = screen.getByRole("region", { name: "My pieces" });
+      expect(within(library).getByRole("alert").textContent).toContain(message);
+      expect(screen.getByRole("textbox", { name: "Search catalog" })).toBeTruthy();
+    },
+  );
+
+  it("[AC7] [T05b AC6] keeps the single D-017 upload and My Pieces interactive when the catalog is unavailable", async () => {
     const user = userEvent.setup();
     const onUpload = vi.fn();
     const onOpenSaved = vi.fn();
@@ -113,11 +178,14 @@ describe("HomeView", () => {
         "Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.",
       ),
     ).toBeTruthy();
-    const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+    const inputs = document.querySelectorAll<HTMLInputElement>('input[type="file"]');
+    expect(inputs).toHaveLength(1);
+    const input = inputs[0];
     expect(input).not.toBeNull();
     await user.upload(input!, new File(["score"], "score.mid"));
     await user.click(screen.getByText("Saved piece").closest("button")!);
     expect(onUpload).toHaveBeenCalledOnce();
+    expect(onUpload).toHaveBeenCalledWith(expect.any(File), "search");
     expect(onOpenSaved).toHaveBeenCalledWith(savedPiece);
   });
 

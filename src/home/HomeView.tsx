@@ -2,7 +2,7 @@ import type { ChangeEvent, KeyboardEvent } from "react";
 
 import type { CatalogEntry } from "../catalog";
 import { AppHeader } from "../design/AppHeader";
-import { ErrorPanel, StatusBanner } from "../design/primitives";
+import { ErrorPanel, GHOST_BUTTON_CLASS_NAME, StatusBanner } from "../design/primitives";
 import type { SavedPieceSummary } from "../library";
 import { relativeOpened } from "../library";
 import { SALAMANDER_ATTRIBUTION, SALAMANDER_LICENSE_URL } from "../playback";
@@ -20,26 +20,39 @@ function sourceName(entry: CatalogEntry) {
 
 export interface UploadControlProps {
   onUpload: (file: File) => void;
+  appearance?: "primary" | "ghost";
 }
 
-export function UploadControl({ onUpload }: UploadControlProps) {
+export function UploadControl({ onUpload, appearance = "primary" }: UploadControlProps) {
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (file) onUpload(file);
   }
 
+  const control = (
+    <label
+      className={
+        appearance === "ghost"
+          ? `${GHOST_BUTTON_CLASS_NAME} inline-flex items-center`
+          : "inline-flex cursor-pointer items-center gap-[10px] rounded-input bg-hand-right px-[18px] py-[12px] text-body font-medium text-on-accent hover:bg-hand-right-hover"
+      }
+    >
+      {appearance === "ghost" ? "Upload" : "Upload a MIDI or MusicXML file"}
+      <input
+        className="sr-only"
+        type="file"
+        accept=".mid,.midi,.musicxml,.xml,.mxl"
+        onChange={chooseFile}
+      />
+    </label>
+  );
+
+  if (appearance === "ghost") return control;
+
   return (
     <div className="flex flex-wrap items-center gap-[14px]">
-      <label className="inline-flex cursor-pointer items-center gap-[10px] rounded-input bg-hand-right px-[18px] py-[12px] text-body font-medium text-on-accent hover:bg-hand-right-hover">
-        Upload a MIDI or MusicXML file
-        <input
-          className="sr-only"
-          type="file"
-          accept=".mid,.midi,.musicxml,.xml,.mxl"
-          onChange={chooseFile}
-        />
-      </label>
+      {control}
       <span className="font-mono text-mono-meta text-mono-dim-2">
         .mid .midi .musicxml .xml .mxl · max 10 MB · max 30 min
       </span>
@@ -144,6 +157,7 @@ export function SearchResults({
             </span>
             <span className="font-mono text-mono-meta tracking-[0.04em] text-mono-dim-2">
               {sourceName(entry)} · {entry.licence.name.toUpperCase()}
+              {entry.licence.creator ? ` · ${entry.licence.creator.toUpperCase()}` : ""}
             </span>
           </span>
           {entry.durationSeconds !== undefined ? (
@@ -162,20 +176,30 @@ export function MyPieces({
   now,
   onOpen,
   onDelete,
+  onUpload,
+  uploadError,
+  showUpload,
 }: {
   pieces: readonly SavedPieceSummary[];
   now: number;
   onOpen: (piece: SavedPieceSummary) => void;
   onDelete: (piece: SavedPieceSummary) => void;
+  onUpload: (file: File) => void;
+  uploadError?: string | null;
+  showUpload: boolean;
 }) {
   return (
-    <section className="flex flex-col gap-[12px]">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-body font-medium tracking-[0.01em]">My pieces</h2>
-        <span className="font-mono text-mono-meta text-mono-dim-2">
-          {pieces.length} SAVED LOCALLY
-        </span>
+    <section aria-label="My pieces" className="flex flex-col gap-[12px]">
+      <div className="flex items-center justify-between gap-[12px]">
+        <div className="flex flex-wrap items-baseline gap-x-[14px] gap-y-[4px]">
+          <h2 className="text-body font-medium tracking-[0.01em]">My pieces</h2>
+          <span className="font-mono text-mono-meta text-mono-dim-2">
+            {pieces.length} SAVED LOCALLY
+          </span>
+        </div>
+        {showUpload ? <UploadControl appearance="ghost" onUpload={onUpload} /> : null}
       </div>
+      {uploadError ? <ErrorPanel>{uploadError}</ErrorPanel> : null}
       {pieces.length === 0 ? (
         <div className="rounded-card border border-dashed border-border-3 p-[30px] text-center text-body-sm text-mono-dim-1">
           {EMPTY_LIBRARY_COPY}
@@ -221,16 +245,19 @@ export interface HomeViewProps {
   catalogUnavailable: boolean;
   library: readonly SavedPieceSummary[];
   uploadError?: string | null;
+  uploadErrorOrigin?: UploadOrigin;
   assetError?: string | null;
   storageWarning?: string | null;
   now: number;
   onQueryChange: (query: string) => void;
   onClear: () => void;
-  onUpload: (file: File) => void;
+  onUpload: (file: File, origin: UploadOrigin) => void;
   onOpenResult: (entry: CatalogEntry) => void;
   onOpenSaved: (piece: SavedPieceSummary) => void;
   onDelete: (piece: SavedPieceSummary) => void;
 }
+
+export type UploadOrigin = "search" | "library";
 
 export function HomeView({
   query,
@@ -239,6 +266,7 @@ export function HomeView({
   catalogUnavailable,
   library,
   uploadError,
+  uploadErrorOrigin = "search",
   assetError,
   storageWarning,
   now,
@@ -265,16 +293,19 @@ export function HomeView({
           {showUpload ? (
             <NoResultsUpload
               query={query}
-              uploadError={uploadError}
+              uploadError={uploadErrorOrigin === "search" ? uploadError : null}
               assetError={assetError}
               catalogUnavailable={catalogUnavailable}
-              onUpload={onUpload}
+              onUpload={(file) => onUpload(file, "search")}
             />
           ) : null}
-          {assetError && !showUpload ? (
+          {!showUpload && (assetError || (uploadError && uploadErrorOrigin === "search")) ? (
             <div className="flex flex-col gap-[18px]">
-              <ErrorPanel>{assetError}</ErrorPanel>
-              <UploadControl onUpload={onUpload} />
+              {assetError ? <ErrorPanel>{assetError}</ErrorPanel> : null}
+              <UploadControl onUpload={(file) => onUpload(file, "search")} />
+              {uploadError && uploadErrorOrigin === "search" ? (
+                <ErrorPanel>{uploadError}</ErrorPanel>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -283,6 +314,9 @@ export function HomeView({
           now={now}
           onOpen={onOpenSaved}
           onDelete={onDelete}
+          onUpload={(file) => onUpload(file, "library")}
+          uploadError={uploadErrorOrigin === "library" ? uploadError : null}
+          showUpload={!catalogUnavailable}
         />
         <a
           className="font-mono text-mono-meta text-mono-dim-2 hover:text-secondary"

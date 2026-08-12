@@ -61,6 +61,114 @@ test("keyboard and waterfall stay viewport-bound at both required sizes", async 
   }
 });
 
+test("[T05a AC3, AC4, AC5, AC7, AC8] volume and header states persist and fit", async ({
+  browser,
+  context,
+  page,
+}) => {
+  await mkdir(resolve("test-results/visual"), { recursive: true });
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/src/testing/e2e/player-harness.html?piece=first");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    const slider = page.getByRole("slider", { name: "Volume" });
+    await expect(slider).toHaveValue("100");
+    await expect(page.getByRole("button", { name: "← Library" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Prelude in C major" })).toBeVisible();
+    await expect(page.getByTestId("hand-legend")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Audio on" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Listen mode" })).toBeVisible();
+
+    const layout = await page.evaluate(() => {
+      const header = document.querySelector<HTMLElement>("[data-testid=player-header]")!;
+      const headerBounds = header.getBoundingClientRect();
+      return {
+        flexWrap: getComputedStyle(header).flexWrap,
+        headerChildrenFit: [...header.children].every((child) => {
+          const bounds = child.getBoundingClientRect();
+          return bounds.left >= headerBounds.left && bounds.right <= headerBounds.right;
+        }),
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+        touchAction: getComputedStyle(
+          document.querySelector<HTMLElement>("input[aria-label=Volume]")!,
+        ).touchAction,
+      };
+    });
+    expect(layout.flexWrap).toBe("nowrap");
+    expect(layout.headerChildrenFit).toBe(true);
+    expect(layout.scrollWidth).toBe(layout.clientWidth);
+    expect(layout.touchAction).toBe("none");
+    await page.screenshot({
+      path: resolve(
+        "test-results/visual",
+        `player-volume-default-${viewport.width}x${viewport.height}.png`,
+      ),
+    });
+
+    const sliderBounds = await slider.boundingBox();
+    if (!sliderBounds) throw new Error("Volume slider has no bounds");
+    await page.mouse.move(sliderBounds.x + sliderBounds.width / 2, sliderBounds.y + 15);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(slider).toHaveValue("50");
+    await page.screenshot({
+      path: resolve(
+        "test-results/visual",
+        `player-volume-half-${viewport.width}x${viewport.height}.png`,
+      ),
+    });
+
+    await page.reload();
+    await expect(page.getByRole("slider", { name: "Volume" })).toHaveValue("50");
+    await page.goto("/src/testing/e2e/player-harness.html?piece=second");
+    await expect(page.getByRole("slider", { name: "Volume" })).toHaveValue("50");
+
+    const storageState = await context.storageState();
+    const restartedContext = await browser.newContext({ storageState, viewport });
+    const restartedPage = await restartedContext.newPage();
+    await restartedPage.goto("/src/testing/e2e/player-harness.html?piece=second");
+    await expect(restartedPage.getByRole("slider", { name: "Volume" })).toHaveValue("50");
+    await restartedContext.close();
+
+    await page.getByRole("button", { name: "Audio on" }).click();
+    await expect(page.getByRole("button", { name: "Muted" })).toBeVisible();
+    await expect(page.getByRole("slider", { name: "Volume" })).toHaveValue("50");
+    await page.screenshot({
+      path: resolve(
+        "test-results/visual",
+        `player-volume-muted-${viewport.width}x${viewport.height}.png`,
+      ),
+    });
+    await page.getByRole("button", { name: "Muted" }).click();
+    await expect(page.getByRole("slider", { name: "Volume" })).toHaveValue("50");
+
+    const restoredSlider = page.getByRole("slider", { name: "Volume" });
+    const restoredBounds = await restoredSlider.boundingBox();
+    if (!restoredBounds) throw new Error("Volume slider has no bounds after reload");
+    await page.mouse.move(restoredBounds.x, restoredBounds.y + 15);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(restoredSlider).toHaveValue("0");
+    await expect(page.getByRole("button", { name: "Audio on" })).toBeVisible();
+    await page.screenshot({
+      path: resolve(
+        "test-results/visual",
+        `player-volume-zero-${viewport.width}x${viewport.height}.png`,
+      ),
+    });
+  }
+});
+
 test("[T07 highlight] prepare and press cues render at both required sizes", async ({ page }) => {
   await mkdir(resolve("test-results/visual"), { recursive: true });
 

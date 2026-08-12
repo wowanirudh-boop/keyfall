@@ -62,8 +62,8 @@ export async function createTonePlaybackRuntime(): Promise<PlaybackRuntime> {
     },
     cancelScheduledNotes,
     getScheduledNoteCount: () => noteTimeouts.size,
-    setMuted(muted) {
-      output.gain.setValueAtTime(muted ? 0 : 1, context.now());
+    setOutputGain(gain) {
+      output.gain.setValueAtTime(gain, context.now());
     },
     startSamplerLoad() {
       if (samplerLoadStarted || disposed) return;

@@ -51,6 +51,7 @@ export const FIXTURE_MANIFEST: CatalogEntry[] = [
       url: "https://example.test/licence",
       sourceUrl: "https://example.test/arranged-study.mid",
       sha256: "2e6839f29b1ea4ae7bedab9223832ba40e51fd637755656065729aca231e2c86",
+      creator: "Example Typesetter",
     },
   },
 ];

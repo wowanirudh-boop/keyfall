@@ -38,7 +38,7 @@ class FakeRuntime implements PlaybackRuntime {
   getScheduledNoteCount() {
     return this.scheduled.length;
   }
-  setMuted() {}
+  setOutputGain() {}
   startSamplerLoad() {}
   dispose() {}
 

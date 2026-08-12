@@ -233,6 +233,86 @@ headline "Open a local score while catalog search is unavailable." All card
 geometry, body copy, upload control, limits hint, and error treatment remain
 unchanged; this adds no new visual language.
 
+### D-018 — The catalog manifest is a fetched asset, not a JS import
+**2026-08-11 · Decided — supersedes T03's static import**
+
+`CatalogRepository` imported `catalog/manifest.json` directly, so the manifest
+was compiled into the entry chunk. Correct at 12 rows; wrong at the several
+hundred T03b brings, where a few hundred KB of JSON would be downloaded by every
+user before first paint, against D-016's 1.5 MB first-load budget.
+
+The manifest becomes a static asset fetched once on Home, precached by the
+service worker in T10 (it is small and search must work offline). Score assets
+remain cached on first open, never precached.
+
+Side effect worth naming: this makes the "catalog search is unavailable" banner
+reachable for a real reason. Until T03a it could only fire because of the
+secure-context bug — a failure state with no legitimate cause. It now covers
+manifest-fetch failure, which is what D-006 and D-017 always described.
+
+### D-019 — Live internet search stays out; the catalog is bundled
+**2026-08-11 · Decided — makes an implicit scoping choice explicit**
+
+The original request asked for sheet music fetched "from public sources", and
+auto-fetch was chosen over upload-only. What shipped is a **bundled** catalog.
+That narrowing happened gradually across the PRD critique loop ("seeded catalog…
+not an MVP gate") and D-001 ("no external search service"), and was never stated
+plainly. Stating it now.
+
+Browser JavaScript cannot query Mutopia or IMSLP directly: neither sends CORS
+headers, neither exposes a search API. Live search therefore requires a proxy
+service — a backend the PRD rules out for a local-first app with no accounts.
+
+The resolution is T03b: bundle Mutopia's full piano collection at build time, so
+search covers hundreds of pieces with no runtime dependency on anyone's server.
+Upload remains the route for modern or copyrighted pieces, which could never be
+auto-fetched legally regardless.
+
+**If bundled breadth proves insufficient**, the escalation is a small Cloudflare
+Worker indexing Mutopia and IMSLP — the Wrangler setup already exists. That
+would supersede D-001's "no backend" clause and needs its own decision entry
+first, including what happens to offline search when the index is remote.
+
+### D-020 — Volume control promoted from P1 into the player
+**2026-08-12 · Decided — supersedes the PRD's deferral**
+
+PRD F3 shipped a mute toggle and marked a volume slider P1. Using the app showed
+that was wrong. The central V1 activity is playing along with the reference
+audio, which requires it **quieter than your own piano** — not silent, not full.
+Mute is binary, and device volume moves everything together, so neither serves
+the case.
+
+The handoff defines no volume control, so this is an additive deviation
+(`tasks/T05a-volume-control.md`). It introduces no new visual language: it
+borrows the seek bar's track, fill and handle styling and sits beside the
+existing mute toggle in the player header.
+
+Two details that decide whether it feels right:
+
+- **Perceptual mapping.** Gain is `position²`, not linear — a linear slider
+  compresses everything useful into the bottom third.
+- **Independent from mute.** Volume 0 and muted are different states, and mute
+  must not silently rewrite the volume the user set.
+
+This is a genuine scope addition, not a bug fix, and it is recorded as one.
+
+### D-021 — Upload has a permanent entry point in My pieces
+**2026-08-12 · Decided — additive to the handoff**
+
+Verified in the running app: with a working catalog and an empty search box,
+**no upload control exists on Home**. Upload lives only inside the §2 no-results
+card, so a learner holding a MIDI file must first search for something that does
+not exist.
+
+D-017 already found this hole in the offline state and fixed it there. This is
+the same defect in the normal state. The fix (`tasks/T05b-upload-entry-point.md`)
+adds a ghost-button upload control to the **My pieces** heading row — the
+learner's own library is where "add a piece" belongs — reusing the existing
+upload component so there is one implementation behind two entry points.
+
+The §2 card keeps its primary blue button; it is the main offer in that state,
+whereas in My pieces it is a secondary action. No new visual language.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation

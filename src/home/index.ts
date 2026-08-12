@@ -10,4 +10,5 @@ export {
   type HomeViewProps,
   type NoResultsUploadProps,
   type UploadControlProps,
+  type UploadOrigin,
 } from "./HomeView";

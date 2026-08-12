@@ -1,11 +1,14 @@
 import { useId, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
 import { alpha, color } from './tokens';
 
+export const GHOST_BUTTON_CLASS_NAME =
+  'cursor-pointer rounded-button border border-border-3 bg-transparent px-[12px] py-[8px] text-small text-secondary hover:border-border-5 hover:text-text';
+
 export function GhostButton({ className = '', type, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       type={type ?? 'button'}
-      className={`cursor-pointer rounded-button border border-border-3 bg-transparent px-[12px] py-[8px] text-small text-secondary hover:border-border-5 hover:text-text ${className}`.trim()}
+      className={`${GHOST_BUTTON_CLASS_NAME} ${className}`.trim()}
       {...props}
     />
   );

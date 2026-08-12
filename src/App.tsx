@@ -10,7 +10,12 @@ import {
 import { HomeRoute, libraryRepository } from './home';
 import type { StoredPiece } from './library';
 import { PlaybackEngine, type PlaybackSnapshot } from './playback';
-import { PlayerView } from './player';
+import {
+  PlayerView,
+  readAudioPreferences,
+  writeMutedPreference,
+  writeVolumePreference,
+} from './player';
 
 function PieceRoute() {
   const { pieceId } = useParams();
@@ -31,6 +36,7 @@ function LoadedPieceRoute({ pieceId }: { pieceId: string }) {
     speed: 1,
     loop: { a: null, b: null },
     muted: false,
+    volume: 1,
   });
 
   useEffect(() => {
@@ -51,6 +57,9 @@ function LoadedPieceRoute({ pieceId }: { pieceId: string }) {
   useEffect(() => {
     if (!piece) return;
     const engine = new PlaybackEngine();
+    const audioPreferences = readAudioPreferences();
+    engine.setMuted(audioPreferences.muted);
+    engine.setVolume(audioPreferences.volume);
     engineRef.current = engine;
     const unsubscribe = engine.subscribe(setPlayback);
     engine.load(piece);
@@ -75,7 +84,13 @@ function LoadedPieceRoute({ pieceId }: { pieceId: string }) {
       playback={playback}
       onLibrary={() => navigate('/')}
       onMutedChange={(muted) => {
+        writeMutedPreference(muted);
         engineRef.current?.setMuted(muted);
+        if (engineRef.current) setPlayback(engineRef.current.getSnapshot());
+      }}
+      onVolumeChange={(volume) => {
+        writeVolumePreference(volume);
+        engineRef.current?.setVolume(volume);
         if (engineRef.current) setPlayback(engineRef.current.getSnapshot());
       }}
       onTogglePlay={() => {

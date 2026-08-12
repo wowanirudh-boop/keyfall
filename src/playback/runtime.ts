@@ -15,7 +15,7 @@ export interface PlaybackRuntime {
   scheduleNote(note: ScheduledPlaybackNote): void;
   cancelScheduledNotes(): void;
   getScheduledNoteCount(): number;
-  setMuted(muted: boolean): void;
+  setOutputGain(gain: number): void;
   startSamplerLoad(): void;
   dispose(): void | Promise<void>;
 }

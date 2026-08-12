@@ -20,6 +20,7 @@ export interface PlaybackSnapshot {
   speed: PlaybackSpeed;
   loop: PlaybackLoop;
   muted: boolean;
+  volume: number;
 }
 
 export interface PlaybackEngineOptions {
@@ -63,6 +64,7 @@ export class PlaybackEngine {
   private speed: PlaybackSpeed = 1;
   private loop: PlaybackLoop = { a: null, b: null };
   private muted = false;
+  private volume = 1;
   private nextNoteIndex = 0;
   private playRequest = 0;
   private disposed = false;
@@ -100,7 +102,7 @@ export class PlaybackEngine {
 
     this.anchorAudioTime = runtime.now();
     this.playing = true;
-    runtime.setMuted(this.muted);
+    runtime.setOutputGain(this.outputGain());
     runtime.startSamplerLoad();
     this.rebuildQueue(this.anchorPosition, this.anchorAudioTime);
     this.timerId = runtime.setInterval(this.tick, UPDATE_INTERVAL_SECONDS);
@@ -173,7 +175,16 @@ export class PlaybackEngine {
   setMuted(muted: boolean) {
     if (this.disposed || muted === this.muted) return;
     this.muted = muted;
-    this.runtime?.setMuted(muted);
+    this.runtime?.setOutputGain(this.outputGain());
+    this.notify();
+  }
+
+  setVolume(volume: number) {
+    if (this.disposed) return;
+    const nextVolume = Math.min(1, Math.max(0, volume));
+    if (nextVolume === this.volume) return;
+    this.volume = nextVolume;
+    this.runtime?.setOutputGain(this.outputGain());
     this.notify();
   }
 
@@ -196,6 +207,7 @@ export class PlaybackEngine {
       speed: this.speed,
       loop: { ...this.loop },
       muted: this.muted,
+      volume: this.volume,
     };
   }
 
@@ -303,7 +315,7 @@ export class PlaybackEngine {
           MINIMUM_NOTE_DURATION_SECONDS,
           (musicalEnd - note.start) / this.speed,
         ),
-        velocity: Math.min(1, Math.max(0, note.velocity / 127)),
+        velocity: Math.min(1, Math.max(0, note.velocity)),
       };
       this.runtime.scheduleNote(scheduled);
       this.nextNoteIndex += 1;
@@ -314,6 +326,10 @@ export class PlaybackEngine {
     if (this.timerId === null || !this.runtime) return;
     this.runtime.clearInterval(this.timerId);
     this.timerId = null;
+  }
+
+  private outputGain() {
+    return this.muted ? 0 : this.volume ** 2;
   }
 
   private notify() {
