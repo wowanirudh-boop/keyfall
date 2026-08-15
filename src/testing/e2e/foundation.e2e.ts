@@ -47,7 +47,7 @@ test('[T10 AC3, AC4] deeplink routes and the Pages fallback resolve through the 
   await expect(page.getByText('Not found')).toBeVisible();
 });
 
-test('[T10 AC5, AC6, AC7, AC9] offline package contains only the intended precache and install metadata', async ({ page }) => {
+test('[T10 AC5, AC6, AC7, AC9, AC11] offline package contains only the intended precache and install metadata', async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
@@ -59,6 +59,7 @@ test('[T10 AC5, AC6, AC7, AC9] offline package contains only the intended precac
     start_url: string;
   };
   const html = readFileSync(resolve('dist/index.html'), 'utf8');
+  const headers = readFileSync(resolve('dist/_headers'), 'utf8');
 
   expect(serviceWorker).toContain('catalog/manifest.json');
   expect(serviceWorker).toMatch(/\.woff2/);
@@ -77,6 +78,9 @@ test('[T10 AC5, AC6, AC7, AC9] offline package contains only the intended precac
   expect(html).toContain('name="apple-mobile-web-app-capable" content="yes"');
   expect(html).toContain('name="apple-mobile-web-app-title" content="Piano Practice Player"');
   expect(html).toContain('rel="apple-touch-icon"');
+  expect(headers.trim()).toBe(
+    '/manifest.webmanifest\n  Content-Type: application/manifest+json',
+  );
 
   await page.goto('/');
   expect(await page.evaluate(() => Boolean(globalThis.crypto?.subtle))).toBe(true);
