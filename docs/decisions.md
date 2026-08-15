@@ -506,6 +506,104 @@ from disagreeing.
 It is a mitigation, not a cure: Für Elise spans A1–E7, so 375px still only buys
 9.4px per key. A piece with a narrower range gains much more.
 
+### D-032 — Playlists are ordered references, and the shipped one is read-only
+**2026-08-13 · Decided — additive to the PRD, F1**
+
+Requested: Rousseau's "Classical" playlist inside the app. That needs a playlist
+feature, and a playlist is a genuinely new product object, so it gets a decision
+before it gets code.
+
+**A playlist is an ordered list of references, not a container of scores.** An
+entry names a catalog id (or a saved-piece id for uploads); the score itself
+stays in the one place it already lives. Two playlists holding the same piece
+therefore cost nothing extra, and a piece re-imported later does not
+desynchronise from a stale copy inside a playlist row.
+
+**An entry may point at a piece the learner has never opened.** Tapping it runs
+the same import-and-save path as a search result. This is the point: the
+Rousseau list is mostly aspiration, and a playlist that could only hold pieces
+you had already played would be useless for it.
+
+**The seeded playlist is read-only, with Duplicate as the escape hatch.** It is
+generated from `catalog/playlists/rousseau-classical.tsv` at build time. If the
+user could edit it in place, the next catalog build would silently overwrite
+their edits or, worse, be unable to and drift. Read-only plus copy-to-edit is
+the only version of this that stays honest across rebuilds.
+
+**Auto-advance is deliberately not in the first cut.** Playing straight through
+a playlist sounds like a small addition and is not: it needs answers for what
+happens at the end of a piece, whether an A–B loop suppresses the advance,
+whether speed carries to the next piece, and what the transport shows. Those are
+transport decisions, not playlist decisions. Shipping the list first tells us
+whether continuous play is even wanted.
+
+This does brush against the PRD non-goal "no gamification / curriculum /
+lessons". A playlist is neither — it is an ordering the learner controls, with
+no progression, no unlocking and no grading. The non-goal stands.
+
+### D-033 — Audio files are not an import format, and the rejection says why
+**2026-08-13 · Decided — no**
+
+Asked: why is MP3 not supported, and can it be added?
+
+The waterfall needs **symbolic** note data — pitch, onset, duration, and ideally
+which staff each note is on. MIDI and MusicXML carry all four. MP3, WAV, M4A and
+FLAC carry none of them; they carry a waveform. Adding them is not a parser, it
+is **automatic music transcription**, an ML problem with an error rate.
+
+The PRD already answers the adjacent question. §4 rules out microphone listening
+because "polyphonic audio transcription is far less accurate" than MIDI, and §4
+rules out PDF/OMR for the same class of reason: an error-prone converter in the
+middle of a practice tool teaches you the errors.
+
+The strongest candidate if this is ever revisited is Spotify's **Basic Pitch**
+(Apache-2.0, runs locally in the browser, no backend, so it fits local-first).
+It was rejected for now on three counts. Piano transcription puts notes in the
+wrong octave and loses inner voices under pedal, and a practice player that
+shows a wrong note is worse than one that shows nothing. It produces **no staff
+information**, so hand colouring — the feature D-026 exists to serve — would be
+dead on every transcribed piece. And it is a ~20 MB model against an offline
+budget that already refuses to precache 1 MB of piano samples (D-008).
+
+Adding more *symbolic* formats (`.kar`, `.rmi`, `.abc`, `.krn`) was also
+considered and dropped: cheap to build, but nothing anyone actually has is in
+them.
+
+What ships instead is honesty. The import rejection currently lists the accepted
+extensions, which reads as an arbitrary allowlist. It now says why: an audio
+file has no note data in it, and points at where to find a MIDI or MusicXML of
+the same piece. Revisit only if the answer changes from "the format cannot carry
+it" to "we chose not to".
+
+### D-034 — A second catalog source, gated on its licence
+**2026-08-13 · Decided — pending verification**
+
+Resolving the 72-item Rousseau list against the shipped catalog found 24 rows
+present (23 distinct works — Clair de Lune is listed twice) and 37 absent. They are absent because **Mutopia does not have them**: it
+carries four Liszt works (all Consolations), no Ravel, no Vivaldi, and nothing
+from The Nutcracker. No amount of re-running the existing build finds them.
+
+**piano-midi.de** (Bernd Krueger) is the proposed second source: ~300 classical
+piano MIDI performances covering most of the gap, and reported by several
+secondary sources as CC-BY-SA with attribution to the sequencer. That licence
+family is already handled — 210 of the 596 shipped rows are CC-BY-*, each
+carrying `licence.creator`, and `catalog/LICENCES.md` already records them.
+
+**This is provisional.** The licence page could not be read from the machine
+that wrote this entry: piano-midi.de is HTTP-only and the request was refused
+by the egress proxy. T13's first acceptance criterion is to read the terms
+first-hand and stop if they do not permit redistribution. Recording a
+second-hand licence claim as fact is exactly the mistake PRD F2's guardrail
+exists to prevent.
+
+Where both sources carry the same work, Mutopia wins: it is an engraving, so its
+staff split is real hand data rather than an inference from a performance.
+
+Not candidates, and why: **IMSLP** licences vary per upload and most content is
+page scans, so it is viable file-by-file at best. **OpenScore** is CC0 but its
+corpora are Lieder and string quartets, not solo piano. **MuseScore.com** is
+user-uploaded with mixed licences and a ToS that forbids scraping.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation
@@ -517,4 +615,6 @@ It is a mitigation, not a cure: Für Elise spans A1–E7, so 375px still only bu
 | O-3 | Measured clock offset and jitter on the actual Roland RP302 in Chrome and Edge. PRD R6. | `tasks/T08-listen-grading.md` |
 | O-4 | Real-world ±300ms tolerance suitability at 0.25×. PRD R5. | `tasks/T08-listen-grading.md` |
 | O-6 | ~~Should hand colours be configurable?~~ **Closed by D-026** — yes, and the hand *mapping* with them. | Closed 2026-08-13 |
+| O-8 | Does piano-midi.de's licence actually permit redistribution? Read `copy.htm` first-hand. **Blocking for T13.** | `tasks/T13-catalog-second-source.md` |
+| O-9 | Is continuous play through a playlist wanted, and what happens to loop/speed at a piece boundary? | after T12 ships and is used |
 | O-5 | Per-asset redistribution licence for all 12 seed pieces. PRD R7 — **blocking for the MVP gate**. | `tasks/T03-catalog-home.md`, started day 1 |

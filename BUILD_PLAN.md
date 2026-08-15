@@ -214,6 +214,30 @@ the denominator; 26 buckets over the **full** piece duration; bucket click →
 player at that time, paused, 0.5×. Store completed and interrupted attempts,
 newest first.
 
+### T11 — Mobile audio, hand colours, sorting and Home navigation ✅ done
+
+Shipped 2026-08-13, **outside this harness** — see `tasks/T11-*.md` for the
+retrospective and D-024 … D-031 for the reasoning. Eight changes: iOS playback
+audio session, hand assignment beyond two tracks, selectable hand colours and
+mapping, a player header that fits 375px, numeric catalog sorting with a visible
+sort control, Home reordered around the learner's own pieces, practice speed no
+longer reset on re-open, and a keyboard that windows to the piece's range on
+narrow screens.
+
+### T12 — Playlists
+
+Named, ordered lists of references to catalog or uploaded pieces, plus one
+seeded read-only playlist built from `catalog/playlists/*.tsv`. Dexie goes to
+version 2 with an additive `playlists` table. No auto-advance — deferred to O-9.
+D-032.
+
+### T13 — A second catalog source
+
+Mutopia does not carry 37 of the 72 rows in the Rousseau list. Refactors
+`scripts/build-catalog.mjs` behind a source adapter and adds piano-midi.de,
+**gated on reading its licence first-hand** (O-8). The Mutopia path must
+regenerate byte-identical. D-034.
+
 ### T10 — Offline packaging and deployment
 Service worker caches shell, fonts and catalog manifest; score assets cached on
 first open; sampler excluded from precache (D-008). Verify My Pieces and playback

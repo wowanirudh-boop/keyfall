@@ -1,0 +1,106 @@
+# Seed playlist — "Classical Rousseau"
+#
+# Source: https://www.youtube.com/playlist?list=PLFv3ZQw-ZPxju8P84jZ0pQ_zb8GR6eFh6
+# Captured 2026-08-13, 72 playlist items, in playlist order.
+#
+# The playlist contains 72 items and 71 distinct works: Debussy's Clair de Lune
+# appears twice, at positions 9 and 69. Both rows are kept so this file stays a
+# faithful capture. The build deduplicates by catalog_id when it emits
+# playlists.json, keeping first-occurrence order (D-032 makes adds idempotent).
+#
+# This file lists WORKS, not Rousseau's recordings. Rousseau's arrangements and
+# performances are his own copyrighted work and are never fetched, embedded or
+# redistributed — only the underlying compositions, which are public domain, and
+# only from sources whose own licences permit redistribution (PRD F2).
+#
+# Columns are tab-separated:
+#   status     have | verify | missing | excluded
+#   composer   canonical "Surname, Forename" as used in catalog/manifest.json
+#   work       the work as Rousseau titles it, normalised
+#   catalog_id manifest id when status is have/verify, otherwise empty
+#   note       why, for verify/missing/excluded
+#
+# Trailing empty columns may be absent — a row with no note ends after
+# catalog_id. Parsers must pad to five fields, not index blindly.
+#
+# status meanings:
+#   have      resolved to a shipped catalog row; nothing to do
+#   verify    a catalog row is very likely this work, but the row's title does
+#             not name the opus. Confirm against the row's Mutopia page
+#             (piece-info.cgi?id=<mutopiaId>) and then set to have or missing.
+#   missing   public-domain work absent from the catalog; source it (T13)
+#   excluded  cannot be shipped, or is not a single work. Never auto-source.
+#
+status	composer	work	catalog_id	note
+have	Chopin, Frédéric	Ballade No. 4 in F minor, Op. 52	ballade-number-4
+excluded	—	The Best of Piano (compilation)		Playlist item is a multi-hour compilation video, not a work.
+missing	Liszt, Franz	Mazeppa (Transcendental Étude No. 4, S.139)		Catalog holds only 4 Liszt works, all Consolations.
+missing	Tchaikovsky, Pyotr Ilyich	Waltz of the Flowers (The Nutcracker, piano arr.)		Catalog Tchaikovsky is Album for the Young / The Seasons only.
+missing	Scriabin, Alexander	Étude Op. 8 No. 12		Catalog Scriabin is Preludes Op. 11 / 16 / 59 only.
+missing	Debussy, Claude	La cathédrale engloutie (Préludes I, No. 10)		Catalog Debussy is 4 rows: two Arabesques, Clair de Lune, Préludes I No. 4.
+have	Mussorgsky, Modest	Pictures at an Exhibition	pictures-at-an-exhibition	Catalog row is 237s — confirm it covers Baba Yaga and Great Gate, or treat as partial.
+missing	Chopin, Frédéric	Étude Op. 25 No. 9 ('Butterfly')		Only one G-flat étude in the catalog and its 90s duration fits Op. 10 No. 5, not this.
+have	Debussy, Claude	Clair de Lune (Suite bergamasque)	suite-bergamasque-clair-de-lune
+missing	Ravel, Maurice	Pavane pour une infante défunte		No Ravel at all in the catalog.
+missing	Bach, Johann Sebastian	Toccata and Fugue in D minor, BWV 565 (piano arr.)		Source a public-domain piano transcription; Busoni's is PD (d. 1924).
+missing	Chopin, Frédéric	Étude Op. 25 No. 5 ('Wrong Note')		E minor; no E minor étude in the catalog.
+missing	Tchaikovsky, Pyotr Ilyich	Dance of the Sugar Plum Fairy (The Nutcracker, piano arr.)
+missing	Rachmaninoff, Sergei	Moment Musicaux Op. 16 No. 4 in E minor		Catalog Rachmaninoff is Preludes Op. 3 No. 2 and Op. 23 only.
+missing	Ravel, Maurice	Gaspard de la nuit (complete)
+missing	Mozart, Wolfgang Amadeus	Piano Sonata No. 8 in A minor, K. 310 (1st mvt)		Catalog Mozart sonatas are K. 309, K. 331, K. 457, K. 545.
+have	Chopin, Frédéric	Prelude Op. 28 No. 15 ('Raindrop')	prelude-op-28-no-15
+missing	Chopin, Frédéric	Polonaise Op. 53 in A-flat ('Heroic')
+excluded	Kreisler, Fritz	Liebesleid (arr. Rachmaninoff)		Kreisler died 1962; the arrangement is not clearly public domain. Do not source without a licence check.
+missing	Ravel, Maurice	Scarbo (Gaspard de la nuit, No. 3)		Covered by the Gaspard row above if sourced complete.
+missing	Mozart, Wolfgang Amadeus	12 Variations on 'Ah vous dirai-je, Maman', K. 265
+missing	Liszt, Franz	Hungarian Rhapsody No. 2, S.244
+missing	Debussy, Claude	Rêverie, L. 68
+have	Bach, Johann Sebastian	Prelude in C minor, BWV 847 (WTC I No. 2)	das-wohltemperierte-clavier-i-praeludium-ii	Prelude only; the catalog does not ship the paired fugue.
+have	Liszt, Franz	Consolation No. 3, S.172	consolation-s-172-no-3
+missing	Schubert, Franz	Ständchen / Serenade (arr. Liszt, S.560 No. 7)
+verify	Chopin, Frédéric	Étude Op. 25 No. 12 ('Ocean')	etude-c-moll	One C minor étude in the catalog (125s). Could be this or Op. 10 No. 12. Confirm the opus from its Mutopia page; the other one becomes missing.
+missing	Debussy, Claude	Reflets dans l'eau (Images I)
+excluded	—	Top 10 Most Difficult Piano Pieces		Compilation video, not a work.
+missing	Vivaldi, Antonio	Summer (The Four Seasons, piano arr.)		No Vivaldi in the catalog; needs a public-domain piano transcription.
+have	Mozart, Wolfgang Amadeus	Piano Sonata No. 16 in C, K. 545 (1st mvt)	sonata-facile-first-movement
+missing	Chopin, Frédéric	Waltz Op. 64 No. 2 in C-sharp minor		Catalog has Op. 64 No. 1 only.
+verify	Chopin, Frédéric	Marche funèbre (Sonata No. 2, 3rd mvt)	sonate-2-b-moll	Catalog row is 82s — far short of the movement, let alone the sonata. Check what it actually contains.
+missing	Bach, Johann Sebastian	Air on the G String (BWV 1068, piano arr.)		The catalog's 'Air — BWV Anh. 131' is a different work.
+missing	Liszt, Franz	Hungarian Rhapsody No. 6, S.244
+verify	Chopin, Frédéric	Étude Op. 10 No. 1 ('Waterfall')	etude-c-dur	One C major étude in the catalog (108s); Op. 10 No. 7 is also C major. Confirm the opus.
+missing	Vivaldi, Antonio	Spring (The Four Seasons, piano arr.)
+missing	Chopin, Frédéric	Étude Op. 10 No. 3 ('Tristesse')		E major; no E major étude in the catalog.
+excluded	—	The Most Insane Piano Pieces Vol. 2		Compilation video, not a work.
+missing	Vivaldi, Antonio	Winter (The Four Seasons, piano arr.)
+have	Petzold, Christian	Minuet in G major, BWV Anh. 114	menuet-bwv-anh-114	Catalogued under Bach, as it is nearly everywhere; the attribution to Petzold is the modern one.
+excluded	Rousseau	Happy Birthday if it were written by Liszt		Rousseau's own composition, and 'Happy Birthday' arrangements carry their own history. Not sourceable.
+verify	Chopin, Frédéric	Étude Op. 10 No. 12 ('Revolutionary')	etude-c-moll	Same C minor row as Op. 25 No. 12 above — only one of the two is in the catalog.
+have	Chopin, Frédéric	Étude Op. 10 No. 5 ('Black Keys')	etude-ges-dur	90s fits Op. 10 No. 5; confirm rather than assume.
+have	Rachmaninoff, Sergei	Prelude Op. 23 No. 5 in G minor	prelude-op-23-no-5
+missing	Chopin, Frédéric	Nocturne No. 20 in C-sharp minor (posth.)
+have	Chopin, Frédéric	Fantaisie-Impromptu, Op. 66	fantaisie-impromptu
+missing	Liszt, Franz	Liebestraum No. 3, S.541
+have	Chopin, Frédéric	Ballade No. 1 in G minor, Op. 23	premiere-ballade	'Première Ballade' is Ballade No. 1.
+missing	Liszt, Franz	Un Sospiro (Concert Étude No. 3, S.144)
+excluded	Leontovych, Mykola	Carol of the Bells		The work is public domain; the arrangement everyone plays is Wilhousky (1936) and is not. Skip unless a PD arrangement is found.
+have	Chopin, Frédéric	Prelude Op. 28 No. 6 in B minor	prelude-op-28-no-6
+have	Bach, Johann Sebastian	Prelude in C major, BWV 846 (WTC I No. 1)	das-wohltemperierte-clavier-i-praeludium-i
+excluded	—	The Most Insane Piano Pieces Vol. 1		Compilation video, not a work.
+missing	Beethoven, Ludwig van	Sonata No. 14 'Moonlight' (complete)		Catalog ships the 1st movement only; source the 2nd and 3rd.
+missing	Chopin, Frédéric	Étude Op. 25 No. 11 ('Winter Wind')		The catalog's only A minor étude is 82s — far too short for Winter Wind.
+have	Chopin, Frédéric	Waltz Op. 64 No. 1 ('Minute')	valse-op-64-no-1-minute-waltz
+missing	Beethoven, Ludwig van	Sonata No. 14 'Moonlight' (3rd mvt)
+missing	Beethoven, Ludwig van	Sonata No. 14 'Moonlight' (2nd mvt)
+missing	Chopin, Frédéric	Étude Op. 10 No. 4 ('Torrent')		C-sharp minor; not in the catalog.
+have	Chopin, Frédéric	Prelude Op. 28 No. 4 in E minor	prelude-op-28-no-4-suffocation
+have	Rachmaninoff, Sergei	Prelude Op. 3 No. 2 in C-sharp minor	prelude-in-c-minor	The id reads 'c-minor' because the slug drops the sharp; the row is the C-sharp minor prelude.
+missing	Liszt, Franz	La Campanella (Grandes études de Paganini No. 3, S.141)
+have	Beethoven, Ludwig van	Sonata No. 14 'Moonlight' (1st mvt)	sonata-no-14-moonlight-1st-movement-adagio-sostenuto
+missing	Rimsky-Korsakov, Nikolai	Flight of the Bumblebee (arr. Rachmaninoff)		Rachmaninoff's 1929 transcription; confirm public-domain status for the edition sourced.
+have	Satie, Erik	Gymnopédie No. 1	gymnopedie-no-1
+have	Debussy, Claude	Arabesque No. 1	premiere-arabesque
+have	Beethoven, Ludwig van	Für Elise	fur-elise
+have	Debussy, Claude	Clair de Lune (Suite bergamasque)	suite-bergamasque-clair-de-lune	Second occurrence — playlist position 69. Same work as position 9; the build keeps one entry.
+have	Chopin, Frédéric	Nocturne Op. 9 No. 2 in E-flat	nocturne-op-9-no-2
+have	Mozart, Wolfgang Amadeus	Rondo alla Turca (Sonata K. 331, 3rd mvt)	sonate-opus-kv-331-rondo-alla-turca
+missing	Rachmaninoff, Sergei	Étude-Tableau Op. 39 No. 6 ('Little Red Riding Hood')
