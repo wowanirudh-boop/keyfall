@@ -290,7 +290,7 @@ async function indexedDbHasPiece(page: Page, pieceId: string) {
   );
 }
 
-test("search opens, practices offline, reloads from library without parsing, and deletes", async ({
+test("[T10 AC1, AC2, AC5, AC7] offline cold boot opens and plays a saved piece with local fonts", async ({
   page,
   context,
 }) => {
@@ -314,6 +314,7 @@ test("search opens, practices offline, reloads from library without parsing, and
   await page.getByRole("button", { name: "Set B" }).click();
   await expect(page.getByTestId("loop-region")).toBeVisible();
 
+  await page.evaluate(async () => navigator.serviceWorker.ready);
   await context.setOffline(true);
   await page.getByRole("button", { name: "Play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
@@ -321,17 +322,44 @@ test("search opens, practices offline, reloads from library without parsing, and
 
   await page.getByRole("button", { name: "← Library" }).click();
   await expect(page.getByText("1 SAVED LOCALLY")).toBeVisible();
+  await page.reload();
+  expect(await page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  expect(
+    await page.evaluate(async () => (await fetch("/catalog/scores/fur-elise.mid")).status),
+  ).toBe(200);
+
   let workerRequests = 0;
+  let failedSampleRequests = 0;
   page.on("request", (request) => {
     if (request.url().includes("import.worker")) workerRequests += 1;
   });
+  page.on("requestfailed", (request) => {
+    if (request.url().includes("/audio/salamander/")) failedSampleRequests += 1;
+  });
+
+  await context.setOffline(true);
   await page.reload();
   await expect(page.getByText("1 SAVED LOCALLY")).toBeVisible();
+  expect(
+    await page.evaluate(async () =>
+      Promise.all([
+        document.fonts.load('400 16px "Space Grotesk"'),
+        document.fonts.load('500 16px "IBM Plex Mono"'),
+      ]).then((fonts) => fonts.every((faces) => faces.length > 0)),
+    ),
+  ).toBe(true);
+  expect(
+    await page.evaluate(async () => (await fetch("/catalog/scores/fur-elise.mid")).status),
+  ).toBe(200);
   await page.getByRole("button", { name: /^Für Elise BEETHOVEN, LUDWIG VAN/ }).click();
   await expect(page.getByRole("heading", { name: "Für Elise" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+  await page.getByRole("button", { name: "Play" }).click();
+  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+  await expect.poll(() => failedSampleRequests).toBeGreaterThan(0);
   expect(workerRequests).toBe(0);
 
+  await context.setOffline(false);
   await page.getByRole("button", { name: "← Library" }).click();
   await page.getByRole("button", { name: "Delete Für Elise" }).click();
   await expect(page.getByText("0 SAVED LOCALLY")).toBeVisible();

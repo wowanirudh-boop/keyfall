@@ -26,13 +26,15 @@ describe('application routes', () => {
     expect(
       await screen.findByRole('heading', { name: 'This piece is not in My pieces.' }),
     ).toBeTruthy();
+    expect(screen.getByRole('link', { name: '← Home' }).getAttribute('href')).toBe('/');
   });
 
-  it('renders the report route shell with its route parameter', () => {
+  it('renders the missing-attempt state for an unknown report', () => {
     renderRoute('/reports/attempt-42');
 
-    expect(screen.getByText('Report')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Attempt attempt-42' })).toBeTruthy();
+    expect(screen.getByText('Not found')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'This attempt is not on this device.' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '← Home' }).getAttribute('href')).toBe('/');
   });
 
   it('renders not-found for an unknown route', () => {

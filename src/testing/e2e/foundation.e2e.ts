@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { build, preview, type PreviewServer } from 'vite';
 
 let server: PreviewServer;
@@ -26,17 +28,74 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('direct deep links and the fallback route render through the SPA', async ({ page }) => {
+test('[T10 AC3, AC4] deeplink routes and the Pages fallback resolve through the production SPA', async ({ page }) => {
+  expect(readFileSync(resolve('dist/_redirects'), 'utf8').trim()).toBe('/* /index.html 200');
+
   await page.goto('/pieces/anything');
   await expect(
     page.getByRole('heading', { name: 'This piece is not in My pieces.' }),
   ).toBeVisible();
+  await expect(page.getByRole('link', { name: '← Home' })).toHaveAttribute('href', '/');
 
   await page.goto('/reports/attempt-42');
-  await expect(page.getByText('Report')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'This attempt is not on this device.' }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: '← Home' })).toHaveAttribute('href', '/');
 
   await page.goto('/missing');
   await expect(page.getByText('Not found')).toBeVisible();
+});
+
+test('[T10 AC5, AC6, AC7, AC9] offline package contains only the intended precache and install metadata', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  const serviceWorker = readFileSync(resolve('dist/sw.js'), 'utf8');
+  const manifest = JSON.parse(readFileSync(resolve('dist/manifest.webmanifest'), 'utf8')) as {
+    display: string;
+    icons: Array<{ purpose?: string; sizes: string; src: string; type?: string }>;
+    start_url: string;
+  };
+  const html = readFileSync(resolve('dist/index.html'), 'utf8');
+
+  expect(serviceWorker).toContain('catalog/manifest.json');
+  expect(serviceWorker).toMatch(/\.woff2/);
+  expect(serviceWorker).toContain('catalog\\/scores');
+  expect(serviceWorker).toContain('clientsClaim');
+  expect(serviceWorker).not.toContain('audio/salamander');
+  expect(serviceWorker).not.toContain('import.worker');
+  expect(html).not.toContain('SKIP_WAITING');
+  expect(manifest).toMatchObject({ display: 'standalone', start_url: '/' });
+  expect(manifest.icons).toEqual([
+    { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: '/icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+  ]);
+  expect(html).toContain('name="theme-color"');
+  expect(html).toContain('name="apple-mobile-web-app-capable" content="yes"');
+  expect(html).toContain('name="apple-mobile-web-app-title" content="Piano Practice Player"');
+  expect(html).toContain('rel="apple-touch-icon"');
+
+  await page.goto('/');
+  expect(await page.evaluate(() => Boolean(globalThis.crypto?.subtle))).toBe(true);
+  expect(
+    await page.evaluate(() =>
+      document.querySelector('link[rel="manifest"]')?.getAttribute('href'),
+    ),
+  ).toBe('/manifest.webmanifest');
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+
+  const session = await page.context().newCDPSession(page);
+  const installability = await session.send('Page.getInstallabilityErrors') as {
+    installabilityErrors: unknown[];
+  };
+  expect(installability.installabilityErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
 });
 
 test('[T05c AC1] header and all UI font weights load locally with external network blocked', async ({ page }) => {

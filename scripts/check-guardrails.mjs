@@ -96,6 +96,12 @@ const RULES = [
     re: /from\s+['"]vinext|['"]use server['"]|next\/(navigation|router|link|image|font)/,
     msg: 'reintroduces Vinext / Next / RSC, which D-001 removed',
   },
+  {
+    id: 'pwa-icon-import',
+    // D-035: install icons are OS packaging and must never enter the app UI.
+    re: /['"`](?:\/icons\/|(?:\.\.\/)*public\/icons\/)/,
+    msg: 'references a packaging-only PWA icon from application source',
+  },
 ];
 
 /**

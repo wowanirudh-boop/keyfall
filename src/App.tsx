@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   BrowserRouter,
+  Link,
   Route,
   Routes,
   useLocation,
   useNavigate,
   useParams,
 } from 'react-router-dom';
+import { GHOST_BUTTON_CLASS_NAME } from './design/primitives';
 import { HomeRoute, libraryRepository } from './home';
 import type { StoredPiece } from './library';
 import { PlaybackEngine, type PlaybackSnapshot } from './playback';
@@ -21,7 +23,7 @@ import {
 function PieceRoute() {
   const { pieceId } = useParams();
 
-  if (!pieceId) return <RouteShell label="Not found" title="This piece is not in My pieces." />;
+  if (!pieceId) return <MissingRecord title="This piece is not in My pieces." />;
   return <LoadedPieceRoute key={pieceId} pieceId={pieceId} />;
 }
 
@@ -74,7 +76,7 @@ function LoadedPieceRoute({ pieceId }: { pieceId: string }) {
   }, [piece]);
 
   if (piece === null) return <RouteShell label="Library" title="Opening piece…" />;
-  if (piece === undefined) return <RouteShell label="Not found" title="This piece is not in My pieces." />;
+  if (piece === undefined) return <MissingRecord title="This piece is not in My pieces." />;
 
   const storageWarning = (location.state as { storageWarning?: boolean } | null)?.storageWarning
     ? 'This piece is usable for this session but was not saved locally because browser storage is full.'
@@ -113,17 +115,20 @@ function LoadedPieceRoute({ pieceId }: { pieceId: string }) {
 }
 
 function ReportRoute() {
-  const { attemptId } = useParams();
-
-  return <RouteShell label="Report" title={`Attempt ${attemptId}`} />;
+  return <MissingRecord title="This attempt is not on this device." />;
 }
 
-function RouteShell({ label, title }: { label: string; title: string }) {
+function MissingRecord({ title }: { title: string }) {
+  return <RouteShell label="Not found" title={title} homeLink />;
+}
+
+function RouteShell({ label, title, homeLink = false }: { label: string; title: string; homeLink?: boolean }) {
   return (
     <main className="grid min-h-screen place-items-center overflow-x-hidden px-[32px] py-[40px]">
-      <section className="w-full max-w-[880px] rounded-card border border-border-2 bg-card p-[26px]">
+      <section className="flex w-full max-w-[880px] flex-col items-start rounded-card border border-border-2 bg-card p-[26px]">
         <span className="font-mono text-mono-label uppercase tracking-[0.1em] text-mono-dim-2">{label}</span>
         <h1 className="mt-[8px] text-subheading font-medium">{title}</h1>
+        {homeLink ? <Link className={`${GHOST_BUTTON_CLASS_NAME} mt-[18px]`} to="/">← Home</Link> : null}
       </section>
     </main>
   );
