@@ -93,6 +93,21 @@ deployment). The 7.9 MB Verovio worker is lazy — it loads only when a MusicXML
 file is imported — so it never touches first paint. Do not let a service-worker
 precache swallow it; that is the same mistake as precaching the samples (D-008).
 
+**Deploy as Workers Static Assets, Git-connected (D-037, supersedes D-036).**
+Cloudflare has put Pages into maintenance mode; the dashboard no longer offers a
+Git-connected Pages project, which is why there is no *Build output directory*
+field. Two files in the repo replace the dashboard fields:
+
+- `wrangler.jsonc` — assets-only, **no `main`**, with
+  `not_found_handling: "single-page-application"` for deep links.
+- `.node-version` containing `22` — `package.json` requires `node >=22.13.0` and
+  the build image defaults lower. A file beats hunting for a build-variables
+  field in a dashboard that keeps changing.
+
+Dashboard settings then reduce to: repository, project name
+`piano-practice-player`, build command `npm run build`, deploy command
+`npx wrangler deploy`.
+
 **Two things that will break the deploy if missed:**
 
 1. **SPA fallback.** `_redirects` with `/* /index.html 200`, or the framework
@@ -142,6 +157,24 @@ Also add, while deploying:
 10. `npm run check:guardrails` fails if anything under `src/` imports a file
     from `public/icons/`, and passes as shipped. The D-035 exception stays a
     packaging exception.
+11. **`/manifest.webmanifest` is served with `Content-Type:
+    application/manifest+json`** on the deployed origin. Verified 2026-08-13 on
+    the live site: Cloudflare Pages sends **no `Content-Type` at all** for
+    `.webmanifest`, while it correctly sends `image/png` for the icons — and
+    `x-content-type-options: nosniff` is set, so the browser is forbidden from
+    guessing. Chrome tolerated it (the manifest fetched, parsed and linked), but
+    an untyped manifest behind `nosniff` is not something to rely on, and other
+    browsers are stricter. Fix with a `public/_headers` file — the same Pages
+    mechanism as the `_redirects` already shipped:
+
+    ```
+    /manifest.webmanifest
+      Content-Type: application/manifest+json
+    ```
+
+    Check it with `curl -sSI https://<origin>/manifest.webmanifest`, not by
+    inspecting the file in `dist/` — the file was always fine; the header was
+    missing.
 
 ## Verify
 
@@ -154,13 +187,22 @@ npm run check
 
 ## Done
 
-- [ ] Ten criteria verified against the **production build**, not dev
+- [ ] Eleven criteria verified against the **production build**, not dev
 - [ ] Exactly four files under `public/icons/`, no more (D-035)
 - [ ] Precache manifest inspected; no sample assets in it, total size recorded
 - [ ] Deployed once and deep links confirmed on the live URL
 - [ ] Salamander CC-BY 3.0 attribution visible in the shipped UI
 
 ## Traps
+
+- **Verify headers on the deployed origin, not files in `dist/`.** A correct
+  file served with the wrong (or missing) `Content-Type` is a different bug
+  and `dist/` cannot show it. AC11 exists because that gap was reported as a
+  pass.
+- **A build log naming a `wrangler.jsonc` that is not in the repo means
+  Cloudflare generated one** — the config is missing or not being found. Fix
+  that rather than chasing the `workerd` version mismatch it reports
+  downstream (D-037).
 
 - Verifying offline in `npm run dev` proves nothing — Vite's dev server bypasses
   the service worker. Always test `npm run preview` or the deployed build.

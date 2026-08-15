@@ -55,8 +55,12 @@ start/end seconds, velocity, `left | right | unknown` hand) · `ImportNotice` ·
 ### Dependencies (the approved list — AGENTS.md #6 refers here)
 
 **Already in the repo, keep:** `react` 19, `react-dom` 19, `typescript`, `vite`,
-`tailwindcss` 4 + `@tailwindcss/postcss` (D-015), `wrangler` +
-`@cloudflare/vite-plugin`, `@vitejs/plugin-react`, the ESLint set.
+`tailwindcss` 4 + `@tailwindcss/postcss` (D-015), `wrangler`,
+`@vitejs/plugin-react`, the ESLint set.
+
+**Remove (D-036):** `@cloudflare/vite-plugin` — unused since D-001 dropped
+Vinext, and it steers Cloudflare's build detection toward a Workers deploy
+this static site must not take.
 
 **Already in the repo, remove (D-001):** `vinext`, `@vitejs/plugin-rsc`,
 `react-server-dom-webpack`, `@next/eslint-plugin-next`, and `next-env.d.ts` /
