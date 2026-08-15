@@ -47,8 +47,11 @@ These are not preferences. Violating one is a failed task.
 6. **No new dependencies** beyond the approved list in `BUILD_PLAN.md`
    §Dependencies without a decision entry. Specifically: no icon library, no
    state management library, no charting library, no CSS-in-JS. **Tailwind 4
-   stays** (D-015). Glyphs are text characters (`▶ ❙❙ ← → ♯ ·`); there are no
-   image or SVG assets in this product.
+   stays** (D-015). Glyphs are text characters (`▶ ❙❙ ← → ♯ ·`); the **user
+   interface contains no image or SVG assets**. One carve-out, and only one:
+   the PWA install icons under `public/icons/` (D-035). They are OS packaging,
+   never rendered by the app, and `check:guardrails` enforces that nothing
+   under `src/` imports them.
    **Vinext, Next and React Server Components are removed** (D-001) — do not
    reintroduce them, and do not add `'use server'` or `next/*` imports.
 7. **No backend.** No API routes, database, secrets, telemetry or external

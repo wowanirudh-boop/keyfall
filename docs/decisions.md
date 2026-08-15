@@ -604,6 +604,48 @@ page scans, so it is viable file-by-file at best. **OpenScore** is CC0 but its
 corpora are Lieder and string quartets, not solo piano. **MuseScore.com** is
 user-uploaded with mixed licences and a ToS that forbids scraping.
 
+### D-035 — PWA install icons are the one image-asset exception
+**2026-08-13 · Decided — resolves a conflict Codex blocked on**
+
+T10 AC7 asked for an installable PWA. AGENTS.md #6 says the product has no image
+or SVG assets. Codex stopped and reported the conflict rather than picking a
+side, which is the harness working.
+
+Both were verified before deciding. **Chrome's installability criteria require a
+manifest with a 192×192 and a 512×512 icon**; there is no icon-free route to an
+install prompt. **iOS Safari uses `apple-touch-icon`** for Add to Home Screen and
+falls back to a screenshot of the page without one — and an iPad home-screen
+launch is the whole point of T10 for this user.
+
+Rule 6 wins on intent and loses on letter. It sits beside "no icon library", and
+its purpose is that the *interface* is built from design tokens and text glyphs
+rather than imported artwork. A home-screen icon is never rendered by the app at
+all — it is packaging consumed by the OS launcher. So the rule is narrowed to
+what it always meant, and the exception is made explicit and small:
+
+- **Exactly four files**, in `public/icons/`: `icon-192.png`, `icon-512.png`,
+  `icon-512-maskable.png`, `apple-touch-icon.png` (180×180).
+- Referenced from **two places only**: the generated web app manifest and
+  `index.html`. Nothing under `src/` may import them, and `check:guardrails`
+  gains a rule that fails the build if anything does.
+- The artwork is the wordmark reduced to its mark: `color.handRight` on
+  `color.bg`, both read from `tokens.ts`. No new visual language, no third
+  colour. If `color.handRight` ever changes, the icons are regenerated.
+- Committed as files rather than generated at build time. Generating them needs
+  a raster library, and adding a dependency to avoid four
+  small PNGs trades a small exception for a larger one.
+
+Rejected: dropping installability to keep the rule absolute. That costs the iPad
+home-screen launch, which is the feature, to protect a rule against a case it
+was not written for.
+
+**Separately, T10 AC7 was wrong on its own terms.** It named Lighthouse's
+"installable" audit; **Lighthouse removed the PWA category entirely in v12.0.0**
+(April 2024). The criterion now checks the real thing — DevTools reporting no
+manifest installability errors on the deployed origin, an install affordance in
+the browser, and iOS Add to Home Screen showing the icon rather than a
+screenshot.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation

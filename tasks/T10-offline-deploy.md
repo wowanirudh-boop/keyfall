@@ -15,6 +15,9 @@ production.
 
 - Generated service worker (Workbox via `vite-plugin-pwa`, or equivalent).
 - Cloudflare Pages deployment config with SPA fallback.
+- Web app manifest and the four install icons permitted by **D-035** — read it
+  before creating any file under `public/icons/`. AGENTS.md #6 still forbids
+  image assets everywhere else, and the guardrail below enforces it.
 
 ## Caching policy
 
@@ -127,11 +130,18 @@ Also add, while deploying:
    restart.
 6. A service worker update does not strand a running session — new version
    activates on next load, not mid-practice.
-7. Lighthouse: installable, offline-capable, no console errors on a cold load.
+7. **Installable on the deployed origin.** Lighthouse's PWA category was removed
+   in v12.0.0, so do not cite it. Check the criteria directly: DevTools →
+   Application → Manifest reports no installability errors, and the browser
+   offers an install affordance. No console errors on a cold load.
 8. `crypto.subtle` is available on the deployed origin and catalog checksum
    verification runs — open a catalog piece on the live URL, not just locally.
-9. Added to an iPad home screen, the app opens without browser chrome and the
-   player still fits the viewport (D-027's `100dvh`).
+9. Added to an iPad home screen, the app shows its own icon (not a screenshot
+   of the page), opens without browser chrome, and the player still fits the
+   viewport (D-027's `100dvh`).
+10. `npm run check:guardrails` fails if anything under `src/` imports a file
+    from `public/icons/`, and passes as shipped. The D-035 exception stays a
+    packaging exception.
 
 ## Verify
 
@@ -144,7 +154,8 @@ npm run check
 
 ## Done
 
-- [ ] Seven criteria verified against the **production build**, not dev
+- [ ] Ten criteria verified against the **production build**, not dev
+- [ ] Exactly four files under `public/icons/`, no more (D-035)
 - [ ] Precache manifest inspected; no sample assets in it, total size recorded
 - [ ] Deployed once and deep links confirmed on the live URL
 - [ ] Salamander CC-BY 3.0 attribution visible in the shipped UI
