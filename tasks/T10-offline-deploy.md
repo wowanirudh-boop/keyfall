@@ -99,7 +99,9 @@ Git-connected Pages project, which is why there is no *Build output directory*
 field. Two files in the repo replace the dashboard fields:
 
 - `wrangler.jsonc` — assets-only, **no `main`**, with
-  `not_found_handling: "single-page-application"` for deep links.
+  `not_found_handling: "single-page-application"` for deep links. This replaces
+  `_redirects`, which must **not** be present: `/* /index.html 200` is rejected
+  by Workers as an infinite loop and fails the whole deploy (D-037).
 - `.node-version` containing `22` — `package.json` requires `node >=22.13.0` and
   the build image defaults lower. A file beats hunting for a build-variables
   field in a dashboard that keeps changing.
@@ -195,6 +197,10 @@ npm run check
 
 ## Traps
 
+- **`_redirects` and Workers Static Assets do not mix.** The Pages SPA rule
+  `/* /index.html 200` is refused as a redirect loop, because `html_handling`
+  strips `/index` and `.html`. Use `not_found_handling` instead and delete the
+  file. `_headers` is fine and is still the AC11 mechanism.
 - **Verify headers on the deployed origin, not files in `dist/`.** A correct
   file served with the wrong (or missing) `Content-Type` is a different bug
   and `dist/` cannot show it. AC11 exists because that gap was reported as a

@@ -724,9 +724,8 @@ is that an agent pushes changes.
 Both things D-036 worried about are covered on Workers Static Assets:
 
 - **SPA deep links** — `assets.not_found_handling: "single-page-application"`
-  serves `index.html` for any path that is not a real file. `public/_redirects`
-  becomes redundant but is harmless; leave it, so a future move back to Pages
-  does not silently lose deep links.
+  serves `index.html` for any path that is not a real file. **`public/_redirects`
+  must be deleted**, not kept: see the correction below.
 - **The manifest `Content-Type`** (AC11) — Workers Static Assets reads the same
   `_headers` file, so the fix Codex already pushed carries over unchanged. Up to
   100 rules, 2,000 characters per line, and it does not apply to responses
@@ -757,11 +756,44 @@ Cloudflare generated rather than one in the repo. An explicit, checked-in
 `wrangler.jsonc` removes that ambiguity. If the mismatch recurs, the lever is
 the deploy command resolving to the project's own wrangler.
 
+**Correction, after the first Workers build failed.** This entry originally said
+`public/_redirects` was "redundant but harmless" on Workers and should be kept in
+case the project ever moved back to Pages. That is wrong, and it cost a build:
+
+```
+Invalid _redirects configuration:
+Line 1: Infinite loop detected in this rule. This would cause a redirect to
+strip `.html` or `/index` and end up triggering this rule again. [code: 100324]
+```
+
+The file's single rule is `/* /index.html 200` — the canonical Pages SPA
+fallback. Workers Static Assets applies `html_handling` (default
+`auto-trailing-slash`) which strips `/index` and `.html`, so a rule rewriting
+every path *to* `/index.html` re-matches itself. Cloudflare detects the cycle at
+deploy time and refuses the whole deployment.
+
+`_redirects` is therefore **deleted**. `not_found_handling:
+"single-page-application"` is the Workers mechanism for the same job and is
+already configured. The reasoning that was wrong is worth naming: keeping a file
+that breaks the current target, to hedge against a hypothetical return to the
+old one, inverts the cost. If this project ever moves back to Pages, adding two
+lines back is trivial; discovering a broken deploy is not.
+
+`_headers` is unaffected — it sets response headers and cannot form a cycle.
+
 **Node version moves into the repo too.** `package.json` requires
-`node >=22.13.0`. Rather than depend on finding a build-variables field in a
-dashboard that keeps moving, add a `.node-version` file containing `22`. It is
-version-controlled, reviewable, and works the same on every Cloudflare build
-path.
+`node >=22.13.0`. A `.node-version` file containing `22` pins it: Cloudflare's
+build-image docs list `.node-version` and `.nvmrc` as equivalent to the
+`NODE_VERSION` build variable, and a file is version-controlled and reviewable
+rather than hidden in a dashboard that keeps moving.
+
+Correcting an earlier claim in this log: **a `NODE_VERSION` variable was said to
+be mandatory, and it is not.** Workers Builds defaults to Node 24.18.0, which
+already satisfies the engines field, so the build would succeed with neither the
+file nor the variable. The file is pinning for reproducibility, not a fix. Note
+it pins CI to the image's preinstalled 22.x while local development is on 24.x —
+harmless for a Vite build, but change it to `24` if that divergence ever
+matters.
 
 ---
 
