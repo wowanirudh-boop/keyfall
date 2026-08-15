@@ -28,8 +28,14 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('[T10 AC3, AC4] deeplink routes and the Pages fallback resolve through the production SPA', async ({ page }) => {
-  expect(readFileSync(resolve('dist/_redirects'), 'utf8').trim()).toBe('/* /index.html 200');
+test('[T10 AC3, AC4] deeplink routes and the Workers fallback resolve through the production SPA', async ({ page }) => {
+  const wrangler = JSON.parse(readFileSync(resolve('wrangler.jsonc'), 'utf8')) as {
+    assets?: { directory?: string; not_found_handling?: string };
+  };
+  expect(wrangler.assets).toMatchObject({
+    directory: './dist',
+    not_found_handling: 'single-page-application',
+  });
 
   await page.goto('/pieces/anything');
   await expect(
