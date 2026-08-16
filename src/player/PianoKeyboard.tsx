@@ -152,9 +152,7 @@ export function PianoKeyboard({
             className="absolute inset-x-0 bottom-0"
             style={{
               height: `${state.imminence * 100}%`,
-              background: geometry.black
-                ? `${activeColor}${alpha.prepareFill}`
-                : `${color.keyLitRing}${alpha.prepareFillDark}`,
+              background: `${activeColor}${alpha.prepareFill}`,
             }}
           />
         ) : null}

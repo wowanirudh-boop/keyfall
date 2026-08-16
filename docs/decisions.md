@@ -1397,6 +1397,47 @@ clean profile — the bug needs a *previous* worker to exist. Private-window
 testing hides exactly this class of fault, and it is the class that hits real
 users hardest, since only real users have a history.
 
+### D-051 — The countdown fill keeps the hand colour, at 1.79:1, on purpose
+**2026-08-16 · Decided — Anirudh, overriding one third of D-047**
+
+D-047 turned the countdown fill near-black on white keys, reasoning that
+`#4CC2FF` at 1.79:1 against `#F0F2F6` would be invisible. Seen in use, the
+result read as a black bar and lost what the fill was for. Anirudh: *"I prefer
+the old fill colour though the keyboard right now is better."*
+
+A third option was drafted and rendered — the **hand colour darkened** until it
+cleared 3:1, keeping hue while gaining contrast (6.03:1 for the right hand,
+7.31:1 for the left, at 45% hue strength). It was **rejected on sight**. The
+same thing happened to the ivory key face in D-047: the arithmetically
+reasonable middle looked wrong, and looking wrong is a real result.
+
+**Decided: the fill is the hand colour at alpha `88` on every key, white and
+black.** On a white key that is **1.79:1**, below the 3:1 WCAG floor for a state
+cue. This is a knowing exception, not an oversight, and it is recorded here so
+that a future reader of D-047 does not "fix" it back. `T15a` adds a test pinning
+the fill to the hand colour for the same reason.
+
+**What the exception costs, stated honestly.** The fill is the imminence cue —
+how soon a key is due. On a white key it will be a pale wash, and in a bright
+room it will be close to unreadable, which is precisely the condition D-047 was
+written for. **What limits the damage:** the cue is redundant. The falling note
+above the key is in full hand colour against a near-black stage, the prepared
+key keeps its hand-coloured border and inset glow, and the pressed state has its
+own 2px ring at 16.89:1 that this decision does not touch. The fill was never
+the only signal, which is why trading it is survivable where trading key
+identification was not.
+
+**The rest of D-047 is untouched and is where the value was**: identification
+went 1.09:1 → 17.35:1, the labels clear 4.5:1, the error state clears 3:1, and
+the black-key fill went `66` → `88`. One of three state changes is reversed; the
+palette that fixed the real defect stands.
+
+The generalisable point, and it is the same one D-047 already recorded: contrast
+maths can prove a thing is *legible* and say nothing about whether it is *good*.
+Where the two disagree and the product owner has seen both rendered, the eye
+decides — and the number gets written down next to it so nobody has to rediscover
+the trade.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation

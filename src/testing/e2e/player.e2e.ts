@@ -249,19 +249,14 @@ test("[T07 highlight, T07a fill AC1-AC7] countdown fill and press cues render at
     await page.goto("/src/testing/e2e/player-harness.html?position=5.25&hand=none");
     await expect(page.getByTestId("piano-key-67")).toHaveAttribute("data-hand", "right");
     await expect(page.getByTestId("piano-key-61")).toHaveAttribute("data-hand", "right");
-    const singleColourCues = await page.evaluate(() =>
-      [67, 61].map((midi) => {
-        const key = document.querySelector<HTMLElement>(`[data-midi="${midi}"]`)!;
-        return {
-          borderColor: getComputedStyle(key).borderColor,
-          fillColor: getComputedStyle(
-            key.querySelector<HTMLElement>("[data-countdown-fill]")!,
-          ).backgroundColor,
-        };
-      }),
+    const singleColourFills = await page.evaluate(() =>
+      [67, 61].map((midi) =>
+        getComputedStyle(
+          document.querySelector(`[data-midi="${midi}"] [data-countdown-fill]`)!,
+        ).backgroundColor,
+      ),
     );
-    expect(singleColourCues[0].borderColor).toBe(singleColourCues[1].borderColor);
-    expect(singleColourCues[0].fillColor).not.toBe(singleColourCues[1].fillColor);
+    expect(singleColourFills[0]).toBe(singleColourFills[1]);
     const layout = await page.evaluate(() => ({
       clientHeight: document.documentElement.clientHeight,
       clientWidth: document.documentElement.clientWidth,

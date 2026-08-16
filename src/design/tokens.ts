@@ -99,8 +99,6 @@ export const alpha = {
   toggleOnBg: '18',
   /** Countdown fill on a prepared key (D-022). */
   prepareFill: '88',
-  /** Dark countdown fill on a prepared white key (D-047). */
-  prepareFillDark: 'E6',
   /** A–B loop region fill over the seek bar. */
   loopFill: '1F',
   /** A–B loop region border. */

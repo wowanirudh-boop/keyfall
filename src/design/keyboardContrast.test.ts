@@ -51,7 +51,7 @@ describe('keyboard contrast palette', () => {
       keyBlackLabel: '#9AA1AB',
       keyLitRing: '#06121A',
     });
-    expect(alpha).toMatchObject({ prepareFill: '88', prepareFillDark: 'E6' });
+    expect(alpha).toMatchObject({ prepareFill: '88' });
   });
 
   it('[T15 AC2] keeps every identification, label, state, and fill contrast above its WCAG floor', () => {

@@ -267,7 +267,7 @@ describe("PianoKeyboard", () => {
     expect(fillFor(60)?.style.height).toBe("50%");
     expect(fillFor(61)?.style.height).toBe("50%");
     expect(fillFor(60)?.style.background).toBe(
-      normalizedBackground(`${color.keyLitRing}${alpha.prepareFillDark}`),
+      normalizedBackground(`${color.handRight}${alpha.prepareFill}`),
     );
     expect(fillFor(61)?.style.background).toBe(
       normalizedBackground(`${color.handLeft}${alpha.prepareFill}`),
@@ -359,7 +359,7 @@ describe("PianoKeyboard", () => {
     );
     expect(labelFor(60).style.color).toBe(normalizedColor(color.keyWhiteFace));
     expect(fillFor(60)?.style.background).toBe(
-      normalizedBackground(`${color.keyLitRing}${alpha.prepareFillDark}`),
+      normalizedBackground(`${color.handRight}${alpha.prepareFill}`),
     );
 
     rerender(
@@ -438,7 +438,7 @@ describe("PianoKeyboard", () => {
         expect(fillFor(60)?.style.height).toBe("50%");
         expect(fillFor(61)?.style.height).toBe("50%");
         expect(fillFor(60)?.style.background).toBe(
-          normalizedBackground(`${color.keyLitRing}${alpha.prepareFillDark}`),
+          normalizedBackground(`${activeColor}${alpha.prepareFill}`),
         );
         expect(fillFor(61)?.style.background).toBe(
           normalizedBackground(`${activeColor}${alpha.prepareFill}`),
@@ -472,6 +472,32 @@ describe("PianoKeyboard", () => {
       }
     },
   );
+
+  it("[T15a AC1, AC5; D-051] fills prepared white keys with their active hand colour", () => {
+    render(
+      <PianoKeyboard
+        notes={[
+          note("right-white", 60, 2, 3, "right"),
+          note("left-white", 62, 2, 3, "left"),
+        ]}
+        position={1.5}
+        hasHandData
+      />,
+    );
+
+    expect(fillFor(60)?.style.background).toBe(
+      normalizedBackground(`${color.handRight}${alpha.prepareFill}`),
+    );
+    expect(fillFor(62)?.style.background).toBe(
+      normalizedBackground(`${color.handLeft}${alpha.prepareFill}`),
+    );
+    expect(fillFor(60)?.style.background).not.toBe(
+      normalizedBackground(`${color.keyLitRing}${alpha.prepareFill}`),
+    );
+    expect(fillFor(62)?.style.background).not.toBe(
+      normalizedBackground(`${color.keyLitRing}${alpha.prepareFill}`),
+    );
+  });
 
   it.each(HAND_COLOR_PRESETS)(
     "[T15 AC6] keeps the lit white-key ring with the $name palette",

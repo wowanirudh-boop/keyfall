@@ -42,6 +42,7 @@ having to re-derive what was done from the decision log.
 | [T13b](T13b-e2e-baseline-repair.md) ✅ | 8 red e2e tests; `npm run check` never ran Playwright |
 | [T03e](T03e-catalog-metadata-fixes.md) ✅ | Two rows claiming far more than their file held |
 | [T15](T15-keyboard-contrast.md) ✅ | White vs black key was 1.09:1; now 17.35:1 (D-047) |
+| [T10a](T10a-update-prompt.md) ✅ | No deploy reached a returning browser; update prompt now exists (D-050) |
 
 [T12](T12-playlists.md) is a stub: it was split into T12a and T12b.
 
@@ -49,7 +50,7 @@ having to re-derive what was done from the decision log.
 
 | Task | Why |
 |---|---|
-| [T10a](T10a-update-prompt.md) | **Do this first.** No deploy has reached a returning browser since T10 — the update prompt was configured and never built (D-050) |
+| [T15a](T15a-restore-coloured-fill.md) | Countdown fill goes back to the hand colour on white keys — Anirudh's call, 1.79:1 accepted knowingly (D-051) |
 | [T03f](T03f-archive-member-titles.md) | 22 rows name a work but hold one movement; one names the wrong movement entirely |
 | [T14](T14-player-landscape-fit.md) | Landscape phone: a scroll to nowhere, 5–29% of the screen for the notes |
 | [T12b](T12b-user-playlists.md) | Playlists the user makes. Carries the Dexie v1→v2 migration — the riskiest change left |
