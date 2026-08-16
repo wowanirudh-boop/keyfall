@@ -6,6 +6,7 @@ import type { NoteEvent, PieceDocument } from "../../music/types";
 import type { PlaybackLoop, PlaybackSnapshot, PlaybackSpeed } from "../../playback";
 import {
   PlayerView,
+  HandColorProvider,
   readAudioPreferences,
   writeMutedPreference,
   writeVolumePreference,
@@ -91,9 +92,19 @@ const visualPiece: PieceDocument = {
 };
 
 function Harness() {
+  const requestedPiece = parameters.get("piece");
   const piece = dense
     ? createDenseFixture()
-    : { ...visualPiece, id: parameters.get("piece") ?? visualPiece.id };
+    : requestedPiece === "air"
+      ? {
+          ...visualPiece,
+          id: "air-bwv-anh-131",
+          title: "Air — BWV Anh. 131",
+          composer: "Bach, Johann Sebastian",
+          source: "catalog" as const,
+          sourceCollection: "Mutopia Project",
+        }
+      : { ...visualPiece, id: requestedPiece ?? visualPiece.id };
   const audioPreferences = readAudioPreferences();
   const [position, setPosition] = useState(startPosition);
   const [playing, setPlaying] = useState(mode === "dense" || parameters.get("playing") === "1");
@@ -228,6 +239,7 @@ function Harness() {
       onSpeedChange={setSpeed}
       onLoopChange={(a, b) => setLoop({ a, b })}
       listeningDevice={listeningDevice}
+      onListenToggle={parameters.get("controls") === "1" ? () => undefined : undefined}
       transientNotice={
         parameters.get("transient") === "1"
           ? "A–B loop is off while listen mode runs. Stop listening to drill a section."
@@ -238,4 +250,8 @@ function Harness() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<Harness />);
+createRoot(document.getElementById("root")!).render(
+  <HandColorProvider>
+    <Harness />
+  </HandColorProvider>,
+);

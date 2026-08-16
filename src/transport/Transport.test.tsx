@@ -255,6 +255,32 @@ describe("transport controls", () => {
     expect(screen.getByTestId("transport-row-2").className).toContain("flex-wrap");
   });
 
+  it("[T14 AC3, AC6, AC11] renders every compact transport control in the required row count", () => {
+    const props = {
+      playback: basePlayback,
+      onTogglePlay: () => undefined,
+      onSeek: () => undefined,
+      onSpeedChange: () => undefined,
+      onLoopChange: () => undefined,
+      density: "compact" as const,
+    };
+    const view = render(<PlayerTransport {...props} width={932} />);
+
+    expect(screen.getByTestId("player-transport").dataset.layout).toBe("single-row");
+    expect(screen.queryByTestId("transport-row-2")).toBeNull();
+    expect(screen.getByRole("button", { name: "Play" }).className).toContain("h-[34px]");
+    expect(screen.getByTestId("seek-bar").className).toContain("h-[34px]");
+    for (const name of ["1x", "0.5x", "0.25x", "Set A", "Set B", "Clear"]) {
+      expect(screen.getByRole("button", { name })).toBeTruthy();
+    }
+    expect(screen.queryByText("← → SKIP 5 SECONDS")).toBeNull();
+
+    view.rerender(<PlayerTransport {...props} width={667} />);
+    expect(screen.getByTestId("player-transport").dataset.layout).toBe("two-row");
+    expect(screen.getByTestId("transport-row-1")).toBeTruthy();
+    expect(screen.getByTestId("transport-row-2")).toBeTruthy();
+  });
+
   it("[T05c AC5] renders only the plain-language skip hint", () => {
     render(
       <TransportRow2

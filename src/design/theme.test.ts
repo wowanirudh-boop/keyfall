@@ -19,6 +19,10 @@ import {
 } from './tokens';
 
 const css = readFileSync(resolve(process.cwd(), 'src/design/globals.css'), 'utf8');
+const html = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8');
+const playerHeader = readFileSync(resolve(process.cwd(), 'src/player/PlayerHeader.tsx'), 'utf8');
+const pianoKeyboard = readFileSync(resolve(process.cwd(), 'src/player/PianoKeyboard.tsx'), 'utf8');
+const transport = readFileSync(resolve(process.cwd(), 'src/transport/Transport.tsx'), 'utf8');
 
 function kebabCase(name: string) {
   return name
@@ -90,5 +94,17 @@ describe('Tailwind theme contract', () => {
     };
 
     expect(actual).toEqual(expected);
+  });
+
+  it('[T14 AC2, AC10] aligns the document floor with dvh without disabling scrolling', () => {
+    expect(css).toMatch(/html,\s*body,\s*#root\s*\{\s*min-height:\s*100%;\s*min-height:\s*100dvh;/);
+    expect(css).not.toMatch(/(?:html|body)[^{]*\{[^}]*overflow:\s*hidden/);
+    expect(html).toContain('viewport-fit=cover');
+    for (const source of [playerHeader, pianoKeyboard, transport]) {
+      expect(source).toContain('env(safe-area-inset-left)');
+      expect(source).toContain('env(safe-area-inset-right)');
+    }
+    expect(pianoKeyboard).toContain('env(safe-area-inset-bottom)');
+    expect(transport).toContain('env(safe-area-inset-bottom)');
   });
 });

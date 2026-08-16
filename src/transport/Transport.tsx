@@ -1,6 +1,6 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
-import { alpha, color, shadow } from "../design/tokens";
+import { alpha, color, playerDensity, shadow, type PlayerDensity } from "../design/tokens";
 import type { PlaybackLoop, PlaybackSnapshot, PlaybackSpeed } from "../playback";
 import {
   dragLoopMarker,
@@ -13,14 +13,17 @@ import {
 export interface PlayButtonProps {
   playing: boolean;
   onClick: () => void;
+  compact?: boolean;
 }
 
-export function PlayButton({ playing, onClick }: PlayButtonProps) {
+export function PlayButton({ playing, onClick, compact = false }: PlayButtonProps) {
   return (
     <button
       type="button"
       aria-label={playing ? "Pause" : "Play"}
-      className={`flex h-[46px] w-[46px] shrink-0 cursor-pointer items-center justify-center rounded-[50%] border-0 ${
+      className={`flex shrink-0 cursor-pointer items-center justify-center rounded-[50%] border-0 ${
+        compact ? "h-[34px] w-[34px]" : "h-[46px] w-[46px]"
+      } ${
         playing
           ? "bg-control text-[13px] text-text"
           : "bg-hand-right text-[15px] text-on-accent"
@@ -314,7 +317,14 @@ export function TransportRow1({
   onLoopChange,
 }: TransportRow1Props) {
   return (
-    <div className="flex items-center gap-[16px] px-[22px] pb-[10px] pt-[16px]">
+    <div
+      data-testid="transport-row-1"
+      className="flex items-center gap-[16px] px-[22px] pb-[10px] pt-[16px]"
+      style={{
+        paddingLeft: "max(22px, env(safe-area-inset-left))",
+        paddingRight: "max(22px, env(safe-area-inset-right))",
+      }}
+    >
       <PlayButton playing={playback.playing} onClick={onTogglePlay} />
       <TimeReadout position={playback.position} duration={playback.duration} />
       <SeekBar
@@ -343,6 +353,11 @@ export function TransportRow2({
     <div
       data-testid="transport-row-2"
       className="flex flex-wrap items-center gap-[22px] px-[22px] pb-[16px]"
+      style={{
+        paddingLeft: "max(22px, env(safe-area-inset-left))",
+        paddingRight: "max(22px, env(safe-area-inset-right))",
+        paddingBottom: "max(16px, env(safe-area-inset-bottom))",
+      }}
     >
       <SpeedSelector speed={playback.speed} onSpeedChange={onSpeedChange} />
       <LoopControls
@@ -364,11 +379,96 @@ export interface PlayerTransportProps {
   onSeek: (position: number) => void;
   onSpeedChange: (speed: PlaybackSpeed) => void;
   onLoopChange: (a: number | null, b: number | null) => void;
+  density?: PlayerDensity;
+  width?: number;
 }
 
 export function PlayerTransport(props: PlayerTransportProps) {
+  const { playback, onTogglePlay, onSeek, onSpeedChange, onLoopChange } = props;
+  const compact = props.density === "compact";
+  const singleRow =
+    compact && (props.width ?? 0) >= playerDensity.singleRowTransportMinWidthPx;
+  const safeInlinePadding = {
+    paddingLeft: "max(14px, env(safe-area-inset-left))",
+    paddingRight: "max(14px, env(safe-area-inset-right))",
+  };
+
+  if (singleRow) {
+    return (
+      <div
+        data-testid="player-transport"
+        data-layout="single-row"
+        className="h-[52px] shrink-0 border-t border-border-1 bg-panel"
+      >
+        <div
+          data-testid="transport-row-1"
+          className="flex h-full items-center gap-[12px]"
+          style={{ ...safeInlinePadding, paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
+        >
+          <PlayButton compact playing={playback.playing} onClick={onTogglePlay} />
+          <TimeReadout position={playback.position} duration={playback.duration} />
+          <SeekBar
+            position={playback.position}
+            duration={playback.duration}
+            loop={playback.loop}
+            onSeek={onSeek}
+            onLoopChange={onLoopChange}
+          />
+          <SpeedSelector speed={playback.speed} onSpeedChange={onSpeedChange} />
+          <LoopControls
+            position={playback.position}
+            loop={playback.loop}
+            onLoopChange={onLoopChange}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div
+        data-testid="player-transport"
+        data-layout="two-row"
+        className="flex h-[88px] shrink-0 flex-col border-t border-border-1 bg-panel"
+      >
+        <div
+          data-testid="transport-row-1"
+          className="flex min-h-0 flex-1 items-center gap-[12px]"
+          style={safeInlinePadding}
+        >
+          <PlayButton compact playing={playback.playing} onClick={onTogglePlay} />
+          <TimeReadout position={playback.position} duration={playback.duration} />
+          <SeekBar
+            position={playback.position}
+            duration={playback.duration}
+            loop={playback.loop}
+            onSeek={onSeek}
+            onLoopChange={onLoopChange}
+          />
+        </div>
+        <div
+          data-testid="transport-row-2"
+          className="flex min-h-0 flex-1 items-center gap-[16px]"
+          style={{ ...safeInlinePadding, paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
+        >
+          <SpeedSelector speed={playback.speed} onSpeedChange={onSpeedChange} />
+          <LoopControls
+            position={playback.position}
+            loop={playback.loop}
+            onLoopChange={onLoopChange}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="shrink-0 border-t border-border-1 bg-panel">
+    <div
+      data-testid="player-transport"
+      data-layout="comfortable"
+      className="shrink-0 border-t border-border-1 bg-panel"
+    >
       <TransportRow1 {...props} />
       <TransportRow2 {...props} />
     </div>

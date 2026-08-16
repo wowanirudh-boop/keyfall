@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { playerDensity, type PlayerDensity } from "../design/tokens";
 import type { PieceDocument } from "../music/types";
 import type { PlaybackSnapshot, PlaybackSpeed } from "../playback";
 import { PlayerShortcuts, PlayerTransport } from "../transport";
@@ -15,13 +16,29 @@ import { WaterfallStage } from "./WaterfallStage";
  * `resize`, so a rotation, a split-screen change and a browser-chrome reflow
  * all land the same way.
  */
-function useMeasuredWidth(element: HTMLElement | null) {
-  const [width, setWidth] = useState(0);
+export function stabilizePlayerHeight(current: number, next: number) {
+  if (next <= 0) return current;
+  if (current <= 0) return next;
+
+  const threshold = playerDensity.comfortableMinHeightPx;
+  const crossesThreshold = (current < threshold) !== (next < threshold);
+  if (crossesThreshold && Math.abs(next - threshold) < playerDensity.hysteresisPx) {
+    return current;
+  }
+  return next;
+}
+
+function useMeasuredSize(element: HTMLElement | null) {
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     if (!element) return;
-    const measure = (next: number) => setWidth((current) => (next > 0 ? next : current));
-    const remeasure = () => measure(element.clientWidth);
+    const measure = (nextWidth: number, nextHeight: number) =>
+      setSize((current) => ({
+        width: nextWidth > 0 ? nextWidth : current.width,
+        height: stabilizePlayerHeight(current.height, nextHeight),
+      }));
+    const remeasure = () => measure(element.clientWidth, element.clientHeight);
     remeasure();
 
     // Belt and braces: a rotation is reliably one of these two, but which one
@@ -34,7 +51,8 @@ function useMeasuredWidth(element: HTMLElement | null) {
       typeof ResizeObserver === "undefined"
         ? null
         : new ResizeObserver((entries) => {
-            measure(entries[0]?.contentRect.width ?? element.clientWidth);
+            const bounds = entries[0]?.contentRect;
+            measure(bounds?.width ?? element.clientWidth, bounds?.height ?? element.clientHeight);
           });
     observer?.observe(element);
 
@@ -45,7 +63,77 @@ function useMeasuredWidth(element: HTMLElement | null) {
     };
   }, [element]);
 
-  return width;
+  return size;
+}
+
+type WebkitFullscreenElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
+type WebkitFullscreenDocument = Document & {
+  webkitExitFullscreen?: () => Promise<void> | void;
+  webkitFullscreenElement?: Element | null;
+};
+
+type LockableOrientation = ScreenOrientation & {
+  lock?: (orientation: "landscape") => Promise<void>;
+};
+
+function usePlayerFullscreen(shell: HTMLElement | null) {
+  const [active, setActive] = useState(false);
+  const orientationLocked = useRef(false);
+  const supported = typeof document !== "undefined" && document.fullscreenEnabled === true;
+
+  useEffect(() => {
+    const fullscreenDocument = document as WebkitFullscreenDocument;
+    const handleChange = () => {
+      const nextActive = Boolean(
+        document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement,
+      );
+      setActive(nextActive);
+      if (!nextActive && orientationLocked.current) {
+        (screen.orientation as LockableOrientation | undefined)?.unlock?.();
+        orientationLocked.current = false;
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleChange);
+    document.addEventListener("webkitfullscreenchange", handleChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleChange);
+      document.removeEventListener("webkitfullscreenchange", handleChange);
+    };
+  }, []);
+
+  const toggle = async () => {
+    if (!shell) return;
+    const fullscreenDocument = document as WebkitFullscreenDocument;
+    if (document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement) {
+      const exit = document.exitFullscreen ?? fullscreenDocument.webkitExitFullscreen;
+      await exit?.call(document);
+      return;
+    }
+
+    const fullscreenShell = shell as WebkitFullscreenElement;
+    const request = shell.requestFullscreen ?? fullscreenShell.webkitRequestFullscreen;
+    if (!request) return;
+    try {
+      await request.call(shell);
+    } catch {
+      return;
+    }
+
+    const orientation = screen.orientation as LockableOrientation | undefined;
+    if (!orientation?.lock) return;
+    try {
+      await orientation.lock("landscape");
+      orientationLocked.current = true;
+    } catch {
+      // Fullscreen remains active when orientation locking is unavailable or rejected.
+    }
+  };
+
+  return { active, supported, toggle };
 }
 
 export interface PlayerViewProps {
@@ -84,7 +172,10 @@ export function PlayerView({
   seekRevision = 0,
 }: PlayerViewProps) {
   const [shell, setShell] = useState<HTMLElement | null>(null);
-  const width = useMeasuredWidth(shell);
+  const { width, height } = useMeasuredSize(shell);
+  const density: PlayerDensity =
+    height > 0 && height < playerDensity.comfortableMinHeightPx ? "compact" : "comfortable";
+  const fullscreen = usePlayerFullscreen(shell);
   const keyboardWindow = useMemo(
     () => keyboardWindowFor(piece.notes.map((note) => note.midi), width),
     [piece.notes, width],
@@ -98,6 +189,7 @@ export function PlayerView({
     <main
       ref={setShell}
       data-testid="player-view"
+      data-density={density}
       className="flex h-screen min-h-0 flex-col overflow-hidden bg-bg [height:100dvh]"
     >
       <PlayerHeader
@@ -109,6 +201,10 @@ export function PlayerView({
         onMutedChange={onMutedChange}
         onVolumeChange={onVolumeChange}
         onListenToggle={onListenToggle}
+        density={density}
+        fullscreenActive={fullscreen.active}
+        fullscreenSupported={fullscreen.supported}
+        onFullscreenToggle={fullscreen.toggle}
       />
       <AudioBlockedNotice blocked={playback.audioBlocked} />
       <ImportNoticeStrip notices={piece.notices} />
@@ -128,6 +224,7 @@ export function PlayerView({
         liveVerdicts={liveVerdicts}
         seekRevision={seekRevision}
         keyboardWindow={keyboardWindow}
+        density={density}
       />
       <PlayerTransport
         playback={playback}
@@ -135,6 +232,8 @@ export function PlayerView({
         onSeek={onSeek}
         onSpeedChange={onSpeedChange}
         onLoopChange={onLoopChange}
+        density={density}
+        width={width}
       />
       <PlayerShortcuts
         position={playback.position}

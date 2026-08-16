@@ -120,6 +120,15 @@ styling verbatim with a message naming the piece and offering upload.
 
 - Player is a **viewport-height flex column, no page scroll**: header → optional
   notice → waterfall (`flex: 1`) → keyboard (clamped) → transport.
+- Player density comes from the shell's measured height, with 12px hysteresis:
+  **comfortable** at 620px and above, **compact** below it (D-046). Comfortable
+  keeps the handoff's 71px header, two-row 121px transport and keyboard clamp.
+  Compact uses a 44px one-row header, a 52px one-row transport at widths ≥820px
+  or an 88px two-row transport below 820px, and
+  `clamp(96px, 24vh, 158px)` for the keyboard.
+- The landscape gate includes **932×430** (iPhone 14 Pro Max installed),
+  **932×320**, **844×390**, and **667×375**. Every practice control remains
+  visible at compact density; no menu, disclosure, timer or auto-hide is allowed.
 - Home and Report scroll in a single centred column (880px / 900px max-width).
 - Verified at **1440×900** (laptop) and **1024×768** (tablet landscape).
 - No horizontal page scroll at any width ≥ 1024.

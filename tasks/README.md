@@ -43,6 +43,7 @@ having to re-derive what was done from the decision log.
 | [T03e](T03e-catalog-metadata-fixes.md) ✅ | Two rows claiming far more than their file held |
 | [T15](T15-keyboard-contrast.md) ✅ | White vs black key was 1.09:1; now 17.35:1 (D-047) |
 | [T10a](T10a-update-prompt.md) ✅ | No deploy reached a returning browser; update prompt now exists (D-050) |
+| [T15a](T15a-restore-coloured-fill.md) ✅ | Countdown fill back to the hand colour on white keys (D-051) |
 
 [T12](T12-playlists.md) is a stub: it was split into T12a and T12b.
 
@@ -50,14 +51,19 @@ having to re-derive what was done from the decision log.
 
 | Task | Why |
 |---|---|
-| [T15a](T15a-restore-coloured-fill.md) | Countdown fill goes back to the hand colour on white keys — Anirudh's call, 1.79:1 accepted knowingly (D-051) |
 | [T03f](T03f-archive-member-titles.md) | 22 rows name a work but hold one movement; one names the wrong movement entirely |
 | [T14](T14-player-landscape-fit.md) | Landscape phone: a scroll to nowhere, 5–29% of the screen for the notes |
 | [T12b](T12b-user-playlists.md) | Playlists the user makes. Carries the Dexie v1→v2 migration — the riskiest change left |
 
-T14's dependency on T13b is **satisfied**. T15 shares only `PianoKeyboard.tsx`
-with T14, where T14 touches the container height and T15 the key colours — still
-run them in separate conversations, per the one-task-one-run rule.
+T14's dependency on T13b is **satisfied**, so any e2e failure found during T14
+belongs to T14 until proven otherwise.
+
+**T14 is a full-surface task, not a one-file edit.** It changes `PlayerView`,
+`PlayerHeader`, the transport, tokens, safe-area CSS and the design contract. An
+earlier note here described T14 as touching "only the container's height in
+`PianoKeyboard.tsx`" — that was about the single file it *shared* with T15, not
+its scope, and it was misread once as a restriction. T15 has shipped, so the
+overlap no longer exists and the note is deleted rather than reworded.
 
 ### Blocked on Anirudh
 

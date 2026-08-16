@@ -1397,6 +1397,12 @@ clean profile — the bug needs a *previous* worker to exist. Private-window
 testing hides exactly this class of fault, and it is the class that hits real
 users hardest, since only real users have a history.
 
+**Closed 2026-08-16 — verified in production by Anirudh.** T10a shipped, and the
+next deploy after it produced the notice on his own browser and reloaded into the
+new build. That is the first confirmed update cycle the app has ever had. The
+one-time manual escape it required is recorded and is now spent: every browser
+that reached this build carries the prompt, so no future deploy needs it.
+
 ### D-051 — The countdown fill keeps the hand colour, at 1.79:1, on purpose
 **2026-08-16 · Decided — Anirudh, overriding one third of D-047**
 

@@ -7,6 +7,7 @@ import {
   keyLabelSize,
   motion,
   shadow,
+  type PlayerDensity,
 } from "../design/tokens";
 import type { NoteEvent } from "../music/types";
 import { displayHand, useHandColors } from "./handColors";
@@ -30,6 +31,7 @@ export interface PianoKeyboardProps {
   liveVerdicts?: ReadonlyMap<string, LiveVerdict>;
   seekRevision?: number;
   keyboardWindow?: KeyboardWindow;
+  density?: PlayerDensity;
 }
 
 function keyStyle(
@@ -114,6 +116,7 @@ export function PianoKeyboard({
   liveVerdicts,
   seekRevision = 0,
   keyboardWindow = FULL_KEYBOARD_WINDOW,
+  density = "comfortable",
 }: PianoKeyboardProps) {
   const handColors = useHandColors();
   const scanner = useMemo(() => new KeyStateScanner(notes), [notes]);
@@ -170,7 +173,12 @@ export function PianoKeyboard({
     <div
       data-testid="piano-keyboard"
       className="relative shrink-0 overflow-hidden border-t border-border-1 bg-stage px-[4px]"
-      style={{ height: keyboard.heightCss }}
+      style={{
+        height: density === "compact" ? keyboard.compactHeightCss : keyboard.heightCss,
+        paddingLeft: "max(4px, env(safe-area-inset-left))",
+        paddingRight: "max(4px, env(safe-area-inset-right))",
+        paddingBottom: "max(0px, env(safe-area-inset-bottom))",
+      }}
     >
       <div
         data-testid="keyboard-window"

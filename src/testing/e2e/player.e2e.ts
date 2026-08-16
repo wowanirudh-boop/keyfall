@@ -63,6 +63,277 @@ test("keyboard and waterfall stay viewport-bound at both required sizes", async 
   }
 });
 
+test("[T14 AC1, AC5] comfortable density preserves every measured band", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(document, "fullscreenEnabled", { configurable: true, value: false });
+  });
+  await mkdir(resolve("test-results/visual/t14-after"), { recursive: true });
+  const cases = [
+    { width: 1440, height: 900, header: 71, notes: 573, keyboard: 135, transport: 121 },
+    { width: 1024, height: 768, header: 71, notes: 460.8125, keyboard: 115.1875, transport: 121 },
+    { width: 768, height: 1024, header: 71, notes: 678.40625, keyboard: 153.59375, transport: 121 },
+  ];
+
+  for (const expected of cases) {
+    await page.setViewportSize(expected);
+    await page.goto("/src/testing/e2e/player-harness.html?piece=air&position=0");
+    await expect(page.getByTestId("player-view")).toHaveAttribute("data-density", "comfortable");
+    const layout = await page.evaluate(() => {
+      const height = (testId: string) =>
+        document
+          .querySelector<HTMLElement>(`[data-testid="${testId}"]`)!
+          .getBoundingClientRect().height;
+      return {
+        header: height("player-header"),
+        notes: height("waterfall-stage"),
+        keyboard: height("piano-keyboard"),
+        transport: height("player-transport"),
+      };
+    });
+    expect(layout.header).toBeCloseTo(expected.header, 3);
+    expect(layout.notes).toBeCloseTo(expected.notes, 3);
+    expect(layout.keyboard).toBeCloseTo(expected.keyboard, 3);
+    expect(layout.transport).toBeCloseTo(expected.transport, 3);
+    await page.screenshot({
+      path: resolve(
+        "test-results/visual/t14-after",
+        `${expected.width}x${expected.height}.png`,
+      ),
+    });
+  }
+});
+
+test("[T14 AC2, AC4, AC6, AC7] compact landscape geometry fits without document scroll", async ({
+  page,
+}) => {
+  const cases = [
+    { width: 932, height: 430, notesMin: 210, transport: "single-row", transportHeight: 52 },
+    { width: 932, height: 320, notesMin: 120, transport: "single-row", transportHeight: 52 },
+    { width: 844, height: 390, notesMin: 0, transport: "single-row", transportHeight: 52 },
+    { width: 667, height: 375, notesMin: 140, transport: "two-row", transportHeight: 88 },
+  ];
+
+  for (const expected of cases) {
+    await page.setViewportSize(expected);
+    await page.goto("/src/testing/e2e/player-harness.html?piece=air&position=0");
+    await expect(page.getByTestId("player-view")).toHaveAttribute("data-density", "compact");
+    await expect(page.getByTestId("player-transport")).toHaveAttribute(
+      "data-layout",
+      expected.transport,
+    );
+    const layout = await page.evaluate(() => {
+      const rect = (testId: string) =>
+        document
+          .querySelector<HTMLElement>(`[data-testid="${testId}"]`)!
+          .getBoundingClientRect();
+      const header = rect("player-header");
+      return {
+        headerHeight: header.height,
+        headerChildrenFit: [...document.querySelector("[data-testid=player-header]")!.children]
+          .every((element) => {
+            const bounds = element.getBoundingClientRect();
+            return bounds.left >= header.left && bounds.right <= header.right;
+          }),
+        notesHeight: rect("waterfall-stage").height,
+        transportHeight: rect("player-transport").height,
+        seekHeight: rect("seek-bar").height,
+        clientHeight: document.documentElement.clientHeight,
+        scrollHeight: document.documentElement.scrollHeight,
+        clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+      };
+    });
+    expect(layout.headerHeight).toBe(44);
+    expect(layout.transportHeight).toBe(expected.transportHeight);
+    expect(layout.headerChildrenFit).toBe(true);
+    expect(layout.notesHeight).toBeGreaterThanOrEqual(expected.notesMin);
+    expect(layout.seekHeight).toBeGreaterThanOrEqual(34);
+    expect(layout.scrollHeight).toBe(layout.clientHeight);
+    expect(layout.scrollWidth).toBe(layout.clientWidth);
+    const title = page.getByTestId("player-title-line");
+    await expect(title).toContainText("Air — BWV Anh. 131");
+    await expect(title).toContainText("BACH, JOHANN SEBASTIAN");
+    await expect(title).toContainText("Mutopia Project");
+  }
+});
+
+test("[T14 AC3, AC6, AC11] every practice control remains visible and operable at both densities", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 932, height: 430 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/src/testing/e2e/player-harness.html?piece=air&position=12&controls=1");
+    const buttons = [
+      /Library/,
+      "Note colours",
+      "Audio on",
+      "Listen mode",
+      "Play",
+      "1x",
+      "0.5x",
+      "0.25x",
+      "Set A",
+      "Set B",
+      "Clear",
+    ] as const;
+    for (const name of buttons) {
+      const control = page.getByRole("button", { name });
+      await expect(control).toBeVisible();
+      await expect(control).toBeEnabled();
+    }
+    await expect(page.getByRole("slider", { name: "Volume" })).toBeVisible();
+    await expect(page.getByTestId("seek-bar")).toBeVisible();
+
+    const volume = page.getByRole("slider", { name: "Volume" });
+    const volumeBounds = await volume.boundingBox();
+    if (!volumeBounds) throw new Error("Volume slider has no bounds");
+    await page.mouse.click(volumeBounds.x + volumeBounds.width * 0.4, volumeBounds.y + 15);
+    await expect(volume).toHaveValue("40");
+
+    await page.getByRole("button", { name: "Note colours" }).click();
+    await page.getByRole("button", { name: "Swap hands" }).click();
+    await expect(page.getByRole("button", { name: "Swap hands" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Note colours" })).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Audio on" }).click();
+    await expect(page.getByRole("button", { name: "Muted" })).toBeVisible();
+    await page.getByRole("button", { name: "Muted" }).click();
+    await page.getByRole("button", { name: "Listen mode" }).click();
+    await page.getByRole("button", { name: "Play" }).click();
+    await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+    for (const speed of ["0.5x", "0.25x", "1x"]) {
+      await page.getByRole("button", { name: speed }).click();
+      await expect(page.getByRole("button", { name: speed })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    }
+
+    const seek = page.getByTestId("seek-bar");
+    const seekBounds = await seek.boundingBox();
+    if (!seekBounds) throw new Error("Seek bar has no bounds");
+    await page.mouse.move(seekBounds.x + seekBounds.width * 0.25, seekBounds.y + 17);
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.getByRole("button", { name: "Set A" }).click();
+    await page.mouse.move(seekBounds.x + seekBounds.width * 0.6, seekBounds.y + 17);
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.getByRole("button", { name: "Set B" }).click();
+    const marker = page.getByTestId("loop-marker-a");
+    const markerBounds = await marker.boundingBox();
+    if (!markerBounds) throw new Error("Loop marker A has no bounds");
+    await page.mouse.move(
+      markerBounds.x + markerBounds.width / 2,
+      markerBounds.y + markerBounds.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(seekBounds.x + seekBounds.width * 0.2, seekBounds.y + 17);
+    await expect(seek).toHaveAttribute("data-scrubbing", "a");
+    await page.mouse.up();
+    await page.getByRole("button", { name: "Clear" }).click();
+    await expect(page.getByTestId("loop-marker-a")).toHaveCount(0);
+    await page.getByRole("button", { name: /Library/ }).click();
+
+    await page.waitForTimeout(4_300);
+    for (const name of buttons) {
+      const currentName = name === "Play" ? "Pause" : name;
+      await expect(page.getByRole("button", { name: currentName })).toBeVisible();
+    }
+  }
+});
+
+test("[T14 AC8, AC9] Chromium fullscreen survives a rejected orientation lock", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 932, height: 430 });
+  await page.goto("/src/testing/e2e/player-harness.html?piece=air");
+  expect(await page.evaluate(() => document.fullscreenEnabled)).toBe(true);
+  await page.evaluate(() => {
+    Object.defineProperty(screen.orientation, "lock", {
+      configurable: true,
+      value: () => {
+        document.body.dataset.orientationLock = "attempted";
+        return Promise.reject(new Error("unsupported"));
+      },
+    });
+  });
+
+  await page.getByRole("button", { name: "Full screen" }).click();
+  await expect(page.getByRole("button", { name: "Exit full screen" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.fullscreenElement?.getAttribute("data-testid") === "player-view",
+    ),
+  ).toBe(true);
+  await expect(page.locator("body")).toHaveAttribute("data-orientation-lock", "attempted");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Full screen" })).toBeVisible();
+});
+
+test("[T14 AC5] measured-height hysteresis does not oscillate around 620px", async ({ page }) => {
+  await page.setViewportSize({ width: 932, height: 430 });
+  await page.goto("/src/testing/e2e/player-harness.html?piece=air");
+  await expect(page.getByTestId("player-view")).toHaveAttribute("data-density", "compact");
+  await page.setViewportSize({ width: 932, height: 625 });
+  await expect(page.getByTestId("player-view")).toHaveAttribute("data-density", "compact");
+  await page.setViewportSize({ width: 932, height: 632 });
+  await expect(page.getByTestId("player-view")).toHaveAttribute("data-density", "comfortable");
+  await page.setViewportSize({ width: 932, height: 615 });
+  await expect(page.getByTestId("player-view")).toHaveAttribute("data-density", "comfortable");
+  await page.setViewportSize({ width: 932, height: 608 });
+  await expect(page.getByTestId("player-view")).toHaveAttribute("data-density", "compact");
+});
+
+test("[T14 AC2] player has no dead scroll while Home and Report remain scrollable", async ({ page }) => {
+  await page.setViewportSize({ width: 932, height: 430 });
+  await page.goto("/src/testing/e2e/player-harness.html?piece=air");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollHeight === document.documentElement.clientHeight,
+    ),
+  ).toBe(true);
+
+  await page.goto("/");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollHeight > document.documentElement.clientHeight,
+    ),
+  ).toBe(true);
+
+  await page.goto("/reports/missing-attempt");
+  const reportCanScroll = await page.evaluate(() => {
+    const filler = document.createElement("div");
+    filler.style.height = "1000px";
+    document.body.append(filler);
+    return {
+      bodyOverflow: getComputedStyle(document.body).overflowY,
+      scrollable: document.documentElement.scrollHeight > document.documentElement.clientHeight,
+    };
+  });
+  expect(reportCanScroll.bodyOverflow).not.toBe("hidden");
+  expect(reportCanScroll.scrollable).toBe(true);
+});
+
+test("[T14 AC10] no tested width creates horizontal page scroll", async ({ page }) => {
+  for (const width of [320, 375, 390, 430, 667, 768, 820, 844, 932, 1024, 1440]) {
+    const height = width < 667 ? 900 : width >= 1024 ? 900 : 430;
+    await page.setViewportSize({ width, height });
+    await page.goto("/src/testing/e2e/player-harness.html?piece=air");
+    const horizontalScroll = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    );
+    expect(horizontalScroll, `${width}x${height}`).toBe(false);
+  }
+});
+
 test("[T05a AC3, AC4, AC5, AC7, AC8] volume and header states persist and fit", async ({
   browser,
   context,

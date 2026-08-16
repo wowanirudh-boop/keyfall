@@ -212,6 +212,15 @@ export const keyboard = {
   /** Black key height as a fraction of keyboard height. */
   blackHeightRatio: 0.62,
   heightCss: 'clamp(112px, 15vh, 158px)',
+  compactHeightCss: 'clamp(96px, 24vh, 158px)',
+} as const;
+
+export type PlayerDensity = 'comfortable' | 'compact';
+
+export const playerDensity = {
+  comfortableMinHeightPx: 620,
+  hysteresisPx: 12,
+  singleRowTransportMinWidthPx: 820,
 } as const;
 
 export const waterfall = {

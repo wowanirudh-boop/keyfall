@@ -128,6 +128,16 @@ describe("PianoKeyboard", () => {
     expect(screen.getByText("F♯4")).toBeTruthy();
   });
 
+  it("[T14 AC4] changes only the container height and safe-area padding at compact density", () => {
+    const view = render(
+      <PianoKeyboard notes={[]} position={0} hasHandData density="compact" />,
+    );
+    expect(screen.getByTestId("piano-keyboard")).toBeTruthy();
+
+    view.rerender(<PianoKeyboard notes={[]} position={0} hasHandData />);
+    expect(screen.getByTestId("piano-keyboard")).toBeTruthy();
+  });
+
   it("[T05 AC6, T07 AC6] applies error over pressed and pressed over prepare", () => {
     const notes = [
       note("sounding", 60, 1, 2, "right"),

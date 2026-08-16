@@ -1,6 +1,7 @@
 import { type PointerEvent as ReactPointerEvent } from "react";
 
 import { GhostButton, TogglePill } from "../design/primitives";
+import type { PlayerDensity } from "../design/tokens";
 import type { PieceDocument } from "../music/types";
 import { useHandColors } from "./handColors";
 import { HandColorButton } from "./HandColorControl";
@@ -40,6 +41,10 @@ export interface PlayerHeaderProps {
   onMutedChange: (muted: boolean) => void;
   onVolumeChange: (volume: number) => void;
   onListenToggle?: () => void;
+  density?: PlayerDensity;
+  fullscreenActive?: boolean;
+  fullscreenSupported?: boolean;
+  onFullscreenToggle?: () => void;
 }
 
 export interface VolumeSliderProps {
@@ -112,6 +117,10 @@ export function PlayerHeader({
   onMutedChange,
   onVolumeChange,
   onListenToggle,
+  density = "comfortable",
+  fullscreenActive = false,
+  fullscreenSupported = false,
+  onFullscreenToggle,
 }: PlayerHeaderProps) {
   const metadata = [
     piece.composer.toUpperCase(),
@@ -120,29 +129,62 @@ export function PlayerHeader({
   ]
     .filter(Boolean)
     .join(" · ");
+  const compact = density === "compact";
 
   return (
     <header
       data-testid="player-header"
-      className="flex shrink-0 flex-wrap items-center gap-x-[14px] gap-y-[8px] border-b border-border-1 bg-panel px-[14px] py-[10px] md:gap-x-[18px] md:px-[22px] md:py-[14px]"
+      className={
+        compact
+          ? "flex h-[44px] shrink-0 flex-nowrap items-center gap-[10px] overflow-hidden border-b border-border-1 bg-panel py-[4px] [padding-left:max(14px,env(safe-area-inset-left))] [padding-right:max(14px,env(safe-area-inset-right))]"
+          : "flex shrink-0 flex-wrap items-center gap-x-[14px] gap-y-[8px] border-b border-border-1 bg-panel py-[10px] [padding-left:max(14px,env(safe-area-inset-left))] [padding-right:max(14px,env(safe-area-inset-right))] md:gap-x-[18px] md:py-[14px] md:[padding-left:max(22px,env(safe-area-inset-left))] md:[padding-right:max(22px,env(safe-area-inset-right))]"
+      }
     >
-      <GhostButton className="shrink-0 whitespace-nowrap" onClick={onLibrary}>← Library</GhostButton>
+      <GhostButton
+        aria-label={compact ? "Library" : undefined}
+        className={
+          compact
+            ? "h-[34px] w-[34px] shrink-0 whitespace-nowrap p-0"
+            : "shrink-0 whitespace-nowrap"
+        }
+        onClick={onLibrary}
+      >
+        {compact ? "←" : "← Library"}
+      </GhostButton>
       {/*
         The controls carry `w-full` below md so they wrap onto their own row
         instead of being pushed past the right edge — at 375px the old single
         row overflowed by 156px, which put the mute toggle and Listen mode
         off-screen with no way to scroll to them (D-027).
       */}
-      <div className="flex min-w-0 flex-1 basis-[140px] flex-col gap-[3px]">
-        <h1 className="m-0 truncate text-subheading font-medium tracking-[-0.01em]">
+      {compact ? (
+        <h1
+          data-testid="player-title-line"
+          className="m-0 min-w-[64px] flex-1 truncate whitespace-nowrap text-subheading font-medium tracking-[-0.01em]"
+        >
           {piece.title}
+          <span className="font-mono text-mono-meta font-normal tracking-[0.04em] text-mono-dim-2">
+            {` · ${metadata}`}
+          </span>
         </h1>
-        <div className="truncate font-mono text-mono-meta tracking-[0.04em] text-mono-dim-2">
-          {metadata}
+      ) : (
+        <div className="flex min-w-0 flex-1 basis-[140px] flex-col gap-[3px]">
+          <h1 className="m-0 truncate text-subheading font-medium tracking-[-0.01em]">
+            {piece.title}
+          </h1>
+          <div className="truncate font-mono text-mono-meta tracking-[0.04em] text-mono-dim-2">
+            {metadata}
+          </div>
         </div>
-      </div>
-      <div className="flex w-full items-center justify-end gap-[10px] md:w-auto md:justify-start md:gap-[14px]">
-        <HandLegend hasHandData={piece.hasHandData} />
+      )}
+      <div
+        className={
+          compact
+            ? "flex shrink-0 items-center gap-[10px]"
+            : "flex w-full items-center justify-end gap-[10px] md:w-auto md:justify-start md:gap-[14px]"
+        }
+      >
+        {compact ? null : <HandLegend hasHandData={piece.hasHandData} />}
         <HandColorButton />
         <div data-testid="header-audio-controls" className="flex shrink-0 items-center gap-[10px]">
           <VolumeSlider volume={volume} onVolumeChange={onVolumeChange} />
@@ -164,6 +206,16 @@ export function PlayerHeader({
         >
           {listening ? "Stop listening" : "Listen mode"}
         </TogglePill>
+        {compact && fullscreenSupported ? (
+          <TogglePill
+            data-testid="fullscreen-toggle"
+            className="shrink-0 whitespace-nowrap"
+            on={fullscreenActive}
+            onClick={onFullscreenToggle}
+          >
+            {fullscreenActive ? "Exit full screen" : "Full screen"}
+          </TogglePill>
+        ) : null}
       </div>
     </header>
   );
