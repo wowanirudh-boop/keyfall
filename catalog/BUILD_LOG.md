@@ -297,3 +297,60 @@ Dropped candidates: **7**
 - missing published Mutopia ID (ftp/BeethovenLv/O27/moonlight/moonlight-lys/moonlight3-a4.ly)
 - missing published Mutopia ID (ftp/BeethovenLv/O27/moonlight/moonlight-lys/moonlight3-let.ly)
 - missing published Mutopia ID (ftp/SatieE/Gnossienne/no_2/no_2.ly)
+
+## Source adapters
+
+- Mutopia: `2144afd6f52d56c5b6995b8b589ef1268b3139f0` (priority 0; wins duplicate works)
+- piano-midi.de: apex HTTP inventory checked 2026-08-16 (priority 1; fetched from `http://piano-midi.de/` over HTTP)
+
+The adapters supply ids, titles, raw and canonical composer names, exact asset
+bytes and per-row licence records. The merged writer validates, hashes, de-duplicates,
+sorts and writes both sources through one path.
+
+## piano-midi.de parser gate
+
+- Accepted rows: **13**
+- Rows with `hasHandData === true`: **13/13 (100.0%)**
+- The build-time MIDI gate yielded at least one A0–C8 note for every accepted row.
+- `tests/build-catalog.test.ts` independently runs every shipped row through the production `parsePieceBytes` path and checks this result and the hand-data fraction.
+
+### Same-licence composites
+
+- **undefined**: [source MIDI](http://piano-midi.de/midis/ravel/rav_ondi.mid), [source MIDI](http://piano-midi.de/midis/ravel/rav_gib.mid), [source MIDI](http://piano-midi.de/midis/ravel/rav_scarbo.mid); concatenated in listed movement order and retained under the same licence.
+- **undefined**: [source MIDI](http://piano-midi.de/midis/beethoven/mond_1.mid), [source MIDI](http://piano-midi.de/midis/beethoven/mond_2.mid), [source MIDI](http://piano-midi.de/midis/beethoven/mond_3.mid); concatenated in listed movement order and retained under the same licence.
+
+### Arrangement rights checks
+
+- Tchaikovsky — Waltz of the Flowers (The Nutcracker, piano arr.): skipped; the source's Tchaikovsky page contains The Seasons, not this arrangement, so there is no file-specific arrangement licence to verify.
+- Bach — Toccata and Fugue in D minor, BWV 565 (piano arr.): skipped; the source's Bach page contains only WTC selections, so there is no file-specific arrangement licence to verify.
+- Tchaikovsky — Dance of the Sugar Plum Fairy (The Nutcracker, piano arr.): skipped; the source's Tchaikovsky page contains The Seasons, not this arrangement, so there is no file-specific arrangement licence to verify.
+- Schubert — Ständchen / Serenade (arr. Liszt, S.560 No. 7): skipped; the source's Schubert page does not list this transcription, so there is no file-specific arrangement licence to verify.
+- Bach — Air on the G String (BWV 1068, piano arr.): skipped; the source's Bach page contains only WTC selections, so there is no file-specific arrangement licence to verify.
+- Vivaldi — Summer (The Four Seasons, piano arr.): skipped; Vivaldi is absent from the source index, so there is no file-specific arrangement licence to verify.
+- Vivaldi — Spring (The Four Seasons, piano arr.): skipped; Vivaldi is absent from the source index, so there is no file-specific arrangement licence to verify.
+- Vivaldi — Winter (The Four Seasons, piano arr.): skipped; Vivaldi is absent from the source index, so there is no file-specific arrangement licence to verify.
+- Rimsky-Korsakov — Flight of the Bumblebee (arr. Rachmaninoff): skipped; Rimsky-Korsakov is absent from the source index, so there is no file-specific arrangement licence to verify.
+
+### Duplicate-source skips
+
+- None
+
+### Second-source drops
+
+- None
+
+## Shipped catalog weight
+
+- Pieces: **609**
+- Score assets: **6,694,948 bytes (6.38 MiB)**
+- 20 MiB deployment flag: **clear at the score-asset stage**
+
+## Deployed catalog weight
+
+- `dist/catalog`: **7,346,642 bytes (7.01 MiB)**
+- 20 MiB deployment flag: **clear**
+## Playlists
+
+| Source | Resolved | Missing | Excluded |
+|---|---:|---:|---:|
+| `rousseau-classical.tsv` | 38 | 26 | 7 |

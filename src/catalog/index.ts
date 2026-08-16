@@ -14,3 +14,14 @@ export {
   type CatalogRepositoryOptions,
   type CatalogSort,
 } from "./CatalogRepository";
+export {
+  PlaylistRepository,
+  validatePlaylistDocument,
+  type LoadedPlaylist,
+  type LoadedPlaylistEntry,
+  type PlaylistCounts,
+  type PlaylistDocument,
+  type PlaylistReference,
+  type PlaylistRepositoryOptions,
+} from "./PlaylistRepository";
+export { catalogRepository, loadCatalogAndPlaylists, playlistRepository } from "./runtime";

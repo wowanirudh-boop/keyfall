@@ -15,38 +15,94 @@ Liszt beyond four Consolations, no Ravel, no Vivaldi, and none of the Nutcracker
 This task adds a second licence-clean source so the seeded playlist stops being
 half empty, and re-resolves the TSV against the enlarged catalog.
 
-## The licence gate — clear this before writing any fetch code
+## The licence gate — CLEARED 2026-08-16, read this before writing any fetch code
 
-**Stop and report if any of this does not hold.** PRD F2's guardrail is that the
-app auto-fetches only from sources whose licences permit redistribution. Getting
-this wrong is not a bug, it is a legal problem, and the app is deployed publicly
-(T10).
+**The gate is passed. Do not re-litigate it, and do not re-verify it by guessing.**
+`http://piano-midi.de/copy.htm` was read first-hand and records:
 
-The proposed source is **piano-midi.de** (Bernd Krueger): roughly 300 classical
-piano MIDI performances, repertoire that overlaps this playlist closely —
-Liszt, Debussy, Tchaikovsky, Ravel, Mussorgsky, Schubert, Rachmaninoff. Multiple
-secondary sources describe the files as **CC-BY-SA (Germany)** with attribution
-to "Bernd Krueger, http://www.piano-midi.de".
+> The MIDI, audio(MP3, OGG) and video files of Bernd Krueger are licensed under
+> the cc-by-sa Germany License. This means, that you can use and adapt the
+> files, as long as you attribute to the copyright holder Name: Bernd Krueger,
+> Source: http://www.piano-midi.de. The distribution or public playback of the
+> files is only allowed under identical license conditions.
 
-**I could not verify this first-hand.** `http://piano-midi.de/copy.htm` was
-unreachable from the machine that wrote this task — the site is HTTP-only and
-the egress proxy returned 418. So:
+Redistribution is permitted. Full reasoning is in `docs/decisions.md` **D-040**.
 
-- [ ] Fetch `http://www.piano-midi.de/copy.htm` and read the licence yourself.
-- [ ] Record the exact licence name, version and required attribution wording in
-      `docs/decisions.md` D-034 and in `catalog/LICENCES.md`.
-- [ ] Confirm redistribution is permitted. If the terms turn out to be
-      non-commercial-only, "personal use", or unclear — **stop, report, and
-      propose an alternative.** Do not ship it and do not guess.
-- [ ] Note that these are *performances*, not engravings. The credit line is the
-      performer/sequencer, which is exactly what `licence.creator` already holds
-      for Mutopia typesetters.
+**Use the apex domain to fetch. `www.piano-midi.de` is a dead host** — a
+different IP serving a placeholder that returns `404` over HTTPS and a bodyless
+`418` over HTTP. Two earlier sessions concluded the site was offline because
+they only ever tried `www.`. Fetch from `http://piano-midi.de/…`. The site is
+HTTP-only; do not assume an HTTPS mirror exists.
 
-If piano-midi.de fails the gate, candidate fallbacks to evaluate, in order:
-KernScores (CCARH, Humdrum `**kern` → MIDI), IMSLP per-file (licences vary
-per upload; only viable file-by-file), and hand-sourcing from Mutopia's own
-unreleased submissions. **OpenScore is not a candidate** — its CC0 corpora are
-Lieder and string quartets, not solo piano.
+What the licence obliges, and what must therefore land in every row's `licence`
+record:
+
+- [ ] `licence.name` — record it **as worded**: `cc-by-sa Germany License`. The
+      page gives **no version number**, so do not write "3.0 DE" or invent a
+      deed URL. If you want a version, find one stated on the site itself.
+- [ ] `licence.creator` — `Bernd Krueger`.
+- [ ] `licence.url` — the licence statement's own page, `http://piano-midi.de/copy.htm`.
+      The attribution *string* the licence demands names `http://www.piano-midi.de`;
+      reproduce that verbatim in the attribution text even though fetching uses
+      the apex. The licence's wording wins over our convenience.
+- [ ] Share-alike: these files ship under the same licence. Add a piano-midi.de
+      section to `catalog/LICENCES.md` stating that, alongside the Mutopia rows.
+- [ ] These are **performances, not engravings**. The credit is to the
+      performer/sequencer, which is what `licence.creator` already holds for
+      Mutopia typesetters. Where both sources carry the same work, **Mutopia
+      wins** (D-034): an engraving has real staff data, a performance infers it.
+
+**Still stop and report** if a specific file's page contradicts the site-wide
+terms, or if any row cannot be attributed. A file we cannot attribute is a file
+we cannot ship.
+
+If a work is absent from piano-midi.de too, the evaluated fallbacks are in
+D-039: the CC BY-NC-SA Humdrum corpora are usable (the app is permanently
+non-commercial, D-041) but cover little of the gap; the Beethoven and Chopin
+kern repositories carry **no licence at all** and are therefore not usable;
+Wikimedia Commons has no score data. **OpenScore is not a candidate** — its CC0
+corpora are Lieder and string quartets, not solo piano.
+
+## What this source actually covers — checked 2026-08-16, not assumed
+
+A shallow pass over the composer pages. Treat it as a starting map, not a
+substitute for resolving all 39 properly.
+
+**Confirmed present** (~15 of the 39):
+
+| Composer | Works | Closes |
+|---|---|---|
+| Beethoven | Sonata No. 14 Op. 27/2 (complete) | 2nd mvt, 3rd mvt, complete — **3 rows** |
+| Liszt | La Campanella, Mazeppa, 19 Hungarian Rhapsodies | Campanella, Mazeppa, HR2, HR6 — **4 rows** |
+| Ravel | Gaspard de la Nuit (Le Gibet listed, so the suite) | complete + Scarbo — **2 rows** |
+| Chopin | Études Op. 10 and Op. 25 (sets), Polonaise Op. 53 | 10/3, 10/4, 25/5, 25/9, 25/11, Op. 53 — **6 rows** |
+
+**Not available from this source at all — the composer is absent from the site
+index entirely**, so do not spend time searching: **Vivaldi** (all three Four
+Seasons rows), **Scriabin** (Étude Op. 8 No. 12), **Rimsky-Korsakov** (Flight of
+the Bumblebee). That is **5 rows that stay `missing`** after this task. Say so
+in the report rather than leaving them looking unattempted.
+
+**Unconfirmed — the composer is on the site but the specific work did not turn
+up in a quick pass.** Check each properly: Liszt *Liebestraum No. 3* and *Un
+Sospiro*; Ravel *Pavane*; Chopin *Nocturne No. 20 posth.* and *Waltz Op. 64/2*;
+all three Debussy; Mozart *K. 310* and *K. 265* (the site's numbering differs —
+it lists "Sonata No. 8 D major, KV 311", which is **not** our K. 310);
+Rachmaninoff (the site has Études-tableaux **Op. 33**, we need **Op. 39 No. 6**,
+and Moments musicaux **Op. 16 No. 4** was not found); Schubert *Ständchen*;
+both Bach arrangements; both Tchaikovsky Nutcracker numbers.
+
+**A bonus outside the 39:** the site carries the full *Pictures at an
+Exhibition* (1874). Our catalog row is a 237-second fragment mislabelled as the
+whole suite (D-038, T03e). If the licence checks out, replacing it fixes that
+defect properly instead of just retitling it. Coordinate with T03e rather than
+both editing the same row.
+
+**Nine of the absent works are arrangements** (the three Vivaldi *Four Seasons*,
+both Bach piano arrangements, both Nutcracker numbers, Flight of the Bumblebee,
+Ständchen). The underlying work being public domain does not make the
+arrangement public domain. Each needs its own check, and "found a MIDI" is not
+that check.
 
 ## Deliverables
 

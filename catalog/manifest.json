@@ -3207,6 +3207,46 @@
     }
   },
   {
+    "id": "etude-op-25-no-11-winter-wind",
+    "title": "Étude Op. 25 No. 11 (‘Winter Wind’)",
+    "composer": "Chopin, Frédéric",
+    "rawComposer": "Chopin",
+    "aliases": [
+      "chopin",
+      "etude winter wind"
+    ],
+    "asset": "etude-op-25-no-11-winter-wind.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/chopin/chpn_op25_e11.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "a078dec84990199e91faddece6b21661ed0c9b358923a0648775ad9ec7560d97"
+    },
+    "durationSeconds": 186.97750409166636
+  },
+  {
+    "id": "etude-op-25-no-12-ocean",
+    "title": "Étude Op. 25 No. 12 (‘Ocean’)",
+    "composer": "Chopin, Frédéric",
+    "rawComposer": "Chopin",
+    "aliases": [
+      "chopin",
+      "etude ocean"
+    ],
+    "asset": "etude-op-25-no-12-ocean.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/chopin/chpn_op25_e12.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "dec059d53eb2b777f60287a27384a75bc2c2cb68eb88b9f69f28c73ced366327"
+    },
+    "durationSeconds": 136.34586538333392
+  },
+  {
     "id": "eugenia",
     "mutopiaId": "496",
     "title": "Eugenia",
@@ -3551,6 +3591,25 @@
     }
   },
   {
+    "id": "gaspard-de-la-nuit-complete",
+    "title": "Gaspard de la nuit (complete)",
+    "composer": "Ravel, Maurice",
+    "rawComposer": "Ravel",
+    "aliases": [
+      "ravel"
+    ],
+    "asset": "gaspard-de-la-nuit-complete.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/ravel.htm",
+      "creator": "Bernd Krueger",
+      "sha256": "96473bbae49409232a77b7736a1813dff722a8442bee51920caaf8cd51ea8555"
+    },
+    "durationSeconds": 1224.1114583333333
+  },
+  {
     "id": "gavotte",
     "mutopiaId": "151",
     "title": "Gavotte",
@@ -3811,6 +3870,25 @@
       "sha256": "b0982329d41c10e20bc15584e00de0362ef961100c92277b3872435ae9c43992",
       "creator": "Benjamin Bloomfield"
     }
+  },
+  {
+    "id": "hungarian-rhapsody-no-2-s-244",
+    "title": "Hungarian Rhapsody No. 2, S.244",
+    "composer": "Liszt, Franz",
+    "rawComposer": "Liszt",
+    "aliases": [
+      "liszt"
+    ],
+    "asset": "hungarian-rhapsody-no-2-s-244.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/liszt/liz_rhap02.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "19f62d62836e8df9d760de8cb645e6020a05c444651ad974be62ddef9ef1d654"
+    },
+    "durationSeconds": 525.8226971104166
   },
   {
     "id": "ich-dank-dir-lieber-herre",
@@ -4800,6 +4878,25 @@
     }
   },
   {
+    "id": "la-campanella-grandes-etudes-de-paganini-no-3-s-141",
+    "title": "La Campanella (Grandes études de Paganini No. 3, S.141)",
+    "composer": "Liszt, Franz",
+    "rawComposer": "Liszt",
+    "aliases": [
+      "liszt"
+    ],
+    "asset": "la-campanella-grandes-etudes-de-paganini-no-3-s-141.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/liszt/liz_et3.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "4f7e61d9a8c458f831e8b8a59e9553f1bd7965a8669a09e2f073221039740767"
+    },
+    "durationSeconds": 247.74625055000024
+  },
+  {
     "id": "la-candeur",
     "mutopiaId": "202",
     "title": "La Candeur",
@@ -5590,6 +5687,25 @@
     }
   },
   {
+    "id": "liebestraum-no-3-s-541",
+    "title": "Liebestraum No. 3, S.541",
+    "composer": "Liszt, Franz",
+    "rawComposer": "Liszt",
+    "aliases": [
+      "liszt"
+    ],
+    "asset": "liebestraum-no-3-s-541.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/liszt/liz_liebestraum.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "4012432ff9712bfb6fad64c37d2ca973ae4ef57181183676d15b618642d990c3"
+    },
+    "durationSeconds": 245.33596003958382
+  },
+  {
     "id": "lied-ohne-worte-opus-102-no-3",
     "mutopiaId": "589",
     "title": "Lied Ohne Worte - Opus 102 No. 3",
@@ -5811,6 +5927,26 @@
     }
   },
   {
+    "id": "marche-funebre-sonata-no-2-3rd-movement",
+    "title": "Marche funèbre (Sonata No. 2, 3rd mvt)",
+    "composer": "Chopin, Frédéric",
+    "rawComposer": "Chopin",
+    "aliases": [
+      "chopin",
+      "marche funebre 3rd mvt"
+    ],
+    "asset": "marche-funebre-sonata-no-2-3rd-movement.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/chopin/chpn_op35_3.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "697d880487b9533b4a3cef43086a9d6a2ec374557863f79e48eb735b98bc2440"
+    },
+    "durationSeconds": 446.86551859166707
+  },
+  {
     "id": "marche-funebre-kv-453a",
     "mutopiaId": "446",
     "title": "Marche funebre KV 453a",
@@ -5829,6 +5965,25 @@
       "sha256": "b671f1773541dc14ee6cfe822aacc4363caffe7f81016cef7b4037f2b305ba44",
       "creator": "Maurizio Tomasi"
     }
+  },
+  {
+    "id": "mazeppa-transcendental-etude-no-4-s-139",
+    "title": "Mazeppa (Transcendental Étude No. 4, S.139)",
+    "composer": "Liszt, Franz",
+    "rawComposer": "Liszt",
+    "aliases": [
+      "liszt"
+    ],
+    "asset": "mazeppa-transcendental-etude-no-4-s-139.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/liszt/liz_et_trans4.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "c20c2f265b4bed8073b0ec4d47a80eaf2e34cf49029713e1e672dd5c08cbf9f9"
+    },
+    "durationSeconds": 375.50882594583317
   },
   {
     "id": "mazurka-op-33-no-1",
@@ -6771,6 +6926,26 @@
       "sha256": "69cfdd1d65d2062aa3326601e1aa5101c62c3932841af4d6de81a513dd8209c9",
       "creator": "Steven McDougall"
     }
+  },
+  {
+    "id": "polonaise-op-53-in-a-flat-heroic",
+    "title": "Polonaise Op. 53 in A-flat (‘Heroic’)",
+    "composer": "Chopin, Frédéric",
+    "rawComposer": "Chopin",
+    "aliases": [
+      "chopin",
+      "polonaise in a flat heroic"
+    ],
+    "asset": "polonaise-op-53-in-a-flat-heroic.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/chopin/chpn_op53.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "df060f39f82178c0ad8b66baa282a872c23c8be25d33129fe9a87d1b31b9be37"
+    },
+    "durationSeconds": 352.01345621249936
   },
   {
     "id": "possum-and-taters",
@@ -8139,6 +8314,25 @@
     }
   },
   {
+    "id": "scarbo-gaspard-de-la-nuit-no-3",
+    "title": "Scarbo (Gaspard de la nuit, No. 3)",
+    "composer": "Ravel, Maurice",
+    "rawComposer": "Ravel",
+    "aliases": [
+      "ravel"
+    ],
+    "asset": "scarbo-gaspard-de-la-nuit-no-3.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/ravel/rav_scarbo.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "b9857f263a2f9d0bd4d2bee60d3c9b2888ee4cf70088a06e9884c53e03f685d0"
+    },
+    "durationSeconds": 507.1631270645864
+  },
+  {
     "id": "scherzino",
     "mutopiaId": "1530",
     "title": "Scherzino",
@@ -9022,6 +9216,63 @@
       "sha256": "0657fbc873711d6a22761be2fc19df3fe338f61cbd37806a4314017badb5bf07",
       "creator": "Stelios Samelis"
     }
+  },
+  {
+    "id": "sonata-no-14-moonlight-2nd-movement",
+    "title": "Sonata No. 14 ‘Moonlight’ (2nd mvt)",
+    "composer": "Beethoven, Ludwig van",
+    "rawComposer": "Beethoven",
+    "aliases": [
+      "beethoven"
+    ],
+    "asset": "sonata-no-14-moonlight-2nd-movement.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/beethoven/mond_2.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "90b3a67073bf9dc01657e6785c27cd8287db5d8fd43a42650c1ac56bdabb0769"
+    },
+    "durationSeconds": 124.04269664999997
+  },
+  {
+    "id": "sonata-no-14-moonlight-3rd-movement",
+    "title": "Sonata No. 14 ‘Moonlight’ (3rd mvt)",
+    "composer": "Beethoven, Ludwig van",
+    "rawComposer": "Beethoven",
+    "aliases": [
+      "beethoven"
+    ],
+    "asset": "sonata-no-14-moonlight-3rd-movement.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/midis/beethoven/mond_3.mid",
+      "creator": "Bernd Krueger",
+      "sha256": "6f01e20c125731b984ab831c48afa4efbc191e0e70b19dcbeb3b01daaea795a9"
+    },
+    "durationSeconds": 410.3569869083329
+  },
+  {
+    "id": "sonata-no-14-moonlight-complete",
+    "title": "Sonata No. 14 ‘Moonlight’ (complete)",
+    "composer": "Beethoven, Ludwig van",
+    "rawComposer": "Beethoven",
+    "aliases": [
+      "beethoven"
+    ],
+    "asset": "sonata-no-14-moonlight-complete.mid",
+    "format": "midi",
+    "licence": {
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/beeth.htm",
+      "creator": "Bernd Krueger",
+      "sha256": "e1ad5b24729b77c984d7883d2a0ea47318ca8d8de866dee83df6a07739638326"
+    },
+    "durationSeconds": 896.3833333333333
   },
   {
     "id": "sonata-no-14-moonlight-1st-movement-adagio-sostenuto",

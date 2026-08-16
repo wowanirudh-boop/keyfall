@@ -71,6 +71,16 @@ distributed and the app's own licence is unaffected.
 If T13 lands a second source first, its rows must clear the same bar before this
 deploys.
 
+## Live URL
+
+**https://piano-practice-player.wowanirudh.workers.dev** — deployed 2026-08-13,
+Git-connected to `wowanirudh-boop/keyfall`, rebuilds on every push to `main`.
+
+The earlier `piano-practice-player.pages.dev` is **dead** — that Pages project was
+deleted when the target moved to Workers (D-037). A Workers deployment is served
+from `<name>.<account-subdomain>.workers.dev`, not `.pages.dev`. Anything
+bookmarked or added to a home screen under the old address must be re-added.
+
 ## Hosting — the decision, and why
 
 **Cloudflare Pages.** `wrangler` and `@cloudflare/vite-plugin` are already in

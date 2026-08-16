@@ -19,7 +19,8 @@ describe('foundation contract', () => {
 
     expect(scripts).toMatchObject({
       dev: 'vite',
-      build: 'vite build',
+      build:
+        'node scripts/build-catalog.mjs --playlists-only && vite build && node scripts/build-catalog.mjs --report-dist-weight',
       preview: 'vite preview',
       test: 'vitest run',
       'test:e2e': 'playwright test',

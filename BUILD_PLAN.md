@@ -228,19 +228,35 @@ sort control, Home reordered around the learner's own pieces, practice speed no
 longer reset on re-open, and a keyboard that windows to the piece's range on
 narrow screens.
 
-### T12 — Playlists
+### T03e — Catalog metadata corrections
 
-Named, ordered lists of references to catalog or uploaded pieces, plus one
-seeded read-only playlist built from `catalog/playlists/*.tsv`. Dexie goes to
-version 2 with an additive `playlists` table. No auto-advance — deferred to O-9.
-D-032.
+Resolves the last four `verify` rows in the Rousseau TSV from the Mutopia source
+paths already in the manifest (25 playable, not 24), and retitles two entries
+that claim far more than their file contains. D-038.
+
+### T12a — The shipped playlist (read-only)
+
+"Classical Rousseau" as an ordered list of catalog references, generated into
+`catalog/playlists.json` at build time from `catalog/playlists/*.tsv`. A
+Playlists section on Home opening its own page; no player changes; the 39 absent
+works get one derived line rather than silence or dead rows. **No schema
+change.** D-032, D-042.
+
+### T12b — Playlists the user makes
+
+Create, rename, add, remove, reorder, duplicate, delete. Dexie goes to version 2
+with an additive `playlists` table — the migration is the risk this split exists
+to isolate, and it is proven against a seeded v1 database before any UI. The
+shipped playlist stays a build artefact and is never written into the table.
+No auto-advance — still O-9. D-032, D-042.
 
 ### T13 — A second catalog source
 
-Mutopia does not carry 37 of the 72 rows in the Rousseau list. Refactors
-`scripts/build-catalog.mjs` behind a source adapter and adds piano-midi.de,
-**gated on reading its licence first-hand** (O-8). The Mutopia path must
-regenerate byte-identical. D-034.
+Mutopia does not carry 39 of the 72 rows in the Rousseau list. Refactors
+`scripts/build-catalog.mjs` behind a source adapter and adds piano-midi.de.
+**The licence gate is cleared** — cc-by-sa Germany, attribution to Bernd
+Krueger, share-alike (D-040); fetch from the apex domain, `www.` is dead. The
+Mutopia path must regenerate byte-identical. D-034, D-040, D-041.
 
 ### T10 — Offline packaging and deployment
 Service worker caches shell, fonts and catalog manifest; score assets cached on

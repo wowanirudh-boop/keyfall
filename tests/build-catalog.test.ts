@@ -10,10 +10,16 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error The committed build script does not need a TypeScript declaration file.
 import {
   buildCatalog,
+  buildCatalogFromAdapters,
+  buildPlaylists,
+  concatenateMidiAssets,
+  createPianoMidiSourceAdapter,
   extractMidiEntries,
   isSoloKeyboardInstrument,
+  PIANO_MIDI_PIECES,
   parsePieceSource,
 } from "../scripts/build-catalog.mjs";
+import { parsePieceBytes } from "../src/music/parse";
 
 const { Midi } = midiPackage;
 
@@ -191,5 +197,244 @@ describe("catalog ingestion", () => {
     expect(entries).toHaveLength(1);
     expect(entries[0].name).toBe("movement-1.mid");
     expect(entries[0].bytes).toEqual(Buffer.from(expected));
+  });
+
+  it("[T13 AC3, AC4] adapts the curated apex inventory with exact licence metadata", async () => {
+    const pages = new Map<string, string>();
+    for (const piece of PIANO_MIDI_PIECES) {
+      pages.set(
+        piece.page,
+        `${pages.get(piece.page) ?? ""}${piece.assets.map((asset: string) => `href="${asset}"`).join("\n")}`,
+      );
+    }
+    const adapter = createPianoMidiSourceAdapter({
+      cacheDir: "unused-in-fixture",
+      composerAliases: {
+        Beethoven: "Beethoven, Ludwig van",
+        Chopin: "Chopin, Frédéric",
+        Liszt: "Liszt, Franz",
+        Ravel: "Ravel, Maurice",
+      },
+      fetchUrl: async (url: string) =>
+        url.endsWith(".htm") ? pages.get(url.split("/").at(-1) ?? "") : midiBytes(),
+    });
+
+    const result = await adapter.load();
+
+    expect(result.rows).toHaveLength(13);
+    expect(result.arrangementDispositions).toHaveLength(9);
+    for (const row of result.rows) {
+      expect(row.licence).toMatchObject({
+        name: "cc-by-sa Germany License",
+        url: "http://piano-midi.de/copy.htm",
+        creator: "Bernd Krueger",
+      });
+      expect(row.licence.sourceUrl).toMatch(/^http:\/\/piano-midi\.de\//);
+    }
+    expect(() => new Midi(concatenateMidiAssets([midiBytes(), midiBytes()]))).not.toThrow();
+  });
+
+  it("[T13 AC2, AC5] gives Mutopia priority over a duplicate second-source work", async () => {
+    const root = await mkdtemp(join(tmpdir(), "piano-catalog-merge-"));
+    const bytes = Buffer.from(midiBytes());
+    const mutopiaRow = {
+      id: "mutopia-study",
+      mutopiaId: "42",
+      title: "Priority Study",
+      composer: "Composer, Example",
+      rawComposer: "Example Composer",
+      aliases: [],
+      asset: "mutopia-study.mid",
+      format: "midi",
+      durationSeconds: 1,
+      licence: {
+        name: "Public Domain",
+        url: "https://www.mutopiaproject.org/legal.html",
+        sourceUrl: "https://www.mutopiaproject.org/ftp/priority.mid",
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      },
+      bytes,
+      sourceKey: "mutopia",
+    };
+    const pianoRow = {
+      ...mutopiaRow,
+      id: "piano-midi-study",
+      mutopiaId: undefined,
+      asset: "piano-midi-study.mid",
+      licence: {
+        name: "cc-by-sa Germany License",
+        url: "http://piano-midi.de/copy.htm",
+        sourceUrl: "http://piano-midi.de/midis/study.mid",
+        creator: "Bernd Krueger",
+      },
+      sourceKey: "piano-midi.de",
+      sourceAssets: ["http://piano-midi.de/midis/study.mid"],
+    };
+    const result = await buildCatalogFromAdapters({
+      adapters: [
+        {
+          key: "mutopia",
+          priority: 0,
+          revision: "fixture-mutopia",
+          load: async () => ({ rows: [mutopiaRow], baseBuildLog: "# Catalog ingestion log" }),
+        },
+        {
+          key: "piano-midi.de",
+          priority: 1,
+          revision: "fixture-piano-midi",
+          load: async () => ({ rows: [pianoRow], arrangementDispositions: [] }),
+        },
+      ],
+      outputDir: join(root, "catalog"),
+      parseAsset: async () => ({
+        ok: true,
+        piece: { notes: [{ midi: 60 }], hasHandData: false },
+      }),
+      log: () => undefined,
+    });
+
+    expect(result.manifest.map((row: { id: string }) => row.id)).toEqual(["mutopia-study"]);
+    expect(result.duplicateDrops).toHaveLength(1);
+    expect(result.duplicateDrops[0]).toContain("Mutopia wins");
+  });
+
+  it("[T13 AC3, AC6, AC7] production-parses every shipped second-source asset", async () => {
+    const manifest = JSON.parse(await readFile("catalog/manifest.json", "utf8"));
+    const rows = manifest.filter(
+      (row: { licence: { url: string } }) =>
+        row.licence.url === "http://piano-midi.de/copy.htm",
+    );
+    let handRows = 0;
+
+    expect(rows).toHaveLength(13);
+    for (const row of rows) {
+      expect(row.licence).toEqual(
+        expect.objectContaining({
+          name: "cc-by-sa Germany License",
+          url: "http://piano-midi.de/copy.htm",
+          creator: "Bernd Krueger",
+          sourceUrl: expect.stringMatching(/^http:\/\/piano-midi\.de\//),
+          sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      );
+      const parsed = await parsePieceBytes({
+        name: row.asset,
+        bytes: await readFile(join("catalog", "scores", row.asset)),
+      });
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) continue;
+      expect(parsed.piece.notes.length).toBeGreaterThan(0);
+      expect(parsed.piece.notes.every((note) => note.midi >= 21 && note.midi <= 108)).toBe(true);
+      if (parsed.piece.hasHandData) handRows += 1;
+    }
+    expect(await readFile("catalog/BUILD_LOG.md", "utf8")).toContain(
+      `Rows with \`hasHandData === true\`: **${handRows}/${rows.length}`,
+    );
+  });
+});
+
+describe("playlist ingestion", () => {
+  it("[T12a AC1, AC2, AC8] ships the corrected seed in first-occurrence order", async () => {
+    const source = await readFile("catalog/playlists/rousseau-classical.tsv", "utf8");
+    const generated = JSON.parse(await readFile("catalog/playlists.json", "utf8"));
+    const playlist = generated.playlists[0];
+    const firstOccurrenceOrder = [
+      ...new Set(
+        source
+          .split(/\r?\n/)
+          .filter((line) => line.startsWith("have\t"))
+          .map((line) => line.split("\t")[3]),
+      ),
+    ];
+
+    expect(source).not.toMatch(/^verify\t/m);
+    expect(playlist.id).toBe("rousseau-classical");
+    expect(playlist.entries.map((entry: { ref: string }) => entry.ref)).toEqual(
+      firstOccurrenceOrder,
+    );
+    expect(playlist.entries).toHaveLength(38);
+    expect(
+      playlist.entries.filter(
+        (entry: { ref: string }) => entry.ref === "suite-bergamasque-clair-de-lune",
+      ),
+    ).toHaveLength(1);
+    expect(playlist.counts).toEqual({ resolved: 38, missing: 26, excluded: 7 });
+    expect(playlist.missingComposers).toEqual([
+      "Vivaldi",
+      "Tchaikovsky",
+      "Rimsky-Korsakov",
+      "Schubert",
+    ]);
+    expect(await readFile("catalog/BUILD_LOG.md", "utf8")).toContain(
+      "| `rousseau-classical.tsv` | 38 | 26 | 7 |",
+    );
+  });
+
+  it.each([
+    {
+      status: "have",
+      catalogId: "absent-piece",
+      message: "unknown.tsv:3 (Unshipped work)",
+    },
+    {
+      status: "verify",
+      catalogId: "known-piece",
+      message: "unknown.tsv:3 (Unshipped work)",
+    },
+  ])("[T12a AC3] rejects a $status row and names it", async ({ status, catalogId, message }) => {
+    const root = await mkdtemp(join(tmpdir(), "piano-playlist-invalid-"));
+    const playlistsDir = join(root, "playlists");
+    await mkdir(playlistsDir);
+    await writeFile(join(root, "manifest.json"), JSON.stringify([{ id: "known-piece" }]));
+    await writeFile(
+      join(playlistsDir, "unknown.tsv"),
+      `# name: Test playlist\nstatus\tcomposer\twork\tcatalog_id\tnote\n${status}\tComposer, Ada\tUnshipped work\t${catalogId}\n`,
+    );
+
+    await expect(
+      buildPlaylists({
+        playlistsDir,
+        manifestPath: join(root, "manifest.json"),
+        outputPath: join(root, "playlists.json"),
+        buildLogPath: join(root, "BUILD_LOG.md"),
+      }),
+    ).rejects.toThrow(message);
+  });
+
+  it("[T12a AC8] re-derives counts and gap composers after a TSV-only change", async () => {
+    const root = await mkdtemp(join(tmpdir(), "piano-playlist-derived-"));
+    const playlistsDir = join(root, "playlists");
+    const manifestPath = join(root, "manifest.json");
+    const outputPath = join(root, "playlists.json");
+    const buildLogPath = join(root, "BUILD_LOG.md");
+    const header = "status\tcomposer\twork\tcatalog_id\tnote";
+    await mkdir(playlistsDir);
+    await writeFile(manifestPath, JSON.stringify([{ id: "piece-one" }]));
+    await writeFile(
+      join(playlistsDir, "derived.tsv"),
+      `${header}\nmissing\tAlpha, Ada\tFirst\nmissing\tAlpha, Ada\tSecond\nmissing\tBeta, Bea\tThird\n`,
+    );
+
+    const before = await buildPlaylists({
+      playlistsDir,
+      manifestPath,
+      outputPath,
+      buildLogPath,
+    });
+    await writeFile(
+      join(playlistsDir, "derived.tsv"),
+      `${header}\nhave\tAlpha, Ada\tFirst\tpiece-one\nmissing\tAlpha, Ada\tSecond\nmissing\tBeta, Bea\tThird\n`,
+    );
+    const after = await buildPlaylists({
+      playlistsDir,
+      manifestPath,
+      outputPath,
+      buildLogPath,
+    });
+
+    expect(before.playlists[0].counts.missing).toBe(3);
+    expect(before.playlists[0].missingComposers).toEqual(["Alpha", "Beta"]);
+    expect(after.playlists[0].counts.missing).toBe(2);
+    expect(after.playlists[0].missingComposers).toEqual(["Beta"]);
   });
 });

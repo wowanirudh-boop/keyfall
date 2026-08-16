@@ -22,6 +22,10 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MIRROR_URL = "https://github.com/MutopiaProject/MutopiaProject.git";
 const MUTOPIA_ORIGIN = "https://www.mutopiaproject.org";
 const PUBLIC_DOMAIN_URL = `${MUTOPIA_ORIGIN}/legal.html`;
+const PIANO_MIDI_ORIGIN = "http://piano-midi.de";
+const PIANO_MIDI_LICENCE_URL = `${PIANO_MIDI_ORIGIN}/copy.htm`;
+const PIANO_MIDI_LICENCE_NAME = "cc-by-sa Germany License";
+const PIANO_MIDI_CREATOR = "Bernd Krueger";
 const REQUEST_INTERVAL_MS = 1_000;
 const MAX_DURATION_SECONDS = 30 * 60;
 export const MIN_ALIAS_LENGTH = 4;
@@ -73,6 +77,120 @@ const LICENCES = new Map([
     { name: "CC-BY-SA-4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
   ],
 ]);
+
+export const PIANO_MIDI_PIECES = [
+  {
+    id: "mazeppa-transcendental-etude-no-4-s-139",
+    title: "Mazeppa (Transcendental Étude No. 4, S.139)",
+    rawComposer: "Liszt",
+    page: "liszt.htm",
+    assets: ["midis/liszt/liz_et_trans4.mid"],
+  },
+  {
+    id: "la-campanella-grandes-etudes-de-paganini-no-3-s-141",
+    title: "La Campanella (Grandes études de Paganini No. 3, S.141)",
+    rawComposer: "Liszt",
+    page: "liszt.htm",
+    assets: ["midis/liszt/liz_et3.mid"],
+  },
+  {
+    id: "hungarian-rhapsody-no-2-s-244",
+    title: "Hungarian Rhapsody No. 2, S.244",
+    rawComposer: "Liszt",
+    page: "liszt.htm",
+    assets: ["midis/liszt/liz_rhap02.mid"],
+  },
+  {
+    id: "liebestraum-no-3-s-541",
+    title: "Liebestraum No. 3, S.541",
+    rawComposer: "Liszt",
+    page: "liszt.htm",
+    assets: ["midis/liszt/liz_liebestraum.mid"],
+  },
+  {
+    id: "gaspard-de-la-nuit-complete",
+    title: "Gaspard de la nuit (complete)",
+    rawComposer: "Ravel",
+    page: "ravel.htm",
+    assets: [
+      "midis/ravel/rav_ondi.mid",
+      "midis/ravel/rav_gib.mid",
+      "midis/ravel/rav_scarbo.mid",
+    ],
+  },
+  {
+    id: "scarbo-gaspard-de-la-nuit-no-3",
+    title: "Scarbo (Gaspard de la nuit, No. 3)",
+    rawComposer: "Ravel",
+    page: "ravel.htm",
+    assets: ["midis/ravel/rav_scarbo.mid"],
+  },
+  {
+    id: "sonata-no-14-moonlight-complete",
+    title: "Sonata No. 14 ‘Moonlight’ (complete)",
+    rawComposer: "Beethoven",
+    page: "beeth.htm",
+    assets: [
+      "midis/beethoven/mond_1.mid",
+      "midis/beethoven/mond_2.mid",
+      "midis/beethoven/mond_3.mid",
+    ],
+  },
+  {
+    id: "sonata-no-14-moonlight-2nd-movement",
+    title: "Sonata No. 14 ‘Moonlight’ (2nd mvt)",
+    rawComposer: "Beethoven",
+    page: "beeth.htm",
+    assets: ["midis/beethoven/mond_2.mid"],
+  },
+  {
+    id: "sonata-no-14-moonlight-3rd-movement",
+    title: "Sonata No. 14 ‘Moonlight’ (3rd mvt)",
+    rawComposer: "Beethoven",
+    page: "beeth.htm",
+    assets: ["midis/beethoven/mond_3.mid"],
+  },
+  {
+    id: "polonaise-op-53-in-a-flat-heroic",
+    title: "Polonaise Op. 53 in A-flat (‘Heroic’)",
+    rawComposer: "Chopin",
+    page: "chopin.htm",
+    assets: ["midis/chopin/chpn_op53.mid"],
+  },
+  {
+    id: "etude-op-25-no-11-winter-wind",
+    title: "Étude Op. 25 No. 11 (‘Winter Wind’)",
+    rawComposer: "Chopin",
+    page: "chopin.htm",
+    assets: ["midis/chopin/chpn_op25_e11.mid"],
+  },
+  {
+    id: "etude-op-25-no-12-ocean",
+    title: "Étude Op. 25 No. 12 (‘Ocean’)",
+    rawComposer: "Chopin",
+    page: "chopin.htm",
+    assets: ["midis/chopin/chpn_op25_e12.mid"],
+  },
+  {
+    id: "marche-funebre-sonata-no-2-3rd-movement",
+    title: "Marche funèbre (Sonata No. 2, 3rd mvt)",
+    rawComposer: "Chopin",
+    page: "chopin.htm",
+    assets: ["midis/chopin/chpn_op35_3.mid"],
+  },
+];
+
+const ARRANGEMENT_DISPOSITIONS = [
+  "Tchaikovsky — Waltz of the Flowers (The Nutcracker, piano arr.): skipped; the source's Tchaikovsky page contains The Seasons, not this arrangement, so there is no file-specific arrangement licence to verify.",
+  "Bach — Toccata and Fugue in D minor, BWV 565 (piano arr.): skipped; the source's Bach page contains only WTC selections, so there is no file-specific arrangement licence to verify.",
+  "Tchaikovsky — Dance of the Sugar Plum Fairy (The Nutcracker, piano arr.): skipped; the source's Tchaikovsky page contains The Seasons, not this arrangement, so there is no file-specific arrangement licence to verify.",
+  "Schubert — Ständchen / Serenade (arr. Liszt, S.560 No. 7): skipped; the source's Schubert page does not list this transcription, so there is no file-specific arrangement licence to verify.",
+  "Bach — Air on the G String (BWV 1068, piano arr.): skipped; the source's Bach page contains only WTC selections, so there is no file-specific arrangement licence to verify.",
+  "Vivaldi — Summer (The Four Seasons, piano arr.): skipped; Vivaldi is absent from the source index, so there is no file-specific arrangement licence to verify.",
+  "Vivaldi — Spring (The Four Seasons, piano arr.): skipped; Vivaldi is absent from the source index, so there is no file-specific arrangement licence to verify.",
+  "Vivaldi — Winter (The Four Seasons, piano arr.): skipped; Vivaldi is absent from the source index, so there is no file-specific arrangement licence to verify.",
+  "Rimsky-Korsakov — Flight of the Bumblebee (arr. Rachmaninoff): skipped; Rimsky-Korsakov is absent from the source index, so there is no file-specific arrangement licence to verify.",
+];
 
 function runGit(args, cwd) {
   const safeDirectory = resolve(cwd).replaceAll("\\", "/");
@@ -385,6 +503,116 @@ function createCachedFetcher(cacheDir) {
   };
 }
 
+function copyMidiTrack(sourceTrack, output, offsetSeconds) {
+  const track = output.addTrack();
+  track.name = sourceTrack.name;
+  track.channel = sourceTrack.channel;
+  track.instrument.number = sourceTrack.instrument.number;
+  for (const note of sourceTrack.notes) {
+    track.addNote({
+      midi: note.midi,
+      time: offsetSeconds + note.time,
+      duration: note.duration,
+      velocity: note.velocity,
+      noteOffVelocity: note.noteOffVelocity,
+    });
+  }
+  for (const changes of Object.values(sourceTrack.controlChanges)) {
+    for (const change of changes) {
+      track.addCC({
+        number: change.number,
+        time: offsetSeconds + change.time,
+        value: change.value,
+      });
+    }
+  }
+  for (const bend of sourceTrack.pitchBends) {
+    track.addPitchBend({ time: offsetSeconds + bend.time, value: bend.value });
+  }
+}
+
+export function concatenateMidiAssets(assets) {
+  if (assets.length === 1) return Buffer.from(assets[0]);
+  const output = new Midi();
+  output.header.setTempo(120);
+  let offsetSeconds = 0;
+  for (const bytes of assets) {
+    const source = new Midi(bytes);
+    for (const track of source.tracks) copyMidiTrack(track, output, offsetSeconds);
+    offsetSeconds += source.duration;
+  }
+  return Buffer.from(output.toArray());
+}
+
+export function createPianoMidiSourceAdapter({ cacheDir, composerAliases, fetchUrl }) {
+  const cachedFetch = fetchUrl ?? createCachedFetcher(cacheDir);
+  return {
+    key: "piano-midi.de",
+    priority: 1,
+    revision: "apex HTTP inventory checked 2026-08-16",
+    async load() {
+      const pages = new Map();
+      const assets = new Map();
+      const rows = [];
+      for (const piece of PIANO_MIDI_PIECES) {
+        const pageUrl = `${PIANO_MIDI_ORIGIN}/${piece.page}`;
+        let page = pages.get(piece.page);
+        if (!page) {
+          page = String(await cachedFetch(pageUrl, `pages/${piece.page}`));
+          pages.set(piece.page, page);
+        }
+        for (const assetPath of piece.assets) {
+          if (!page.includes(`href="${assetPath}"`)) {
+            throw new Error(`${pageUrl} does not list ${assetPath}`);
+          }
+          if (!assets.has(assetPath)) {
+            assets.set(
+              assetPath,
+              Buffer.from(
+                await cachedFetch(
+                  `${PIANO_MIDI_ORIGIN}/${assetPath}`,
+                  `assets/${assetPath.replaceAll("/", "-")}`,
+                ),
+              ),
+            );
+          }
+        }
+        const composer = composerAliases[piece.rawComposer];
+        if (!composer) {
+          throw new Error(`piano-midi.de composer is not mapped (${piece.rawComposer})`);
+        }
+        const bytes = concatenateMidiAssets(piece.assets.map((assetPath) => assets.get(assetPath)));
+        rows.push({
+          id: piece.id,
+          title: piece.title,
+          composer,
+          rawComposer: piece.rawComposer,
+          aliases: baselineAliases({ title: piece.title, composer }),
+          asset: `${piece.id}.mid`,
+          format: "midi",
+          licence: {
+            name: PIANO_MIDI_LICENCE_NAME,
+            url: PIANO_MIDI_LICENCE_URL,
+            sourceUrl:
+              piece.assets.length === 1
+                ? `${PIANO_MIDI_ORIGIN}/${piece.assets[0]}`
+                : pageUrl,
+            creator: PIANO_MIDI_CREATOR,
+          },
+          bytes,
+          sourceKey: "piano-midi.de",
+          sourceAssets: piece.assets.map((assetPath) => `${PIANO_MIDI_ORIGIN}/${assetPath}`),
+        });
+      }
+      return {
+        rows,
+        dropped: [],
+        arrangementDispositions: ARRANGEMENT_DISPOSITIONS,
+      };
+    },
+  };
+}
+
 function licenceFor(value) {
   return LICENCES.get(value?.trim());
 }
@@ -409,6 +637,165 @@ function validateMidi(bytes) {
 
 function markdownCell(value) {
   return String(value).replaceAll("|", "\\|").replaceAll(/\r?\n/g, " ");
+}
+
+const PLAYLIST_HEADER = ["status", "composer", "work", "catalog_id", "note"];
+
+function incrementComposer(counts, composer) {
+  counts.set(composer, (counts.get(composer) ?? 0) + 1);
+}
+
+function composerSurname(composer) {
+  return composer.split(",")[0].trim();
+}
+
+export function parsePlaylistTsv(source, { fileName, manifestIds }) {
+  const id = basename(fileName, extname(fileName));
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) {
+    throw new Error(`Playlist file ${fileName} does not have a slug-safe name.`);
+  }
+
+  const lines = source.replace(/^\uFEFF/, "").split(/\r?\n/);
+  let name;
+  let headerSeen = false;
+  const entries = [];
+  const seenIds = new Set();
+  const missingByComposer = new Map();
+  const playableByComposer = new Map();
+  let missing = 0;
+  let excluded = 0;
+
+  for (const [index, line] of lines.entries()) {
+    const lineNumber = index + 1;
+    if (!line.trim()) continue;
+    if (line.startsWith("#")) {
+      const directive = line.match(/^#\s*name:\s*(.+?)\s*$/i);
+      if (directive) name = directive[1];
+      continue;
+    }
+
+    if (!headerSeen) {
+      const header = line.split("\t").map((field) => field.trim());
+      if (header.length !== PLAYLIST_HEADER.length ||
+          header.some((field, fieldIndex) => field !== PLAYLIST_HEADER[fieldIndex])) {
+        throw new Error(
+          `Playlist ${fileName}:${lineNumber} must use the header ${PLAYLIST_HEADER.join(", ")}.`,
+        );
+      }
+      headerSeen = true;
+      continue;
+    }
+
+    const fields = line.split("\t");
+    while (fields.length < PLAYLIST_HEADER.length) fields.push("");
+    const [status, composer, work, catalogId] = fields.map((field) => field.trim());
+    const row = `${fileName}:${lineNumber} (${work || "unnamed row"})`;
+
+    if (status === "verify") {
+      throw new Error(`Playlist row ${row} still has status verify.`);
+    }
+    if (status === "have") {
+      if (!manifestIds.has(catalogId)) {
+        throw new Error(
+          `Playlist row ${row} names catalog_id ${catalogId || "(empty)"}, which is absent from manifest.json.`,
+        );
+      }
+      incrementComposer(playableByComposer, composer);
+      if (!seenIds.has(catalogId)) {
+        seenIds.add(catalogId);
+        entries.push({ ref: catalogId, kind: "catalog" });
+      }
+      continue;
+    }
+    if (status === "missing") {
+      missing += 1;
+      incrementComposer(missingByComposer, composer);
+      continue;
+    }
+    if (status === "excluded") {
+      excluded += 1;
+      continue;
+    }
+    throw new Error(`Playlist row ${row} has unknown status ${status || "(empty)"}.`);
+  }
+
+  if (!headerSeen) throw new Error(`Playlist ${fileName} has no header row.`);
+
+  const missingComposers = [...missingByComposer]
+    .map(([composer, missingCount]) => ({
+      surname: composerSurname(composer),
+      missing: missingCount,
+      playable: playableByComposer.get(composer) ?? 0,
+    }))
+    .filter(({ missing: missingCount, playable }) => missingCount > playable)
+    .sort(
+      (left, right) =>
+        right.missing - left.missing ||
+        left.playable - right.playable ||
+        left.surname.localeCompare(right.surname),
+    )
+    .slice(0, 4)
+    .map(({ surname }) => surname);
+
+  return {
+    id,
+    name: name ?? id,
+    entries,
+    counts: { resolved: entries.length, missing, excluded },
+    missingComposers,
+  };
+}
+
+function playlistLogSection(files) {
+  const rows = files.map(
+    ({ fileName, playlist }) =>
+      `| \`${markdownCell(fileName)}\` | ${playlist.counts.resolved} | ${playlist.counts.missing} | ${playlist.counts.excluded} |`,
+  );
+  return `## Playlists
+
+| Source | Resolved | Missing | Excluded |
+|---|---:|---:|---:|
+${rows.join("\n")}`;
+}
+
+async function writePlaylistBuildLog(buildLogPath, files) {
+  const current = existsSync(buildLogPath) ? await readFile(buildLogPath, "utf8") : "";
+  const marker = "\n## Playlists\n";
+  const markerIndex = current.indexOf(marker);
+  const base = markerIndex >= 0 ? current.slice(0, markerIndex) : current;
+  await writeFile(
+    buildLogPath,
+    `${base.trimEnd()}\n\n${playlistLogSection(files)}\n`,
+  );
+}
+
+export async function buildPlaylists({
+  playlistsDir,
+  manifestPath,
+  outputPath,
+  buildLogPath,
+}) {
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  if (!Array.isArray(manifest)) throw new Error("Catalog manifest must be an array");
+  const manifestIds = new Set(manifest.map((entry) => entry?.id).filter(Boolean));
+  const fileNames = (await readdir(playlistsDir))
+    .filter((fileName) => extname(fileName).toLowerCase() === ".tsv")
+    .sort((left, right) => left.localeCompare(right));
+  const files = [];
+
+  for (const fileName of fileNames) {
+    const playlist = parsePlaylistTsv(await readFile(join(playlistsDir, fileName), "utf8"), {
+      fileName,
+      manifestIds,
+    });
+    files.push({ fileName, playlist });
+  }
+
+  const output = { playlists: files.map(({ playlist }) => playlist) };
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, `${JSON.stringify(output, null, 2)}\n`);
+  await writePlaylistBuildLog(buildLogPath, files);
+  return output;
 }
 
 function licenceDocument(manifest, revision, totalBytes) {
@@ -516,7 +903,26 @@ export async function buildCatalog({
     slugCounts.set(base, (slugCounts.get(base) ?? 0) + 1);
   }
 
+  const playlistSourceDir = join(outputDir, "playlists");
+  const playlistSources = existsSync(playlistSourceDir)
+    ? await Promise.all(
+        (await readdir(playlistSourceDir))
+          .filter((fileName) => extname(fileName).toLowerCase() === ".tsv")
+          .map(async (fileName) => ({
+            fileName,
+            source: await readFile(join(playlistSourceDir, fileName)),
+          })),
+      )
+    : [];
   await rm(outputDir, { recursive: true, force: true });
+  if (playlistSources.length > 0) {
+    await mkdir(playlistSourceDir, { recursive: true });
+    await Promise.all(
+      playlistSources.map(({ fileName, source }) =>
+        writeFile(join(playlistSourceDir, fileName), source),
+      ),
+    );
+  }
   await mkdir(join(outputDir, "scores"), { recursive: true });
 
   const manifest = [];
@@ -646,10 +1052,366 @@ export async function buildCatalog({
   return { manifest, dropped, totalBytes };
 }
 
+export function createMutopiaSourceAdapter(options) {
+  return {
+    key: "mutopia",
+    priority: 0,
+    revision: options.revision,
+    async load() {
+      const result = await buildCatalog(options);
+      const rows = await Promise.all(
+        result.manifest.map(async (row) => ({
+          ...row,
+          bytes: await readFile(join(options.outputDir, "scores", row.asset)),
+          sourceKey: "mutopia",
+        })),
+      );
+      return {
+        rows,
+        dropped: result.dropped,
+        baseBuildLog: await readFile(join(options.outputDir, "BUILD_LOG.md"), "utf8"),
+      };
+    },
+  };
+}
+
+function inspectMidiAsset({ bytes }) {
+  const midi = new Midi(bytes);
+  const medians = midi.tracks
+    .filter((track) => track.channel !== 9)
+    .map((track) => track.notes.filter((note) => note.midi >= 21 && note.midi <= 108))
+    .filter((notes) => notes.length > 0)
+    .map((notes) => {
+      const pitches = notes.map((note) => note.midi).sort((left, right) => left - right);
+      const middle = Math.floor(pitches.length / 2);
+      return pitches.length % 2 === 0
+        ? (pitches[middle - 1] + pitches[middle]) / 2
+        : pitches[middle];
+    })
+    .sort((left, right) => left - right);
+  const hasHandData = medians.some((median, index) => index > 0 && median > medians[index - 1]);
+  return {
+    ok: medians.length > 0,
+    ...(medians.length > 0
+      ? { piece: { notes: [{ midi: medians[0] }], hasHandData } }
+      : { error: { message: "MIDI contains no notes in A0–C8" } }),
+  };
+}
+
+function mergedLicenceDocument(manifest, revisions, totalBytes) {
+  const rows = manifest.map((entry) => {
+    const isMutopia = entry.mutopiaId !== undefined;
+    const pageUrl = isMutopia
+      ? `${MUTOPIA_ORIGIN}/cgibin/piece-info.cgi?id=${entry.mutopiaId}`
+      : entry.licence.sourceUrl;
+    const sourceLabel = isMutopia ? `Mutopia ${entry.mutopiaId}` : "piano-midi.de";
+    const creator = entry.licence.creator ?? "Not required (public domain)";
+    return `| ${markdownCell(entry.title)} | ${markdownCell(entry.composer)} | ${markdownCell(creator)} | [${entry.licence.name}](${entry.licence.url}) | [${sourceLabel}](${pageUrl}) | \`${entry.asset}\` · \`${entry.licence.sha256}\` |`;
+  });
+  return `# Catalog licence audit
+
+Generated from the Mutopia GitHub mirror at commit \`${revisions.mutopia}\` and
+the piano-midi.de apex-domain inventory (${revisions["piano-midi.de"]}).
+
+- Shipped pieces: **${manifest.length}**
+- Total score asset weight: **${totalBytes.toLocaleString("en-US")} bytes (${(totalBytes / 1024 / 1024).toFixed(2)} MiB)**
+
+## piano-midi.de terms
+
+The source states:
+
+> The MIDI, audio(MP3, OGG) and video files of Bernd Krueger are licensed under
+> the cc-by-sa Germany License. This means, that you can use and adapt the
+> files, as long as you attribute to the copyright holder Name: Bernd Krueger,
+> Source: http://www.piano-midi.de. The distribution or public playback of the
+> files is only allowed under identical license conditions.
+
+Every piano-midi.de file and same-licence composite below ships under those
+identical conditions. The licence is recorded exactly as worded, with no version
+number or invented deed URL. Creator attribution is **Bernd Krueger** and the
+licence statement is [http://piano-midi.de/copy.htm](${PIANO_MIDI_LICENCE_URL}).
+
+## Per-piece audit
+
+Every row records the exact shipped MIDI bytes, their SHA-256, the applicable
+licence, and the creator/typesetter or performer/sequencer credit.
+
+| Piece | Composer | Creator / typesetter | Licence | Source page | Shipped asset / SHA-256 |
+|---|---|---|---|---|---|
+${rows.join("\n")}
+`;
+}
+
+function mergedBuildLogDocument({
+  baseBuildLog,
+  revisions,
+  manifest,
+  pianoRows,
+  pianoHandRows,
+  totalBytes,
+  dropped,
+  duplicateDrops,
+  arrangementDispositions,
+}) {
+  const compositeRows = pianoRows
+    .filter((row) => row.sourceAssets.length > 1)
+    .map(
+      (row) =>
+        `- **${markdownCell(row.title)}**: ${row.sourceAssets.map((url) => `[source MIDI](${url})`).join(", ")}; concatenated in listed movement order and retained under the same licence.`,
+    );
+  const droppedRows = dropped.length > 0 ? dropped.map((reason) => `- ${reason}`).join("\n") : "- None";
+  const duplicateRows = duplicateDrops.length > 0
+    ? duplicateDrops.map((reason) => `- ${reason}`).join("\n")
+    : "- None";
+  const handPercent = pianoRows.length === 0 ? 0 : (pianoHandRows / pianoRows.length) * 100;
+  return `${baseBuildLog.trimEnd()}
+
+## Source adapters
+
+- Mutopia: \`${revisions.mutopia}\` (priority 0; wins duplicate works)
+- piano-midi.de: ${revisions["piano-midi.de"]} (priority 1; fetched from \`${PIANO_MIDI_ORIGIN}/\` over HTTP)
+
+The adapters supply ids, titles, raw and canonical composer names, exact asset
+bytes and per-row licence records. The merged writer validates, hashes, de-duplicates,
+sorts and writes both sources through one path.
+
+## piano-midi.de parser gate
+
+- Accepted rows: **${pianoRows.length}**
+- Rows with \`hasHandData === true\`: **${pianoHandRows}/${pianoRows.length} (${handPercent.toFixed(1)}%)**
+- The build-time MIDI gate yielded at least one A0–C8 note for every accepted row.
+- \`tests/build-catalog.test.ts\` independently runs every shipped row through the production \`parsePieceBytes\` path and checks this result and the hand-data fraction.
+
+### Same-licence composites
+
+${compositeRows.join("\n") || "- None"}
+
+### Arrangement rights checks
+
+${arrangementDispositions.map((reason) => `- ${reason}`).join("\n")}
+
+### Duplicate-source skips
+
+${duplicateRows}
+
+### Second-source drops
+
+${droppedRows}
+
+## Shipped catalog weight
+
+- Pieces: **${manifest.length}**
+- Score assets: **${totalBytes.toLocaleString("en-US")} bytes (${(totalBytes / 1024 / 1024).toFixed(2)} MiB)**
+- 20 MiB deployment flag: **${totalBytes > 20 * 1024 * 1024 ? "OVER — inspect dist/catalog before deployment" : "clear at the score-asset stage"}**
+`;
+}
+
+async function preservePlaylistSources(outputDir) {
+  const playlistSourceDir = join(outputDir, "playlists");
+  const sources = existsSync(playlistSourceDir)
+    ? await Promise.all(
+        (await readdir(playlistSourceDir))
+          .filter((fileName) => extname(fileName).toLowerCase() === ".tsv")
+          .map(async (fileName) => ({ fileName, source: await readFile(join(playlistSourceDir, fileName)) })),
+      )
+    : [];
+  return { playlistSourceDir, sources };
+}
+
+export async function buildCatalogFromAdapters({
+  adapters,
+  outputDir,
+  composerAliases,
+  parseAsset,
+  log = console.log,
+}) {
+  const loaded = [];
+  for (const adapter of [...adapters].sort((left, right) => left.priority - right.priority)) {
+    loaded.push({ adapter, result: await adapter.load() });
+  }
+
+  const revisions = Object.fromEntries(loaded.map(({ adapter }) => [adapter.key, adapter.revision]));
+  const baseBuildLog = loaded.find(({ result }) => result.baseBuildLog)?.result.baseBuildLog ?? "# Catalog ingestion log";
+  const arrangementDispositions = loaded.flatMap(
+    ({ result }) => result.arrangementDispositions ?? [],
+  );
+  const dropped = [];
+  const duplicateDrops = [];
+  const seenIds = new Map();
+  const seenWorks = new Map();
+  const accepted = [];
+  let pianoHandRows = 0;
+
+  for (const { adapter, result } of loaded) {
+    if (adapter.key !== "mutopia") dropped.push(...(result.dropped ?? []));
+    for (const candidate of result.rows) {
+      const { bytes, sourceKey, sourceAssets = [], ...candidateRow } = candidate;
+      const label = `${adapter.key} ${candidateRow.id}`;
+      const idOwner = seenIds.get(candidateRow.id);
+      if (sourceKey === "piano-midi.de") {
+        const canonicalComposer = composerAliases?.[candidateRow.rawComposer];
+        if (composerAliases && !canonicalComposer) {
+          dropped.push(`${label}: composer is not mapped (${candidateRow.rawComposer})`);
+          continue;
+        }
+        if (canonicalComposer) candidateRow.composer = canonicalComposer;
+        candidateRow.aliases = baselineAliases({
+          title: candidateRow.title,
+          composer: candidateRow.composer,
+        });
+      }
+      const workKey = `${fold(candidateRow.title)}\u0000${fold(candidateRow.composer)}`;
+      const workOwner = seenWorks.get(workKey);
+      if (idOwner || workOwner) {
+        const winner = idOwner ?? workOwner;
+        const reason = `${label}: skipped because ${winner} has priority (Mutopia wins when sources overlap)`;
+        duplicateDrops.push(reason);
+        log(`SKIP: ${reason}`);
+        continue;
+      }
+      if (
+        !candidateRow.id ||
+        !candidateRow.title ||
+        !candidateRow.composer ||
+        !candidateRow.rawComposer ||
+        !candidateRow.asset ||
+        !candidateRow.licence?.name ||
+        !candidateRow.licence?.url ||
+        !candidateRow.licence?.sourceUrl ||
+        !candidateRow.licence?.creator && candidateRow.licence?.name !== "Public Domain"
+      ) {
+        dropped.push(`${label}: missing required catalog or licence metadata`);
+        continue;
+      }
+
+      let durationSeconds;
+      try {
+        durationSeconds = validateMidi(bytes);
+      } catch (error) {
+        dropped.push(`${label}: ${error instanceof Error ? error.message : String(error)}`);
+        continue;
+      }
+
+      if (sourceKey === "piano-midi.de") {
+        const parsed = await parseAsset({ asset: candidateRow.asset, bytes });
+        if (!parsed.ok || parsed.piece.notes.length === 0) {
+          const reason = parsed.ok ? "production parser yielded no A0–C8 notes" : parsed.error.message;
+          dropped.push(`${label}: ${reason}`);
+          continue;
+        }
+        if (parsed.piece.hasHandData) pianoHandRows += 1;
+      }
+
+      const sha256 = createHash("sha256").update(bytes).digest("hex");
+      if (candidateRow.licence.sha256 && candidateRow.licence.sha256 !== sha256) {
+        throw new Error(`${label}: adapter checksum does not match its bytes`);
+      }
+      const row = {
+        ...candidateRow,
+        durationSeconds: candidateRow.durationSeconds ?? durationSeconds,
+        licence: { ...candidateRow.licence, sha256 },
+      };
+      seenIds.set(row.id, label);
+      seenWorks.set(workKey, label);
+      accepted.push({ row, bytes, sourceKey, sourceAssets });
+    }
+  }
+
+  accepted.sort(
+    (left, right) =>
+      left.row.title.localeCompare(right.row.title) ||
+      left.row.composer.localeCompare(right.row.composer) ||
+      left.row.id.localeCompare(right.row.id),
+  );
+  const { playlistSourceDir, sources } = await preservePlaylistSources(outputDir);
+  await rm(outputDir, { recursive: true, force: true });
+  await mkdir(join(outputDir, "scores"), { recursive: true });
+  if (sources.length > 0) {
+    await mkdir(playlistSourceDir, { recursive: true });
+    await Promise.all(sources.map(({ fileName, source }) => writeFile(join(playlistSourceDir, fileName), source)));
+  }
+  for (const { row, bytes } of accepted) {
+    await writeFile(join(outputDir, "scores", row.asset), bytes);
+  }
+
+  const manifest = accepted.map(({ row }) => row);
+  const pianoRows = accepted.filter(({ sourceKey }) => sourceKey === "piano-midi.de");
+  const totalBytes = accepted.reduce((total, { bytes }) => total + bytes.byteLength, 0);
+  await writeFile(join(outputDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(join(outputDir, "LICENCES.md"), mergedLicenceDocument(manifest, revisions, totalBytes));
+  await writeFile(
+    join(outputDir, "BUILD_LOG.md"),
+    mergedBuildLogDocument({
+      baseBuildLog,
+      revisions,
+      manifest,
+      pianoRows,
+      pianoHandRows,
+      totalBytes,
+      dropped,
+      duplicateDrops,
+      arrangementDispositions,
+    }),
+  );
+  await writeFile(join(outputDir, "index.ts"), "export {};\n");
+  for (const reason of dropped) log(`DROP: ${reason}`);
+  log(`Shipped ${manifest.length} pieces (${totalBytes} bytes); dropped ${dropped.length}.`);
+  return { manifest, dropped, duplicateDrops, totalBytes, pianoHandRows };
+}
+
+export async function reportDeployedCatalogWeight({ distCatalogDir, buildLogPath }) {
+  const buildLogName = "BUILD_LOG.md";
+  const sectionPattern = /\n## Deployed catalog weight\n[\s\S]*?(?=\n## Playlists\n|$)/;
+  const current = await readFile(buildLogPath, "utf8");
+  const withoutSection = current.replace(sectionPattern, "").trimEnd();
+  const playlistMarker = "\n## Playlists\n";
+  const playlistIndex = withoutSection.indexOf(playlistMarker);
+  const beforePlaylists = playlistIndex >= 0 ? withoutSection.slice(0, playlistIndex) : withoutSection;
+  const playlists = playlistIndex >= 0 ? withoutSection.slice(playlistIndex) : "";
+  const files = (await walk(distCatalogDir)).filter((path) => basename(path) !== buildLogName);
+  const otherBytes = (
+    await Promise.all(files.map(async (path) => (await stat(path)).size))
+  ).reduce((total, size) => total + size, 0);
+  let totalBytes = otherBytes;
+  let document = "";
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const section = `## Deployed catalog weight
+
+- \`dist/catalog\`: **${totalBytes.toLocaleString("en-US")} bytes (${(totalBytes / 1024 / 1024).toFixed(2)} MiB)**
+- 20 MiB deployment flag: **${totalBytes > 20 * 1024 * 1024 ? "OVER — inspect before deployment" : "clear"}**`;
+    document = `${beforePlaylists.trimEnd()}\n\n${section}${playlists}\n`;
+    const nextTotal = otherBytes + Buffer.byteLength(document);
+    if (nextTotal === totalBytes) break;
+    totalBytes = nextTotal;
+  }
+  await writeFile(buildLogPath, document);
+  await writeFile(join(distCatalogDir, buildLogName), document);
+  return { totalBytes, overLimit: totalBytes > 20 * 1024 * 1024 };
+}
+
 async function main() {
+  const catalogDir = resolve(process.env.CATALOG_OUTPUT_DIR ?? join(ROOT, "catalog"));
+  const playlistsDir = join(catalogDir, "playlists");
+  const manifestPath = join(catalogDir, "manifest.json");
+  const playlistOutputPath = join(catalogDir, "playlists.json");
+  const buildLogPath = join(catalogDir, "BUILD_LOG.md");
+  if (process.argv.includes("--report-dist-weight")) {
+    const result = await reportDeployedCatalogWeight({
+      distCatalogDir: resolve(process.env.DIST_CATALOG_DIR ?? join(ROOT, "dist", "catalog")),
+      buildLogPath,
+    });
+    console.log(
+      `dist/catalog is ${result.totalBytes} bytes; 20 MiB flag ${result.overLimit ? "OVER" : "clear"}.`,
+    );
+    return;
+  }
+  if (process.argv.includes("--playlists-only")) {
+    await buildPlaylists({ playlistsDir, manifestPath, outputPath: playlistOutputPath, buildLogPath });
+    return;
+  }
+
   const refresh = process.argv.includes("--refresh");
   const sourceDir = resolve(process.env.MUTOPIA_SOURCE_DIR ?? join(ROOT, "work", "mutopia"));
-  const outputDir = resolve(process.env.CATALOG_OUTPUT_DIR ?? join(ROOT, "catalog"));
   const revision = await ensureMirror(sourceDir, refresh);
   const cacheDir = resolve(
     process.env.CATALOG_CACHE_DIR ?? join(ROOT, "work", "catalog-cache", revision),
@@ -661,9 +1423,13 @@ async function main() {
     await readFile(join(ROOT, "scripts", "catalog-composers.json"), "utf8"),
   );
   const cachedFetch = createCachedFetcher(cacheDir);
-  await buildCatalog({
+  const mutopiaOnly = process.argv.includes("--mutopia-only");
+  const mutopiaOutputDir = mutopiaOnly
+    ? catalogDir
+    : resolve(process.env.MUTOPIA_STAGE_DIR ?? join(ROOT, "work", "catalog-mutopia-stage"));
+  const mutopiaAdapter = createMutopiaSourceAdapter({
     sourceDir,
-    outputDir,
+    outputDir: mutopiaOutputDir,
     cacheDir,
     aliases,
     composerAliases,
@@ -672,6 +1438,29 @@ async function main() {
       String(await cachedFetch(url, `listings/${piece.publicationId}.html`)),
     fetchAsset: async (url) =>
       cachedFetch(url, `assets/${createHash("sha256").update(url).digest("hex")}.mid`),
+  });
+  if (mutopiaOnly) {
+    await mutopiaAdapter.load();
+  } else {
+    const pianoMidiAdapter = createPianoMidiSourceAdapter({
+      cacheDir: resolve(
+        process.env.PIANO_MIDI_CACHE_DIR ?? join(ROOT, "work", "piano-midi-de"),
+      ),
+      composerAliases,
+    });
+    await buildCatalogFromAdapters({
+      adapters: [mutopiaAdapter, pianoMidiAdapter],
+      outputDir: catalogDir,
+      composerAliases,
+      parseAsset: inspectMidiAsset,
+    });
+  }
+  if (!existsSync(playlistsDir)) return;
+  await buildPlaylists({
+    playlistsDir,
+    manifestPath,
+    outputPath: playlistOutputPath,
+    buildLogPath,
   });
 }
 

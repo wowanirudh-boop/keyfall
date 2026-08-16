@@ -14,6 +14,7 @@ import {
   composerIndex,
   type CatalogEntry,
   type CatalogSort,
+  type LoadedPlaylist,
 } from "../catalog";
 import { AppHeader } from "../design/AppHeader";
 import {
@@ -25,6 +26,7 @@ import {
 import type { SavedPieceSummary } from "../library";
 import { relativeOpened } from "../library";
 import { SALAMANDER_ATTRIBUTION, SALAMANDER_LICENSE_URL } from "../playback";
+import { formatPlaylistDuration } from "../playlists/format";
 import { formatTime } from "../transport";
 
 const EMPTY_LIBRARY_COPY =
@@ -450,6 +452,42 @@ export function ContinueCard({
   );
 }
 
+export function Playlists({
+  playlists,
+  onOpen,
+}: {
+  playlists: readonly LoadedPlaylist[];
+  onOpen: (playlist: LoadedPlaylist) => void;
+}) {
+  if (playlists.length === 0) return null;
+  return (
+    <section aria-label="Playlists" className="flex min-w-0 flex-col gap-[8px]">
+      <h2 className="pl-[2px] font-mono text-mono-label uppercase tracking-[0.1em] text-mono-dim-2">
+        Playlists
+      </h2>
+      {playlists.map((playlist) => (
+        <button
+          key={playlist.id}
+          type="button"
+          className="grid min-w-0 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-[12px] rounded-card border border-border-3 bg-card px-[16px] py-[14px] text-left hover:border-result-hover-border hover:bg-result-hover-bg"
+          onClick={() => onOpen(playlist)}
+        >
+          <span className="flex min-w-0 flex-col gap-[4px]">
+            <span className="truncate text-subheading font-medium">{playlist.name}</span>
+            <span className="truncate font-mono text-mono-meta tracking-[0.04em] text-mono-dim-2">
+              {playlist.entries.length} {playlist.entries.length === 1 ? "PIECE" : "PIECES"} ·{" "}
+              {formatPlaylistDuration(playlist.durationSeconds)}
+            </span>
+          </span>
+          <span aria-hidden="true" className="text-subheading text-mono-dim-2">
+            ›
+          </span>
+        </button>
+      ))}
+    </section>
+  );
+}
+
 export function MyPieces({
   pieces,
   now,
@@ -520,6 +558,7 @@ export function MyPieces({
 export interface HomeViewProps {
   query: string;
   catalogEntries: readonly CatalogEntry[];
+  playlists?: readonly LoadedPlaylist[];
   results: readonly CatalogEntry[];
   searched: boolean;
   catalogUnavailable: boolean;
@@ -535,6 +574,7 @@ export interface HomeViewProps {
   onClear: () => void;
   onUpload: (file: File, origin: UploadOrigin) => void;
   onOpenResult: (entry: CatalogEntry) => void;
+  onOpenPlaylist?: (playlist: LoadedPlaylist) => void;
   onOpenSaved: (piece: SavedPieceSummary) => void;
   onDelete: (piece: SavedPieceSummary) => void;
 }
@@ -544,6 +584,7 @@ export type UploadOrigin = "search" | "library";
 export function HomeView({
   query,
   catalogEntries,
+  playlists = [],
   results,
   searched,
   catalogUnavailable,
@@ -559,6 +600,7 @@ export function HomeView({
   onClear,
   onUpload,
   onOpenResult,
+  onOpenPlaylist = () => undefined,
   onOpenSaved,
   onDelete,
 }: HomeViewProps) {
@@ -601,6 +643,8 @@ export function HomeView({
               for tomorrow.
             </p>
           )}
+
+          <Playlists playlists={playlists} onOpen={onOpenPlaylist} />
 
           <MyPieces
             pieces={library}

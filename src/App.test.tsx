@@ -37,6 +37,15 @@ describe('application routes', () => {
     expect(screen.getByRole('link', { name: '← Home' }).getAttribute('href')).toBe('/');
   });
 
+  it('[T12a AC4] renders the missing-record shell for an unknown playlist', async () => {
+    renderRoute('/playlists/unknown');
+
+    expect(
+      await screen.findByRole('heading', { name: 'This playlist is not available.' }),
+    ).toBeTruthy();
+    expect(screen.getByRole('link', { name: '← Home' }).getAttribute('href')).toBe('/');
+  });
+
   it('renders not-found for an unknown route', () => {
     renderRoute('/missing');
 

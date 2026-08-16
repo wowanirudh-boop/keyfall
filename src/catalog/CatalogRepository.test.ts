@@ -18,7 +18,7 @@ import {
   validateCatalogEntry,
 } from "./CatalogRepository";
 
-const shippedManifest = shippedManifestJson as Array<CatalogEntry & { mutopiaId: string }>;
+const shippedManifest = shippedManifestJson as Array<CatalogEntry & { mutopiaId?: string }>;
 
 function fixtureRepository(manifest: unknown = FIXTURE_MANIFEST) {
   return new CatalogRepository({
@@ -182,7 +182,7 @@ describe("CatalogRepository", () => {
       expect(row.rawComposer.trim()).not.toBe("");
     }
     const chopinRows = shippedManifest.filter((entry) => entry.composer === "Chopin, Frédéric");
-    expect(chopinRows).toHaveLength(47);
+    expect(chopinRows).toHaveLength(51);
     expect(searchCatalog(shippedManifest, "chopin")).toEqual(
       chopinRows.sort((left, right) => compareCatalogEntries(left, right)),
     );
@@ -234,7 +234,7 @@ describe("CatalogRepository", () => {
     expect(index.map((row) => row.composer)).toEqual(
       [...index.map((row) => row.composer)].sort((left, right) => left.localeCompare(right)),
     );
-    expect(index.find((row) => row.composer === "Chopin, Frédéric")?.count).toBe(47);
+    expect(index.find((row) => row.composer === "Chopin, Frédéric")?.count).toBe(51);
   });
 
   it("[T03d AC5] has no duplicate visible title and composer pairs", () => {
@@ -271,6 +271,20 @@ describe("CatalogRepository", () => {
     expect(validateCatalogEntry(publicDomain)).toEqual(publicDomain);
     expect(validateCatalogEntry(missingCreator)).toBeNull();
   });
+
+  it.each(["name", "url", "sourceUrl", "sha256", "creator"] as const)(
+    "[T13 AC3] rejects a second-source row missing licence.%s",
+    (field) => {
+      const row = structuredClone(
+        shippedManifest.find(
+          (entry) => entry.licence.url === "http://piano-midi.de/copy.htm",
+        ),
+      ) as CatalogEntry;
+      delete (row.licence as unknown as Record<string, unknown>)[field];
+
+      expect(validateCatalogEntry(row)).toBeNull();
+    },
+  );
 
   it("[T03a AC2] [T03c AC3] raises CatalogAssetError when the score 404s on open", async () => {
     const warn = vi.fn();
@@ -330,7 +344,7 @@ describe("CatalogRepository", () => {
     expect(audit).toContain(`Shipped pieces: **${shippedManifest.length}**`);
     expect(audit).toContain(`**${totalBytes.toLocaleString("en-US")} bytes`);
     for (const row of shippedManifest) {
-      expect(audit).toContain(`Mutopia ${row.mutopiaId}`);
+      expect(audit).toContain(row.mutopiaId ? `Mutopia ${row.mutopiaId}` : "piano-midi.de");
       expect(audit).toContain(`\`${row.asset}\``);
       expect(audit).toContain(row.licence.creator ?? "Not required (public domain)");
     }

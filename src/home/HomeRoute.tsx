@@ -2,18 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  CatalogAssetError,
-  CatalogRepository,
+  catalogRepository,
+  playlistRepository,
   searchCatalog,
   type CatalogEntry,
   type CatalogSort,
+  type LoadedPlaylist,
 } from "../catalog";
 import { LibraryRepository, type SavedPieceSummary } from "../library";
 import { importPiece, type ImportError, type PieceDocument } from "../music";
-import type { PlaybackSpeed } from "../playback";
+import { importAndSaveCatalogEntry, savePiecePreservingSpeed } from "../openPiece";
 import { HomeView, type UploadOrigin } from "./HomeView";
 
-const catalogRepository = new CatalogRepository();
 export const libraryRepository = new LibraryRepository();
 
 function uploadError(file: File, error: ImportError) {
@@ -25,6 +25,7 @@ export function HomeRoute() {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
   const [catalogEntries, setCatalogEntries] = useState<CatalogEntry[]>([]);
+  const [playlists, setPlaylists] = useState<LoadedPlaylist[]>([]);
   const [catalogUnavailable, setCatalogUnavailable] = useState(false);
   const [library, setLibrary] = useState<SavedPieceSummary[]>([]);
   const [currentUploadError, setCurrentUploadError] = useState<{
@@ -38,14 +39,22 @@ export function HomeRoute() {
 
   useEffect(() => {
     let active = true;
-    catalogRepository
-      .load()
-      .then((entries) => {
+    void (async () => {
+      let entries: CatalogEntry[];
+      try {
+        entries = await catalogRepository.load();
         if (active) setCatalogEntries(entries);
-      })
-      .catch(() => {
+      } catch {
         if (active) setCatalogUnavailable(true);
-      });
+        return;
+      }
+      try {
+        const loadedPlaylists = await playlistRepository.load(entries);
+        if (active) setPlaylists(loadedPlaylists);
+      } catch {
+        if (active) setPlaylists([]);
+      }
+    })();
     libraryRepository
       .list()
       .then((pieces) => {
@@ -65,22 +74,12 @@ export function HomeRoute() {
   );
 
   async function saveAndOpen(piece: PieceDocument, originalName: string, bytes: Uint8Array) {
-    // Re-opening a piece from search re-imports and re-saves it. Without this
-    // the save reset lastSpeed to 1x and threw away the practice speed the
-    // learner had settled on (D-030).
-    let lastSpeed: PlaybackSpeed | undefined;
-    try {
-      lastSpeed = (await libraryRepository.get(piece.id))?.lastSpeed;
-    } catch {
-      lastSpeed = undefined;
-    }
-
-    const result = await libraryRepository.save({
+    const result = await savePiecePreservingSpeed(
+      libraryRepository,
       piece,
       originalName,
-      originalBytes: bytes,
-      lastSpeed,
-    });
+      bytes,
+    );
     if (!result.saved) {
       setStorageWarning(
         "This piece is usable for this session but was not saved locally because browser storage is full.",
@@ -95,22 +94,19 @@ export function HomeRoute() {
     setAssetError(null);
     setCurrentUploadError(null);
     try {
-      const bytes = await catalogRepository.open(entry);
-      const file = new File([bytes.slice().buffer], entry.asset);
-      const imported = await importPiece(file);
-      if (!imported.ok) throw new CatalogAssetError(imported.error.message);
-      await saveAndOpen(
-        {
-          ...imported.piece,
-          id: entry.id,
-          title: entry.title,
-          composer: entry.composer,
-          source: "catalog",
-          sourceCreator: entry.licence.creator,
-        },
-        entry.asset,
-        bytes,
+      const result = await importAndSaveCatalogEntry(
+        entry,
+        catalogRepository,
+        libraryRepository,
       );
+      if (!result.saved) {
+        setStorageWarning(
+          "This piece is usable for this session but was not saved locally because browser storage is full.",
+        );
+      }
+      navigate(`/pieces/${encodeURIComponent(result.pieceId)}`, {
+        state: { storageWarning: !result.saved },
+      });
     } catch {
       setAssetError(
         `The score file for “${entry.title}” could not be opened. Upload a MIDI or MusicXML copy below instead.`,
@@ -144,6 +140,7 @@ export function HomeRoute() {
     <HomeView
       query={query}
       catalogEntries={catalogEntries}
+      playlists={playlists}
       results={results}
       searched={searched}
       catalogUnavailable={catalogUnavailable}
@@ -169,6 +166,9 @@ export function HomeRoute() {
       }}
       onUpload={(file, origin) => void openUpload(file, origin)}
       onOpenResult={(entry) => void openCatalogEntry(entry)}
+      onOpenPlaylist={(playlist) =>
+        navigate(`/playlists/${encodeURIComponent(playlist.id)}`)
+      }
       onOpenSaved={(piece) => void openSaved(piece)}
       onDelete={(piece) => void deleteSaved(piece)}
     />

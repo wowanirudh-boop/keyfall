@@ -1,5 +1,5 @@
 import { cpSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
@@ -11,12 +11,17 @@ import { color } from "./src/design/tokens";
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 function catalogStaticAsset(): Plugin {
+  const catalogDirectory = resolve("catalog");
   return {
     name: "catalog-static-asset",
     writeBundle(options) {
-      cpSync(resolve("catalog"), resolve(options.dir ?? "dist", "catalog"), {
+      cpSync(catalogDirectory, resolve(options.dir ?? "dist", "catalog"), {
         force: true,
         recursive: true,
+        filter(source) {
+          const catalogPath = relative(catalogDirectory, source).replaceAll("\\", "/");
+          return !/^playlists\/[^/]+\.tsv$/i.test(catalogPath);
+        },
       });
     },
   };
@@ -82,6 +87,7 @@ export default defineConfig({
           "index.html",
           "assets/*.{js,css,woff2}",
           "catalog/manifest.json",
+          "catalog/playlists.json",
         ],
         globIgnores: ["assets/import.worker-*.js"],
         runtimeCaching: [

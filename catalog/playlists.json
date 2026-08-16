@@ -1,0 +1,173 @@
+{
+  "playlists": [
+    {
+      "id": "rousseau-classical",
+      "name": "Classical Rousseau",
+      "entries": [
+        {
+          "ref": "ballade-number-4",
+          "kind": "catalog"
+        },
+        {
+          "ref": "mazeppa-transcendental-etude-no-4-s-139",
+          "kind": "catalog"
+        },
+        {
+          "ref": "pictures-at-an-exhibition",
+          "kind": "catalog"
+        },
+        {
+          "ref": "suite-bergamasque-clair-de-lune",
+          "kind": "catalog"
+        },
+        {
+          "ref": "gaspard-de-la-nuit-complete",
+          "kind": "catalog"
+        },
+        {
+          "ref": "prelude-op-28-no-15",
+          "kind": "catalog"
+        },
+        {
+          "ref": "polonaise-op-53-in-a-flat-heroic",
+          "kind": "catalog"
+        },
+        {
+          "ref": "scarbo-gaspard-de-la-nuit-no-3",
+          "kind": "catalog"
+        },
+        {
+          "ref": "hungarian-rhapsody-no-2-s-244",
+          "kind": "catalog"
+        },
+        {
+          "ref": "das-wohltemperierte-clavier-i-praeludium-ii",
+          "kind": "catalog"
+        },
+        {
+          "ref": "consolation-s-172-no-3",
+          "kind": "catalog"
+        },
+        {
+          "ref": "etude-op-25-no-12-ocean",
+          "kind": "catalog"
+        },
+        {
+          "ref": "sonata-facile-first-movement",
+          "kind": "catalog"
+        },
+        {
+          "ref": "marche-funebre-sonata-no-2-3rd-movement",
+          "kind": "catalog"
+        },
+        {
+          "ref": "etude-c-dur",
+          "kind": "catalog"
+        },
+        {
+          "ref": "menuet-bwv-anh-114",
+          "kind": "catalog"
+        },
+        {
+          "ref": "etude-c-moll",
+          "kind": "catalog"
+        },
+        {
+          "ref": "etude-ges-dur",
+          "kind": "catalog"
+        },
+        {
+          "ref": "prelude-op-23-no-5",
+          "kind": "catalog"
+        },
+        {
+          "ref": "fantaisie-impromptu",
+          "kind": "catalog"
+        },
+        {
+          "ref": "liebestraum-no-3-s-541",
+          "kind": "catalog"
+        },
+        {
+          "ref": "premiere-ballade",
+          "kind": "catalog"
+        },
+        {
+          "ref": "prelude-op-28-no-6",
+          "kind": "catalog"
+        },
+        {
+          "ref": "das-wohltemperierte-clavier-i-praeludium-i",
+          "kind": "catalog"
+        },
+        {
+          "ref": "sonata-no-14-moonlight-complete",
+          "kind": "catalog"
+        },
+        {
+          "ref": "etude-op-25-no-11-winter-wind",
+          "kind": "catalog"
+        },
+        {
+          "ref": "valse-op-64-no-1-minute-waltz",
+          "kind": "catalog"
+        },
+        {
+          "ref": "sonata-no-14-moonlight-3rd-movement",
+          "kind": "catalog"
+        },
+        {
+          "ref": "sonata-no-14-moonlight-2nd-movement",
+          "kind": "catalog"
+        },
+        {
+          "ref": "prelude-op-28-no-4-suffocation",
+          "kind": "catalog"
+        },
+        {
+          "ref": "prelude-in-c-minor",
+          "kind": "catalog"
+        },
+        {
+          "ref": "la-campanella-grandes-etudes-de-paganini-no-3-s-141",
+          "kind": "catalog"
+        },
+        {
+          "ref": "sonata-no-14-moonlight-1st-movement-adagio-sostenuto",
+          "kind": "catalog"
+        },
+        {
+          "ref": "gymnopedie-no-1",
+          "kind": "catalog"
+        },
+        {
+          "ref": "premiere-arabesque",
+          "kind": "catalog"
+        },
+        {
+          "ref": "fur-elise",
+          "kind": "catalog"
+        },
+        {
+          "ref": "nocturne-op-9-no-2",
+          "kind": "catalog"
+        },
+        {
+          "ref": "sonate-opus-kv-331-rondo-alla-turca",
+          "kind": "catalog"
+        }
+      ],
+      "counts": {
+        "resolved": 38,
+        "missing": 26,
+        "excluded": 7
+      },
+      "missingComposers": [
+        "Vivaldi",
+        "Tchaikovsky",
+        "Rimsky-Korsakov",
+        "Schubert"
+      ]
+    }
+  ]
+}

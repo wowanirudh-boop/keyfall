@@ -9,6 +9,8 @@ import { FIXTURE_MANIFEST } from "../catalog/__fixtures__/manifest";
 import type { SavedPieceSummary } from "../library";
 import { IMPORT_ERROR_MESSAGES } from "../music";
 import { SALAMANDER_ATTRIBUTION, SALAMANDER_LICENSE_URL } from "../playback";
+import { FIXTURE_PLAYLIST } from "../playlists/__fixtures__/playlist";
+import { formatPlaylistDuration } from "../playlists/format";
 import { CATALOG_PAGE_SIZE, HomeView, type HomeViewProps } from "./HomeView";
 
 const savedPiece: SavedPieceSummary = {
@@ -40,6 +42,32 @@ function props(overrides: Partial<HomeViewProps> = {}): HomeViewProps {
 }
 
 describe("HomeView", () => {
+  it("[T12a AC4, AC7] shows loaded playlists on a fresh profile and hides an empty catalog", async () => {
+    const user = userEvent.setup();
+    const onOpenPlaylist = vi.fn();
+    const { rerender } = render(
+      <HomeView {...props({ playlists: [FIXTURE_PLAYLIST], onOpenPlaylist })} />,
+    );
+
+    const playlists = screen.getByRole("region", { name: "Playlists" });
+    expect(within(playlists).getByText(FIXTURE_PLAYLIST.name)).toBeTruthy();
+    expect(
+      within(playlists).getByText(
+        `${FIXTURE_PLAYLIST.entries.length} PIECES · ${formatPlaylistDuration(FIXTURE_PLAYLIST.durationSeconds)}`,
+      ),
+    ).toBeTruthy();
+    expect(
+      playlists.compareDocumentPosition(screen.getByRole("region", { name: "My pieces" })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    await user.click(within(playlists).getByRole("button"));
+    expect(onOpenPlaylist).toHaveBeenCalledWith(FIXTURE_PLAYLIST);
+
+    rerender(<HomeView {...props()} />);
+    expect(screen.queryByRole("region", { name: "Playlists" })).toBeNull();
+    expect(screen.getByRole("region", { name: "My pieces" })).toBeTruthy();
+  });
+
   it.each([
     ["empty", []],
     ["populated", [savedPiece]],

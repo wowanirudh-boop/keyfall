@@ -9,6 +9,7 @@ export {
   NoResultsUpload,
   SearchResults,
   SearchResultRow,
+  Playlists,
   UploadControl,
   type CatalogSearchProps,
   type HomeViewProps,

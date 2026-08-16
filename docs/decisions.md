@@ -795,6 +795,223 @@ it pins CI to the image's preinstalled 22.x while local development is on 24.x �
 harmless for a Vite build, but change it to `24` if that divergence ever
 matters.
 
+### D-038 — The four ambiguous Rousseau rows resolve to 25 playable, not 24
+**2026-08-16 · Decided — data correction**
+
+`rousseau-classical.tsv` carried four rows marked `verify`, each guessing at a
+Chopin catalog id from a German title too generic to disambiguate. All four are
+now settled, and not by listening or guessing: `manifest.json` records a
+`licence.sourceUrl` for every row, and Mutopia's own directory paths name the
+opus.
+
+| Row | Claimed | id | Mutopia path | Verdict |
+|---|---|---|---|---|
+| 70 | Étude Op. 10 No. 1 | `etude-c-dur` | `O10/chp-10-01/` | **have** |
+| 77 | Étude Op. 10 No. 12 | `etude-c-moll` | `O10/op-10-12-wfi/` | **have** |
+| 61 | Étude Op. 25 No. 12 | `etude-c-moll` | same file as row 77 | **missing** |
+| 67 | Marche funèbre (3rd mvt) | `sonate-2-b-moll` | `O35/chp-op-35-**4**-scholz-fi/` | **missing** |
+
+So the seeded playlist resolves to **25 distinct playable pieces and 39 absent
+works**, not 24 and 37. The generalisable point: the source path is harder
+evidence than the title, and it was sitting in the manifest the whole time.
+
+Two catalog-quality bugs fell out of this and are **not** playlist bugs:
+`sonate-2-b-moll` is titled "Sonate 2 b-moll" but contains only the finale
+(82s), and `pictures-at-an-exhibition` is 237s against a ~33-minute suite. Both
+are mislabelled scope, and both will mislead search long after this playlist
+ships.
+
+### D-039 — Closing the catalog gap is a licensing problem, not a format problem
+**2026-08-16 · Decided — scope correction, and a correction to D-034**
+
+Asked: fetch the 39 absent works from anywhere, in any format, and convert them.
+Conversion is the easy half and it is not what is blocking us. Every source
+below was checked first-hand today; none of this is repeated from a secondary
+claim.
+
+> **Superseded the same day by D-040 on the central point.** The claim below —
+> that piano-midi.de cannot be read from this machine — is **wrong**, and the
+> diagnosis that it is "a filtering intermediary" is wrong with it. The host
+> tested was `www.piano-midi.de`; the site lives on the **apex** domain. The rest
+> of this entry (the kern licences, Commons, the arrangement trap) stands.
+
+**piano-midi.de is still unreadable from this machine, and D-034 said why
+incorrectly.** D-034 recorded the failure as the egress proxy refusing HTTP.
+Plain HTTP is not blocked — `http://example.com` returns 200 from here. The
+block is specific to that host: every request returns a bodyless `418 I'm a
+teapot` with no `Server` header, which is a filtering intermediary rather than
+the origin, and browser-identical headers do not defeat it. HTTPS is not served
+(404, then a TLS handshake failure without `www`). O-8 therefore cannot be
+closed from this machine at all — it needs a human browser, not another attempt.
+
+**Humdrum/kern editions — the licences, read from the LICENSE files:**
+
+| Corpus | Licence | Usable? |
+|---|---|---|
+| `mozart-piano-sonatas`, `scarlatti-keyboard-sonatas`, `joplin`, `haydn-piano-sonatas`, `bach-370-chorales` | CC BY-NC-SA 4.0 | only if the app is permanently non-commercial |
+| `beethoven-piano-sonatas`, `chopin-preludes`, `chopin-mazurkas`, `chopin-humdrum-nifc`, `scriabin`, `vivaldi-op6` | **none declared** | **no** — no licence is all rights reserved |
+
+A public-domain work does not make its *encoding* public domain; the digital
+edition is a new copyrightable work. The repositories that would actually help
+here — Beethoven and Chopin — are the unlicensed ones. Kern remains attractive
+in principle because it carries staff information, which is real hand data
+rather than an inference, but not at the price of shipping unlicensed files.
+
+**Wikimedia Commons is ruled out** for this purpose: it holds page scans, PDFs
+and recordings of these works, and no symbolic score data.
+
+**Nine of the 39 are arrangements, and the arrangement carries its own
+copyright** — the Vivaldi Four Seasons, the two Bach piano arrangements, both
+Nutcracker numbers, Flight of the Bumblebee (arr. Rachmaninoff) and Ständchen
+(arr. Liszt). "Find a MIDI of it" is not sufficient for any of them; the
+specific arrangement must also be out of copyright. This is the same trap that
+already excluded Liebesleid and Carol of the Bells, and it is why the sourcing
+count cannot be treated as a single number.
+
+**Consequence for T12a:** the playlist must be able to render a work it cannot
+play regardless of how sourcing goes — the 7 excluded rows are permanently
+unsourceable. That is a UI question, and it is in the design options rather than
+assumed here.
+
+**Left open, because it is not mine to decide:** whether the app is permanently
+non-commercial. Answering yes unlocks the CC BY-NC-SA corpora, at the price of
+a commitment that is awkward to reverse once files are shipped under it. See O-10.
+
+### D-040 — piano-midi.de is CC-BY-SA and cleared for use. The blocker was a `www.`
+**2026-08-16 · Decided — O-8 closed, and three sessions of wrong conclusions corrected**
+
+`http://piano-midi.de/copy.htm` returns `200 OK` from Apache, 7205 bytes. It
+always did. Every previous attempt — D-034's, and D-039's more confident one —
+tested **`www.piano-midi.de`**, which is a different machine on a different IP
+(82.165.134.185 vs 87.106.182.110) serving a Go placeholder that answers `404`
+over HTTPS and a bodyless `418` over HTTP. Two sessions concluded "the site is
+unreachable" and one concluded "a filtering intermediary is blocking that host".
+Both were describing a dead subdomain and neither tried the apex.
+
+The licence, read from the page:
+
+> The MIDI, audio(MP3, OGG) and video files of Bernd Krueger are licensed under
+> the cc-by-sa Germany License. This means, that you can use and adapt the
+> files, as long as you attribute to the copyright holder Name: Bernd Krueger,
+> Source: http://www.piano-midi.de. The distribution or public playback of the
+> files is only allowed under identical license conditions.
+
+**Redistribution is permitted.** Attribution is to *Bernd Krueger*, source
+*http://www.piano-midi.de* — the licence names the broken host, so that string
+goes in `licence.creator`/`licence.url` verbatim as the licence requires,
+regardless of the fact that fetching must use the apex.
+
+Two things this page does **not** say, and which must not be invented: it gives
+**no version number** ("cc-by-sa Germany License", not "3.0 DE"), and it does not
+name a deed URL. Record it exactly as worded and link the page itself. There is
+**no NonCommercial clause** — the licence family here is BY-SA, not BY-NC-SA.
+
+The composer index on that page is precisely the shape of our gap: Liszt,
+Ravel, Debussy, Tchaikovsky, Rachmaninov, Mussorgsky, Schubert, Chopin,
+Beethoven, Mozart. T13's gate is **cleared**; its sourcing work is unblocked.
+
+The lesson is cheap to state and was expensive to learn twice: `www.` and the
+apex are different hosts, and "the site is down" is a claim about a hostname,
+not about a site. Test both before recording a source as unreachable.
+
+### D-041 — The app is permanently non-commercial
+**2026-08-16 · Decided — Anirudh, answering O-10**
+
+Stated plainly so future sourcing decisions can lean on it: this app will not be
+sold, monetised, ad-supported or licensed commercially, ever.
+
+That unlocks the CC BY-NC-SA kern corpora (Mozart, Scarlatti, Joplin, Haydn,
+Bach chorales) as legitimate sources. It turned out not to be needed for
+piano-midi.de, which is BY-SA with no NC clause (D-040).
+
+Two consequences to hold onto. **NC and SA sources cannot be merged into one
+work** — BY-SA and BY-NC-SA are mutually incompatible — but that is not what we
+do: each score is a separate file carrying its own `licence` record, which the
+catalog already models per row. Keep it that way; never concatenate or bundle
+scores of different licences into a single artefact. And **share-alike binds any
+file we adapt**: a MIDI converted from a BY-SA or BY-NC-SA source ships under
+that same licence, attributed, not relicensed.
+
+### D-042 — The shipped playlist: a Home section, its own page, no play-through, and an honest footer
+**2026-08-16 · Decided — Anirudh, from three option sets**
+
+T12 was split into T12a (shipped, read-only, no schema change) and T12b (user
+playlists, carrying the Dexie v1→v2 migration). Three UI questions were put up
+as rendered options over the real resolved data in
+`docs/mockups/playlist-options.html`. All three recommendations were approved.
+
+**Where it lives — a "Playlists" section on Home, opening its own page** at
+`/playlists/:playlistId`, rather than expanding inline or hiding behind a header
+link. Inline expansion pushes My pieces below 25 rows and would be rebuilt the
+moment T12b allows a second playlist; a header link is the least discoverable
+version of the feature this task exists to deliver.
+
+**No play-through.** The player is not touched: no next/previous, no
+auto-advance, no playlist context threaded into the route. D-032 deferred this
+because "play the next one" drags in transport questions — end-of-piece
+behaviour, whether an A–B loop suppresses the advance, whether practice speed
+carries over. Shipping without it keeps T12a small and turns O-9 into a question
+answered by use rather than by speculation.
+
+**The absent works get one honest line**, not silence and not 39 dead rows:
+"39 more works from this playlist are not in the catalog yet", followed by the
+composers most affected. Hiding them makes the app quietly drop more than half
+the captured list; rendering all 64 makes three rows in five untappable in a
+tool whose entire purpose is playing something.
+
+Both halves of that line are **derived from the build**, never written in a
+component — the count and the composer names must shrink on their own when T13
+lands more pieces, or the line becomes a lie the day it ships.
+
+**Amended the same day, after Codex found the spec contradicting itself.** The
+task first said "the four composers with the most missing rows" while showing an
+example naming four different ones. Working the numbers showed the *stated
+algorithm* was the wrong half: by raw missing count the top entry is **Chopin,
+with 10 missing and 11 playable** — the best-served composer in the playlist.
+The line means "composers you largely cannot play", so eligibility is
+`missing > playable`, sorted by missing desc, then playable asc, then surname.
+That yields Liszt (6/1), Ravel (3/0), Vivaldi (3/0), Beethoven (3/2), and
+excludes Chopin and Debussy (3/3) correctly. The two extra sort keys are not
+decoration: four composers tie at 3 missing rows, and without them the generated
+JSON reorders between builds.
+
+The generalisable bit: a derived string can be perfectly well-derived and still
+false. "Most missing" and "most absent" are different questions, and only the
+data says which one the sentence is actually asking.
+
+### D-043 — Accounts and sync are the destination, deliberately not the next stop
+**2026-08-16 · Decided — Anirudh, direction recorded, no work authorised**
+
+Asked how several people are meant to keep their own catalogues with no
+database, no API and no authentication. The honest answer was that they cannot:
+the app has no user identity at all, so one browser profile is one library, two
+devices are two unrelated libraries, and nothing is shareable.
+
+**The long-term intent is real accounts with sync across devices.** The
+prioritisation call is to skip it for now: assume a single user on any device,
+with **no syncing and no new functionality built for it**. Local profiles and
+export/import were both offered and both declined — building either now would be
+scope the user explicitly did not ask for.
+
+**This changes how PRD §4 should be read.** It lists "No accounts, cloud sync,
+or sharing" among the non-goals, and that reads as permanent. It is not — it is
+a *sequencing* statement scoped to MVP/V1, which the line itself hints at
+("for MVP/V1") but does not make obvious. AGENTS.md rule 1 forbids editing
+`PRD.md`, so this entry is the correction: **do not treat accounts as
+permanently refused.** When it is picked up it needs a PRD amendment from
+Anirudh, not a decision entry from an agent, because it reverses a stated
+non-goal and pulls in a backend, a bill, password handling and privacy
+obligations that the product has never carried.
+
+**What this does and does not license today.** It licenses nothing to be built.
+It does license *cheap* choices that avoid painting the schema into a corner —
+specifically, identifiers that stay unique when a second device eventually
+exists. T12b already carries `createdAt`/`updatedAt` per playlist, which is what
+a future merge would need, so no extra work is required there beyond making ids
+collision-proof (see the amendment in T12b). Nothing else is to be added
+speculatively: a sync design written now, against no backend and no requirements,
+would be guesswork that ages badly.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation
@@ -806,6 +1023,8 @@ matters.
 | O-3 | Measured clock offset and jitter on the actual Roland RP302 in Chrome and Edge. PRD R6. | `tasks/T08-listen-grading.md` |
 | O-4 | Real-world ±300ms tolerance suitability at 0.25×. PRD R5. | `tasks/T08-listen-grading.md` |
 | O-6 | ~~Should hand colours be configurable?~~ **Closed by D-026** — yes, and the hand *mapping* with them. | Closed 2026-08-13 |
-| O-8 | Does piano-midi.de's licence actually permit redistribution? Read `copy.htm` first-hand. **Blocking for T13.** | `tasks/T13-catalog-second-source.md` |
-| O-9 | Is continuous play through a playlist wanted, and what happens to loop/speed at a piece boundary? | after T12 ships and is used |
+| O-8 | ~~Does piano-midi.de's licence permit redistribution?~~ **Closed by D-040** — yes. cc-by-sa Germany, attribution to Bernd Krueger, share-alike. Fetch from the **apex** domain; `www.` is dead. | Closed 2026-08-16 |
+| O-10 | ~~Is the app permanently non-commercial?~~ **Closed by D-041** — yes, permanently. | Closed 2026-08-16 |
+| O-9 | Is continuous play through a playlist wanted, and what happens to loop/speed at a piece boundary? | after T12a ships and is used |
+| O-11 | Accounts + cross-device sync. Direction confirmed, deprioritised (D-043). Needs a PRD amendment from Anirudh before any task exists, plus answers on hosting cost, auth provider, and what merges when two devices disagree. | not scheduled |
 | O-5 | Per-asset redistribution licence for all 12 seed pieces. PRD R7 — **blocking for the MVP gate**. | `tasks/T03-catalog-home.md`, started day 1 |

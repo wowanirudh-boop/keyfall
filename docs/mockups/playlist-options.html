@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  DESIGN REFERENCE — not production code, not a pixel spec.
+
+  Three open questions for T12a (the shipped, read-only "Classical Rousseau"
+  playlist), each shown as candidate screens over the REAL resolved data:
+  25 playable pieces, 39 works absent from the catalog, 7 unsourceable.
+
+    Set A — where the playlist lives            (navigation)
+    Set B — how you work through it             (play-through)
+    Set C — how the 39 absent works are treated (honesty)
+
+  Nothing here is decided. Once Anirudh picks, the choice becomes a decision
+  entry in docs/decisions.md and the normative spec is tasks/T12a-*.md plus
+  src/design/tokens.ts. Do not copy this markup, these class names, or these
+  inline colour literals into src/.
+
+  Colours are token values from src/design/tokens.ts, inlined because this file
+  opens standalone. Fonts fall back to system faces — the app self-hosts Space
+  Grotesk / IBM Plex Mono (design-contract.md rule 5).
+
+  Open directly in a browser: no server needed.
+-->
+<title>Playlists — design options for T12a</title>
+</head>
+<body>
+<style>
+  :root{
+    --bg:#0B0C0E; --card:#101216; --raised:#14161A; --control:#1D2026; --controlHover:#262A31;
+    --line1:#1A1D22; --line2:#1D2026; --line3:#23262C; --line4:#2C3037;
+    --ink:#E8EAED; --dim:#8A9099; --md1:#6B727C; --md2:#5B626B; --md3:#3E444C;
+    --right:#4CC2FF; --tint:#0E2331; --hover:#34576B; --onAccent:#06121A;
+    --amber:#FFB25E; --amberBorder:#4A3A22; --amberText:#E0C9A5; --amberBg:#1B1509;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 24px 110px;display:flex;flex-direction:column;gap:36px}
+
+  header h1{font-size:26px;font-weight:700;letter-spacing:-0.02em;margin:0 0 10px;text-wrap:balance}
+  header p{margin:0 0 8px;color:var(--dim);font-size:14px;max-width:70ch}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;color:var(--md2);
+           margin:0 0 10px;text-transform:uppercase}
+
+  .facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .fact{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:10px 14px}
+  .fact b{display:block;font-size:19px;font-weight:700;letter-spacing:-0.01em}
+  .fact span{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--md2);text-transform:uppercase}
+
+  h2.setTitle{font-size:19px;font-weight:700;letter-spacing:-0.01em;margin:0 0 6px}
+  .setIntro{margin:0 0 18px;color:var(--dim);font-size:14px;max-width:74ch}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px;align-items:start}
+  .opt{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:18px;
+       display:flex;flex-direction:column;gap:12px;min-width:0}
+  .opt.rec{border-color:var(--hover)}
+  .opt h3{margin:0;font-size:15px;font-weight:500;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;color:var(--md2);
+       border:1px solid var(--line3);border-radius:3px;padding:2px 6px;white-space:nowrap}
+  .tag.rec{color:var(--right);border-color:var(--hover)}
+  .note{margin:0;font-size:13px;color:var(--dim)}
+  .cost{margin:0;font-size:12px;color:var(--md1);border-top:1px solid var(--line1);padding-top:10px}
+  .cost b{color:var(--dim);font-weight:500}
+
+  /* ---- app screen frame ---- */
+  .screen{background:#0B0C0E;border:1px solid var(--line1);border-radius:8px;padding:14px;
+          display:flex;flex-direction:column;gap:12px;overflow:hidden}
+  .scrLabel{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;color:var(--md3);
+            text-transform:uppercase}
+  .appHead{display:flex;align-items:center;gap:9px;padding-bottom:11px;border-bottom:1px solid var(--line1)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--right);flex:none}
+  .mark{font-size:14px;font-weight:700;letter-spacing:-0.01em}
+  .headMeta{font-family:var(--mono);font-size:9px;letter-spacing:0.09em;color:var(--md2);margin-left:auto}
+  .headLink{font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--right);
+            margin-left:auto;border:1px solid var(--hover);border-radius:5px;padding:4px 8px}
+
+  .secLabel{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--md2);
+            text-transform:uppercase;display:flex;align-items:center;gap:8px}
+  .secLabel .count{color:var(--md3)}
+
+  .row{display:flex;align-items:center;gap:10px;background:var(--raised);border:1px solid var(--line2);
+       border-radius:6px;padding:9px 11px;min-width:0}
+  .row.tap{border-color:var(--line3)}
+  .row .t{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .c{font-family:var(--mono);font-size:10px;color:var(--md2);white-space:nowrap}
+  .row .d{font-family:var(--mono);font-size:10px;color:var(--right);margin-left:auto;white-space:nowrap;
+          font-variant-numeric:tabular-nums}
+  .row .n{font-family:var(--mono);font-size:10px;color:var(--md3);width:20px;flex:none;
+          font-variant-numeric:tabular-nums;text-align:right}
+  .row.off{opacity:1;background:transparent;border-style:dashed;border-color:var(--line2)}
+  .row.off .t{color:var(--md1)}
+  .row.off .d{color:var(--md3)}
+  .row.plCard{background:var(--card);border-color:var(--line3);padding:12px 13px;align-items:flex-start;
+              flex-direction:column;gap:4px;cursor:default}
+  .row.plCard .top{display:flex;align-items:center;gap:9px;width:100%;min-width:0}
+  .row.plCard .nm{font-size:14px;font-weight:500}
+  .row.plCard .sub{font-family:var(--mono);font-size:10px;color:var(--md2);letter-spacing:0.04em}
+  .chev{color:var(--md2);font-size:13px;margin-left:auto;flex:none}
+
+  .contCard{background:var(--card);border:1px solid var(--hover);border-radius:6px;padding:11px 13px;
+            display:flex;align-items:center;gap:10px}
+  .contCard .t{font-size:13px}
+  .contCard .lab{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;color:var(--md2);text-transform:uppercase}
+
+  .stack{display:flex;flex-direction:column;gap:7px;min-width:0}
+
+  .footLine{font-family:var(--mono);font-size:10px;color:var(--md1);letter-spacing:0.03em;
+            border-top:1px solid var(--line1);padding-top:9px;line-height:1.6}
+  .footLine em{color:var(--amberText);font-style:normal}
+
+  .amberStrip{background:var(--amberBg);border:1px solid var(--amberBorder);border-radius:6px;
+              padding:8px 11px;font-size:11px;color:var(--amberText);line-height:1.5}
+
+  .ghost{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line3);border-radius:5px;
+         padding:6px 10px;font-size:11px;color:var(--dim);background:transparent;white-space:nowrap}
+  .ghost.on{border-color:var(--right);background:var(--tint);color:var(--right)}
+  .btnRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* player mock */
+  .pHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:10px;
+         border-bottom:1px solid var(--line1)}
+  .back{font-family:var(--mono);font-size:10px;color:var(--dim);border:1px solid var(--line3);
+        border-radius:5px;padding:5px 9px;white-space:nowrap}
+  .pTitle{font-size:13px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pSub{font-family:var(--mono);font-size:9px;color:var(--md2);letter-spacing:0.08em}
+  .posPill{font-family:var(--mono);font-size:9px;letter-spacing:0.08em;color:var(--md1);
+           border:1px solid var(--line2);border-radius:20px;padding:3px 9px;white-space:nowrap}
+  .stage{height:74px;border-radius:6px;border:1px solid var(--line1);position:relative;overflow:hidden;
+         background:linear-gradient(#0A0B0D,#0D0F13)}
+  .nt{position:absolute;border-radius:3px}
+  .strike{position:absolute;left:0;right:0;bottom:0;height:1px;background:#2A2F36}
+  .keys{display:flex;gap:1px;height:34px}
+  .keys i{flex:1;background:#151821;border:1px solid #252A32;border-radius:0 0 4px 4px}
+  .transport{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .play{width:30px;height:30px;border-radius:50%;background:var(--right);color:var(--onAccent);
+        display:grid;place-items:center;font-size:11px;flex:none}
+  .clock{font-family:var(--mono);font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .seek{flex:1;min-width:60px;height:4px;border-radius:2px;background:var(--control);position:relative}
+  .seek::after{content:"";position:absolute;left:0;top:0;bottom:0;width:38%;background:var(--right);border-radius:2px}
+
+  .endCard{background:var(--card);border:1px solid var(--line3);border-radius:6px;padding:12px;
+           display:flex;flex-direction:column;gap:9px}
+  .endCard .h{font-size:13px;font-weight:500}
+
+  footer{border-top:1px solid var(--line1);padding-top:20px;color:var(--md1);font-size:13px}
+  footer p{margin:0 0 8px;max-width:74ch}
+  code{font-family:var(--mono);font-size:12px;color:var(--dim)}
+
+  @media (max-width:560px){
+    .wrap{padding:28px 16px 80px}
+    .grid{grid-template-columns:1fr}
+  }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">T12a · design options · nothing decided yet</p>
+  <h1>The shipped playlist: three things to choose</h1>
+  <p>“Classical Rousseau” ships with the app, read-only, built from the 72-row capture in
+     <code>catalog/playlists/rousseau-classical.tsv</code>. Every screen below uses the real
+     resolved data, so what you see is what you would get.</p>
+  <p>Pick one option per set. Anything you dislike in the details is worth saying — the
+     details here are proposals, not constraints.</p>
+  <div class="facts">
+    <div class="fact"><b>25</b><span>playable now</span></div>
+    <div class="fact"><b>39</b><span>not in catalog</span></div>
+    <div class="fact"><b>7</b><span>unsourceable</span></div>
+    <div class="fact"><b id="totDur">—</b><span>total playable</span></div>
+  </div>
+</header>
+
+<!-- ================= SET A ================= -->
+<section>
+  <h2 class="setTitle">Set A — Where the playlist lives</h2>
+  <p class="setIntro">Today Home is one screen: Continue, then search, then My pieces. The playlist
+     has to appear somewhere. This choice mostly decides how much of Home changes now versus later,
+     when you can make your own playlists (T12b) and there are several of them.</p>
+
+  <div class="grid">
+
+    <div class="opt rec">
+      <h3>A1 · Home section, own page <span class="tag rec">recommended</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Home</div>
+        <div class="appHead"><span class="dot"></span><span class="mark">Piano Practice Player</span>
+          <span class="headMeta">LOCAL LIBRARY · NO ACCOUNT</span></div>
+        <div class="contCard"><div><div class="lab">Continue</div><div class="t">Für Elise</div></div>
+          <span class="chev">▶</span></div>
+        <div class="secLabel">Playlists</div>
+        <div class="row plCard">
+          <div class="top"><span class="nm">Classical Rousseau</span><span class="chev">›</span></div>
+          <span class="sub">25 PIECES · 1H 29M · SHIPPED</span>
+        </div>
+        <div class="secLabel">My pieces <span class="count">· 6</span></div>
+        <div class="stack" id="a1mine"></div>
+      </div>
+      <p class="note">A “Playlists” section between Continue and My pieces. Tapping the row opens a
+         page of its own at <code>/playlists/rousseau-classical</code>.</p>
+      <p class="cost"><b>Why this one.</b> It is the shape T12b needs the moment there are two
+         playlists. Nothing gets rebuilt later — the section just grows a second row.</p>
+    </div>
+
+    <div class="opt">
+      <h3>A2 · Expands in place <span class="tag">no new page</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Home</div>
+        <div class="appHead"><span class="dot"></span><span class="mark">Piano Practice Player</span>
+          <span class="headMeta">LOCAL LIBRARY · NO ACCOUNT</span></div>
+        <div class="secLabel">Playlists</div>
+        <div class="row plCard">
+          <div class="top"><span class="nm">Classical Rousseau</span><span class="chev">⌄</span></div>
+          <span class="sub">25 PIECES · 1H 29M</span>
+        </div>
+        <div class="stack" id="a2list"></div>
+        <div class="footLine">…19 more</div>
+      </div>
+      <p class="note">No second page. The section opens downward and the 25 pieces sit inside Home.</p>
+      <p class="cost"><b>The cost.</b> Home becomes long — 25 rows pushes My pieces far below the
+         fold — and T12b will need the separate page anyway, so this gets built twice.</p>
+    </div>
+
+    <div class="opt">
+      <h3>A3 · Link in the header <span class="tag">home untouched</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Home</div>
+        <div class="appHead"><span class="dot"></span><span class="mark">Piano Practice Player</span>
+          <span class="headLink">PLAYLISTS</span></div>
+        <div class="contCard"><div><div class="lab">Continue</div><div class="t">Für Elise</div></div>
+          <span class="chev">▶</span></div>
+        <div class="secLabel">My pieces <span class="count">· 6</span></div>
+        <div class="stack" id="a3mine"></div>
+        <div class="footLine">Home is exactly as it is today, plus one word in the header.</div>
+      </div>
+      <p class="note">Nothing changes on Home itself; “Playlists” lives in the header beside the wordmark.</p>
+      <p class="cost"><b>The cost.</b> Least disruption, least discoverability — a header word is
+         easy to never notice, and the playlist is the reason this task exists.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= SET B ================= -->
+<section>
+  <h2 class="setTitle">Set B — Working through the list</h2>
+  <p class="setIntro">Once you are inside a piece, what does the playlist still do for you? D-032
+     deferred this deliberately, because “play the next one” quietly drags in the transport: what
+     happens when a piece ends, whether an A–B loop should stop it, whether your practice speed
+     carries over.</p>
+
+  <div class="grid">
+
+    <div class="opt rec">
+      <h3>B1 · Nothing — tap, play, go back <span class="tag rec">recommended</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Player</div>
+        <div class="pHead"><span class="back">← LIBRARY</span>
+          <div style="min-width:0"><div class="pTitle">Nocturne Op. 9 No. 2</div>
+            <div class="pSub">CHOPIN · 3:22</div></div></div>
+        <div class="stage" id="stgB1"><div class="strike"></div></div>
+        <div class="keys" id="kbB1"></div>
+        <div class="transport"><span class="play">▶</span><span class="clock">1:16 / 3:22</span>
+          <span class="seek"></span></div>
+      </div>
+      <p class="note">The player is untouched. The playlist is a shortcut list you come back to.</p>
+      <p class="cost"><b>Why this one.</b> Zero new transport behaviour, so T12a stays small and
+         ships. If you find yourself wanting “next” once it is in your hands, that is real evidence
+         and it becomes its own task.</p>
+    </div>
+
+    <div class="opt">
+      <h3>B2 · Next / previous buttons <span class="tag">manual</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Player · opened from the playlist</div>
+        <div class="pHead"><span class="back">← CLASSICAL ROUSSEAU</span>
+          <div style="min-width:0"><div class="pTitle">Nocturne Op. 9 No. 2</div>
+            <div class="pSub">CHOPIN · 3:22</div></div>
+          <span class="posPill">24 OF 25</span></div>
+        <div class="stage" id="stgB2"><div class="strike"></div></div>
+        <div class="keys" id="kbB2"></div>
+        <div class="transport"><span class="play">▶</span><span class="clock">1:16 / 3:22</span>
+          <span class="seek"></span></div>
+        <div class="btnRow"><span class="ghost">‹ PREV</span><span class="ghost">NEXT ›</span></div>
+      </div>
+      <p class="note">You move yourself, one tap, no surprises. The back button returns to the
+         playlist instead of Home, and a “24 of 25” pill tells you where you are.</p>
+      <p class="cost"><b>The cost.</b> The player now has to know which list you came from, and the
+         two ends need a rule (grey out, or wrap around). Modest, but it is new state.</p>
+    </div>
+
+    <div class="opt">
+      <h3>B3 · Plays straight through <span class="tag">own task</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Player · piece just ended</div>
+        <div class="pHead"><span class="back">← CLASSICAL ROUSSEAU</span>
+          <div style="min-width:0"><div class="pTitle">Nocturne Op. 9 No. 2</div>
+            <div class="pSub">CHOPIN · ENDED</div></div>
+          <span class="ghost on">CONTINUE ON</span></div>
+        <div class="endCard">
+          <div class="h">Next: Rondo alla Turca</div>
+          <div class="pSub">MOZART · 4:15 · STARTING IN 4S</div>
+          <div class="btnRow"><span class="ghost">PLAY NOW</span><span class="ghost">STAY HERE</span></div>
+        </div>
+        <div class="amberStrip">Open questions this raises: does an A–B loop stop the advance or
+          repeat forever? Does 0.5× practice speed carry to the next piece? What shows during the gap?</div>
+      </div>
+      <p class="note">The list plays itself, with a countdown and an escape hatch at each hand-off.</p>
+      <p class="cost"><b>The cost.</b> Every question in the amber box is a transport decision, not a
+         playlist one. Choosing this means T12a grows or splits again — say so and I will scope it
+         properly rather than smuggle it in.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= SET C ================= -->
+<section>
+  <h2 class="setTitle">Set C — The works that are not in the catalog</h2>
+  <p class="setIntro">You asked me to go and find the 39 missing works. I have started, and the
+     honest position is in the note at the bottom of this page: the blocker is licensing, not file
+     format, and some of these will not be sourceable at all — the 7 already-excluded rows never
+     will be. So the playlist needs a way to show a work it cannot play, whatever the sourcing
+     turns up. This set is about how loudly it says so.</p>
+
+  <div class="grid">
+
+    <div class="opt">
+      <h3>C1 · Show only what plays <span class="tag">25 rows</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Playlist</div>
+        <div class="pHead"><span class="back">← HOME</span>
+          <div><div class="pTitle">Classical Rousseau</div><div class="pSub">25 PIECES · 1H 29M</div></div></div>
+        <div class="stack" id="c1list"></div>
+        <div class="footLine">…and nothing else. The list simply looks like a 25-piece list.</div>
+      </div>
+      <p class="note">Every row works. The 39 absent works are invisible.</p>
+      <p class="cost"><b>The cost.</b> The app quietly drops more than half of what you captured, and
+         nothing in the product ever tells you the gap exists.</p>
+    </div>
+
+    <div class="opt rec">
+      <h3>C2 · Play what plays, then say the rest <span class="tag rec">recommended</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Playlist</div>
+        <div class="pHead"><span class="back">← HOME</span>
+          <div><div class="pTitle">Classical Rousseau</div><div class="pSub">25 OF 64 · 1H 29M</div></div></div>
+        <div class="stack" id="c2list"></div>
+        <div class="footLine"><em>39 more works from this playlist are not in the catalog yet.</em><br>
+          Liszt, Ravel, Vivaldi and Beethoven are the big gaps.</div>
+      </div>
+      <p class="note">25 tappable rows, then one honest line naming the shortfall.</p>
+      <p class="cost"><b>Why this one.</b> No dead rows to tap, no silent omission, and the line is
+         the thing that will tell you whether closing the gap was worth it.</p>
+    </div>
+
+    <div class="opt">
+      <h3>C3 · The whole list, greyed <span class="tag">64 rows</span></h3>
+      <div class="screen">
+        <div class="scrLabel">Playlist</div>
+        <div class="pHead"><span class="back">← HOME</span>
+          <div><div class="pTitle">Classical Rousseau</div><div class="pSub">64 WORKS · 25 PLAYABLE</div></div></div>
+        <div class="stack" id="c3list"></div>
+        <div class="footLine">Rousseau’s own order, kept whole. Dashed rows do nothing when tapped.</div>
+      </div>
+      <p class="note">The full capture in the original order; absent works render dashed and dim.</p>
+      <p class="cost"><b>The cost.</b> Roughly three rows in five do nothing. Faithful to the source
+         list, frustrating as a practice tool — you scroll past what you cannot play.</p>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <p class="eyebrow">Where the sourcing actually stands</p>
+  <p>Checked first-hand today, not from memory: <b>piano-midi.de</b> — the proposed second source —
+     still cannot be read from this machine. Plain HTTP works fine generally, but that one host
+     answers every request with an empty <code>418</code> and serves nothing over HTTPS, so its
+     licence page is unreadable here. <b>You can settle it in your browser in ten seconds</b>; the
+     steps are in my message.</p>
+  <p>The Humdrum score repositories are licence-checked: the Mozart, Scarlatti, Joplin, Haydn and
+     Bach-chorale editions are <b>CC BY-NC-SA 4.0</b> (non-commercial), and the Beethoven, Chopin,
+     Scriabin and Vivaldi ones carry <b>no licence at all</b>, which means no redistribution rights.
+     Wikimedia Commons has scans and recordings but no score data. So the obstacle is permission,
+     not file format — converting is the easy part, and it is not what is stopping us.</p>
+</footer>
+
+</div>
+
+<script>
+  // Real resolved data — 25 playable entries, first-occurrence order from the TSV.
+  const PLAYABLE = [
+    ["Ballade No. 4 in F minor, Op. 52","Chopin",717],
+    ["Pictures at an Exhibition","Mussorgsky",237],
+    ["Clair de Lune","Debussy",323],
+    ["Prelude Op. 28 No. 15 (‘Raindrop’)","Chopin",267],
+    ["Prelude in C minor, BWV 847","Bach",79],
+    ["Consolation No. 3, S.172","Liszt",243],
+    ["Piano Sonata No. 16 in C, K. 545","Mozart",132],
+    ["Étude Op. 10 No. 1 (‘Waterfall’)","Chopin",108],
+    ["Minuet in G major, BWV Anh. 114","Petzold",41],
+    ["Étude Op. 10 No. 12 (‘Revolutionary’)","Chopin",125],
+    ["Étude Op. 10 No. 5 (‘Black Keys’)","Chopin",90],
+    ["Prelude Op. 23 No. 5 in G minor","Rachmaninoff",227],
+    ["Fantaisie-Impromptu, Op. 66","Chopin",254],
+    ["Ballade No. 1 in G minor, Op. 23","Chopin",695],
+    ["Prelude Op. 28 No. 6 in B minor","Chopin",101],
+    ["Prelude in C major, BWV 846","Bach",140],
+    ["Waltz Op. 64 No. 1 (‘Minute’)","Chopin",90],
+    ["Prelude Op. 28 No. 4 in E minor","Chopin",108],
+    ["Prelude Op. 3 No. 2 in C-sharp minor","Rachmaninoff",164],
+    ["Sonata No. 14 ‘Moonlight’ (1st mvt)","Beethoven",276],
+    ["Gymnopédie No. 1","Satie",141],
+    ["Arabesque No. 1","Debussy",176],
+    ["Für Elise","Beethoven",130],
+    ["Nocturne Op. 9 No. 2 in E-flat","Chopin",202],
+    ["Rondo alla Turca, K. 331","Mozart",255]
+  ];
+  // A few of the 39 absent works, in their true playlist positions, for set C.
+  const ABSENT = [
+    ["Mazeppa, S.139 No. 4","Liszt"],
+    ["Waltz of the Flowers","Tchaikovsky"],
+    ["La cathédrale engloutie","Debussy"],
+    ["Pavane pour une infante défunte","Ravel"]
+  ];
+
+  const mmss = s => Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+  const total = PLAYABLE.reduce((a,p)=>a+p[2],0);
+  document.getElementById("totDur").textContent =
+    Math.floor(total/3600)+"h "+Math.round((total%3600)/60)+"m";
+
+  function row(p,i,opts={}){
+    const el=document.createElement("div");
+    el.className="row"+(opts.tap?" tap":"");
+    el.innerHTML=(opts.num?`<span class="n">${i+1}</span>`:"")+
+      `<span class="t">${p[0]}</span><span class="c">${p[1]}</span>`+
+      `<span class="d">${mmss(p[2])}</span>`;
+    return el;
+  }
+  function absentRow(p,i,num){
+    const el=document.createElement("div");
+    el.className="row off";
+    el.innerHTML=(num?`<span class="n">${i+1}</span>`:"")+
+      `<span class="t">${p[0]}</span><span class="c">${p[1]}</span>`+
+      `<span class="d">NOT IN CATALOG</span>`;
+    return el;
+  }
+  function fill(id,items,opts={}){
+    const host=document.getElementById(id); if(!host)return;
+    items.forEach((p,i)=>host.appendChild(p.absent?absentRow(p,i,opts.num):row(p,i,opts)));
+  }
+
+  const mine=[PLAYABLE[22],PLAYABLE[20],PLAYABLE[15]];
+  fill("a1mine",mine); fill("a3mine",mine);
+  fill("a2list",PLAYABLE.slice(0,6),{num:true});
+  fill("c1list",PLAYABLE.slice(0,7),{num:true,tap:true});
+  fill("c2list",PLAYABLE.slice(0,7),{num:true,tap:true});
+
+  // C3 interleaves absent works where they really fall.
+  const mixed=[];
+  PLAYABLE.slice(0,5).forEach((p,i)=>{
+    mixed.push(p);
+    if(ABSENT[i]) mixed.push({0:ABSENT[i][0],1:ABSENT[i][1],absent:true});
+  });
+  fill("c3list",mixed,{num:true,tap:true});
+
+  // decorative falling notes
+  function notes(id,seed){
+    const s=document.getElementById(id); if(!s)return;
+    const xs=[[6,18,10],[26,44,16],[48,8,22],[62,30,12],[78,56,14]];
+    xs.forEach(([l,t,h],i)=>{
+      const n=document.createElement("div");
+      n.className="nt";
+      const right=(i+seed)%3!==0;
+      n.style.cssText=`left:${l}%;top:${t}%;width:7%;height:${h}px;`+
+        `background:${right?"#4CC2FF":"#FF7A45"};box-shadow:0 0 14px ${right?"#4CC2FF":"#FF7A45"}55`;
+      s.appendChild(n);
+    });
+  }
+  notes("stgB1",0); notes("stgB2",1);
+  ["kbB1","kbB2"].forEach(id=>{
+    const k=document.getElementById(id); if(!k)return;
+    for(let i=0;i<22;i++) k.appendChild(document.createElement("i"));
+  });
+</script>
+</body>
+</html>
