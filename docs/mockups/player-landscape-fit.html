@@ -422,7 +422,7 @@ function render(i){
     html: frame(c.w, c.h, today, 'full'), bands: today,
   }];
   if (p) blocks.push({
-    title:'Proposed', tag:'rec', tagText: c.w >= ONE_ROW_TRANSPORT_MIN ? 'one transport row' : 'two compact rows',
+    title:'Proposed', tag:'rec', tagText: c.w >= ONE_ROW_TRANSPORT_MIN ? 'approved · one transport row' : 'narrow fallback · two rows',
     note:'Same controls, all of them, all visible.',
     html: frame(c.w, c.h, p, c.w >= ONE_ROW_TRANSPORT_MIN ? 'one' : 'two'), bands: p,
   });

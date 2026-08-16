@@ -40,7 +40,7 @@ function pixelEntries(prefix: string, values: Record<string, number>) {
 }
 
 describe('Tailwind theme contract', () => {
-  it('matches every declared theme value to the authoritative TypeScript tokens', () => {
+  it('[T15 AC1] matches every declared theme value to the authoritative TypeScript tokens', () => {
     const block = css.match(/@theme(?:\s+static)?\s*\{([\s\S]*?)\}/)?.[1];
     expect(block).toBeTruthy();
 

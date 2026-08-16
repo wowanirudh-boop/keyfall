@@ -138,8 +138,9 @@ styling verbatim with a message naming the piece and offering upload.
 
 Deviations require an entry in `docs/decisions.md`. The **visual/behavioural**
 deviations are D-006 (asset-failure state), D-009 (listen auto-start, kept as
-designed) and D-012 (sampler attribution line) — all additive; none changes a
-pixel of an existing handoff state. D-011 resolves a PRD-vs-decision conflict
+designed), D-012 (sampler attribution line) and D-047 (keyboard contrast) — the
+first three are additive; D-047 deliberately replaces the keyboard palette and
+state contrast. D-011 resolves a PRD-vs-decision conflict
 about the live `missed` flash. The **engineering** deviations, which change no
 visuals at all, are D-002 (windowed waterfall), D-003/D-004 (grading), D-005
 (clock domains) and D-014 (tokens as CSS custom properties); `docs/algorithms.md`

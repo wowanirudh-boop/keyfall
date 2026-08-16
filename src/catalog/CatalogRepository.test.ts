@@ -92,6 +92,15 @@ describe("CatalogRepository", () => {
     expect(repository.search("prelude op. 28, no. 15")[0]?.title).toBe(
       "Prelude: Op. 28, No. 15",
     );
+    expect(repository.search("pictures at an exhibition")[0]?.title).toBe(
+      "Pictures at an Exhibition",
+    );
+    expect(repository.search("sonata no 2")).toContainEqual(
+      expect.objectContaining({
+        id: "sonate-2-b-moll",
+        title: "Finale (Sonata No. 2, 4th mvt)",
+      }),
+    );
     expect(performance.now() - startedAt).toBeLessThan(50);
   });
 

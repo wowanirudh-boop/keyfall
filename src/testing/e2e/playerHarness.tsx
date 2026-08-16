@@ -112,6 +112,7 @@ function Harness() {
   const verdicts = new Map<string, LiveVerdict>();
   if (parameters.get("error") === "1") {
     verdicts.set("visual-error", { kind: "wrong", publishedAt: 3.9 });
+    verdicts.set("visual-black", { kind: "wrong", publishedAt: 3.9 });
   }
 
   useLayoutEffect(() => {

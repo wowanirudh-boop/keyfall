@@ -250,6 +250,15 @@ to isolate, and it is proven against a seeded v1 database before any UI. The
 shipped playlist stays a build artefact and is never written into the table.
 No auto-advance — still O-9. D-032, D-042.
 
+### T03f — 22 rows name a work but hold one movement
+
+T03e's audit found the defect it fixed twice is systemic: where a Mutopia entry's
+asset is a multi-file archive, the build took one member and kept the
+collection's title. "French Suite No. 6" plays 84 seconds of its Allemande. One
+row is worse — English Suite II is labelled Gigue and sourced from the Prelude.
+Merge where the archive is a genuine whole, retitle where it is a set of
+independent exercises. D-038, D-049.
+
 ### T13b — The e2e suite is red
 
 8 of 31 Playwright tests fail. Two are provably T13's (a hardcoded count of 47

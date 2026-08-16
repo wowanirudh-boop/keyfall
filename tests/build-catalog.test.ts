@@ -142,6 +142,41 @@ describe("catalog ingestion", () => {
     );
   });
 
+  it("[T03e AC2, AC3] applies the source-derived Chopin finale title during every Mutopia build", async () => {
+    const root = await mkdtemp(join(tmpdir(), "piano-catalog-title-"));
+    const sourceDir = join(root, "source");
+    const scoreDir = join(sourceDir, "ftp", "ChopinFF", "O35", "chp-op-35-4-scholz-fi");
+    await mkdir(scoreDir, { recursive: true });
+    await writeFile(
+      join(scoreDir, "finale.ly"),
+      `\\header {
+        mutopiatitle = "Sonate 2 b-moll"
+        composer = "Frédéric Chopin (1810 - 1849)"
+        mutopiainstrument = "Piano"
+        license = "Public Domain"
+        footer = "Mutopia-2026/08/12-1727"
+      }`,
+    );
+
+    const result = await buildCatalog({
+      sourceDir,
+      outputDir: join(root, "catalog"),
+      cacheDir: join(root, "cache"),
+      aliases: {},
+      composerAliases: { "Frédéric Chopin": "Chopin, Frédéric" },
+      revision: "fixture-revision",
+      fetchDirectory: async (url: string) => `<a href="${new URL("finale.mid", url)}">MIDI</a>`,
+      fetchAsset: async () => midiBytes(),
+      log: () => undefined,
+    });
+
+    expect(result.manifest).toHaveLength(1);
+    expect(result.manifest[0]).toMatchObject({
+      id: "sonate-2-b-moll",
+      title: "Finale (Sonata No. 2, 4th mvt)",
+    });
+  });
+
   it("[T03b AC2] permits a public-domain row without a creator but identifies unpublished files", () => {
     const sourceDir = join("fixture", "mirror");
     const published = parsePieceSource(
@@ -213,6 +248,7 @@ describe("catalog ingestion", () => {
         Beethoven: "Beethoven, Ludwig van",
         Chopin: "Chopin, Frédéric",
         Liszt: "Liszt, Franz",
+        Mussorgsky: "Mussorgsky, Modest Petrovich",
         Ravel: "Ravel, Maurice",
       },
       fetchUrl: async (url: string) =>
@@ -221,7 +257,7 @@ describe("catalog ingestion", () => {
 
     const result = await adapter.load();
 
-    expect(result.rows).toHaveLength(13);
+    expect(result.rows).toHaveLength(14);
     expect(result.arrangementDispositions).toHaveLength(9);
     for (const row of result.rows) {
       expect(row.licence).toMatchObject({
@@ -231,7 +267,87 @@ describe("catalog ingestion", () => {
       });
       expect(row.licence.sourceUrl).toMatch(/^http:\/\/piano-midi\.de\//);
     }
+    expect(result.rows.find((row: { id: string }) => row.id === "pictures-at-an-exhibition"))
+      .toMatchObject({
+        title: "Pictures at an Exhibition",
+        composer: "Mussorgsky, Modest Petrovich",
+        licence: { sourceUrl: "http://piano-midi.de/muss.htm" },
+        sourceAssets: PIANO_MIDI_PIECES.find(
+          (piece: { id: string }) => piece.id === "pictures-at-an-exhibition",
+        )?.assets.map((asset: string) => `http://piano-midi.de/${asset}`),
+      });
     expect(() => new Midi(concatenateMidiAssets([midiBytes(), midiBytes()]))).not.toThrow();
+  });
+
+  it("[T03e AC2, AC5] replaces the incomplete Mutopia Pictures row without changing the row count", async () => {
+    const root = await mkdtemp(join(tmpdir(), "piano-catalog-replacement-"));
+    const bytes = Buffer.from(midiBytes());
+    const baseRow = {
+      id: "pictures-at-an-exhibition",
+      title: "Pictures at an Exhibition",
+      composer: "Mussorgsky, Modest Petrovich",
+      rawComposer: "Mussorgsky",
+      aliases: [],
+      asset: "pictures-at-an-exhibition.mid",
+      format: "midi",
+    };
+    const mutopiaRow = {
+      ...baseRow,
+      mutopiaId: "475",
+      licence: {
+        name: "CC-BY-SA-4.0",
+        url: "https://creativecommons.org/licenses/by-sa/4.0/",
+        sourceUrl: "https://www.mutopiaproject.org/pictures.zip#baba.mid",
+        creator: "Knute Snortum",
+      },
+      bytes,
+      sourceKey: "mutopia",
+    };
+    const pianoRow = {
+      ...baseRow,
+      licence: {
+        name: "cc-by-sa Germany License",
+        url: "http://piano-midi.de/copy.htm",
+        sourceUrl: "http://piano-midi.de/muss.htm",
+        creator: "Bernd Krueger",
+      },
+      bytes,
+      sourceKey: "piano-midi.de",
+      sourceAssets: ["http://piano-midi.de/midis/mussorgsky/muss_1.mid"],
+    };
+    const result = await buildCatalogFromAdapters({
+      adapters: [
+        {
+          key: "mutopia",
+          priority: 0,
+          revision: "fixture-mutopia",
+          load: async () => ({ rows: [mutopiaRow], baseBuildLog: "# Catalog ingestion log" }),
+        },
+        {
+          key: "piano-midi.de",
+          priority: 1,
+          revision: "fixture-piano-midi",
+          load: async () => ({ rows: [pianoRow], arrangementDispositions: [] }),
+        },
+      ],
+      outputDir: join(root, "catalog"),
+      composerAliases: { Mussorgsky: "Mussorgsky, Modest Petrovich" },
+      parseAsset: async () => ({
+        ok: true,
+        piece: { notes: [{ midi: 60 }], hasHandData: true },
+      }),
+      log: () => undefined,
+    });
+
+    expect(result.manifest).toHaveLength(1);
+    expect(result.manifest[0]).toMatchObject({
+      id: "pictures-at-an-exhibition",
+      licence: { creator: "Bernd Krueger", sourceUrl: "http://piano-midi.de/muss.htm" },
+    });
+    expect(result.manifest[0].mutopiaId).toBeUndefined();
+    expect(result.duplicateDrops).toEqual([
+      "mutopia pictures-at-an-exhibition: skipped because piano-midi.de supplies the complete work",
+    ]);
   });
 
   it("[T13 AC2, AC5] gives Mutopia priority over a duplicate second-source work", async () => {
@@ -306,7 +422,7 @@ describe("catalog ingestion", () => {
     );
     let handRows = 0;
 
-    expect(rows).toHaveLength(13);
+    expect(rows).toHaveLength(14);
     for (const row of rows) {
       expect(row.licence).toEqual(
         expect.objectContaining({
@@ -330,6 +446,36 @@ describe("catalog ingestion", () => {
     expect(await readFile("catalog/BUILD_LOG.md", "utf8")).toContain(
       `Rows with \`hasHandData === true\`: **${handRows}/${rows.length}`,
     );
+  });
+
+  it("[T03e AC2, AC5] ships the complete Pictures source and the source-derived Chopin title", async () => {
+    const manifest = JSON.parse(await readFile("catalog/manifest.json", "utf8"));
+    const pictures = manifest.find(
+      (row: { id: string }) => row.id === "pictures-at-an-exhibition",
+    );
+    const finale = manifest.find((row: { id: string }) => row.id === "sonate-2-b-moll");
+
+    expect(manifest).toHaveLength(609);
+    expect(pictures).toMatchObject({
+      title: "Pictures at an Exhibition",
+      composer: "Mussorgsky, Modest Petrovich",
+      licence: {
+        name: "cc-by-sa Germany License",
+        url: "http://piano-midi.de/copy.htm",
+        sourceUrl: "http://piano-midi.de/muss.htm",
+        creator: "Bernd Krueger",
+      },
+    });
+    expect(pictures.mutopiaId).toBeUndefined();
+    expect(pictures.durationSeconds).toBeGreaterThan(29 * 60);
+    expect(pictures.durationSeconds).toBeLessThanOrEqual(30 * 60);
+    expect(finale).toMatchObject({
+      title: "Finale (Sonata No. 2, 4th mvt)",
+      licence: {
+        sourceUrl:
+          "https://www.mutopiaproject.org/ftp/ChopinFF/O35/chp-op-35-4-scholz-fi/chp-op-35-4-scholz-fi.mid",
+      },
+    });
   });
 });
 

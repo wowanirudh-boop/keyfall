@@ -3327,6 +3327,27 @@
     }
   },
   {
+    "id": "sonate-2-b-moll",
+    "mutopiaId": "1727",
+    "title": "Finale (Sonata No. 2, 4th mvt)",
+    "composer": "Chopin, Frédéric",
+    "rawComposer": "Frédéric Chopin (1810 - 1849)",
+    "aliases": [
+      "chopin",
+      "finale 4th mvt"
+    ],
+    "asset": "sonate-2-b-moll.mid",
+    "format": "midi",
+    "durationSeconds": 82.499956,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/ChopinFF/O35/chp-op-35-4-scholz-fi/chp-op-35-4-scholz-fi.mid",
+      "sha256": "5e6ac4bfa8fd44daf75dc09bc5097f97e0afd8e913a0aa7644b064644f4f61ce",
+      "creator": "Roland Goretzki"
+    }
+  },
+  {
     "id": "flat",
     "mutopiaId": "1004",
     "title": "Flat",
@@ -6807,23 +6828,22 @@
   },
   {
     "id": "pictures-at-an-exhibition",
-    "mutopiaId": "475",
     "title": "Pictures at an Exhibition",
     "composer": "Mussorgsky, Modest Petrovich",
-    "rawComposer": "Modest Moussorgsky (1839 - 1881)",
+    "rawComposer": "Mussorgsky",
     "aliases": [
       "mussorgsky"
     ],
     "asset": "pictures-at-an-exhibition.mid",
     "format": "midi",
-    "durationSeconds": 237.49972199999996,
     "licence": {
-      "name": "CC-BY-SA-4.0",
-      "url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/MussorgskyM/pictures-at-an-exhibition/pictures-at-an-exhibition-mids.zip#baba.mid",
-      "sha256": "e0062ce4f642cdd8160ff16f22569281f138249fc968dd154a0870c5cb7f5a65",
-      "creator": "Knute Snortum"
-    }
+      "name": "cc-by-sa Germany License",
+      "url": "http://piano-midi.de/copy.htm",
+      "sourceUrl": "http://piano-midi.de/muss.htm",
+      "creator": "Bernd Krueger",
+      "sha256": "ee2c1c427d72f31cd393cbf2be387efc5b9feb9f55ccfa7e161c2dab4d5f0fd8"
+    },
+    "durationSeconds": 1772.303125
   },
   {
     "id": "pineapple-rag",
@@ -9794,26 +9814,6 @@
       "sourceUrl": "https://www.mutopiaproject.org/ftp/ScarlattiD/K11/sonatensatz/sonatensatz.mid",
       "sha256": "47d90a716ef613368609db391df9b0bb2086ea5f8ab530013848d4b9a0609b8c",
       "creator": "Bas Wassink"
-    }
-  },
-  {
-    "id": "sonate-2-b-moll",
-    "mutopiaId": "1727",
-    "title": "Sonate 2 b-moll",
-    "composer": "Chopin, Frédéric",
-    "rawComposer": "Frédéric Chopin (1810 - 1849)",
-    "aliases": [
-      "chopin"
-    ],
-    "asset": "sonate-2-b-moll.mid",
-    "format": "midi",
-    "durationSeconds": 82.499956,
-    "licence": {
-      "name": "Public Domain",
-      "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/ChopinFF/O35/chp-op-35-4-scholz-fi/chp-op-35-4-scholz-fi.mid",
-      "sha256": "5e6ac4bfa8fd44daf75dc09bc5097f97e0afd8e913a0aa7644b064644f4f61ce",
-      "creator": "Roland Goretzki"
     }
   },
   {

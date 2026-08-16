@@ -309,14 +309,15 @@ sorts and writes both sources through one path.
 
 ## piano-midi.de parser gate
 
-- Accepted rows: **13**
-- Rows with `hasHandData === true`: **13/13 (100.0%)**
+- Accepted rows: **14**
+- Rows with `hasHandData === true`: **14/14 (100.0%)**
 - The build-time MIDI gate yielded at least one A0–C8 note for every accepted row.
 - `tests/build-catalog.test.ts` independently runs every shipped row through the production `parsePieceBytes` path and checks this result and the hand-data fraction.
 
 ### Same-licence composites
 
 - **undefined**: [source MIDI](http://piano-midi.de/midis/ravel/rav_ondi.mid), [source MIDI](http://piano-midi.de/midis/ravel/rav_gib.mid), [source MIDI](http://piano-midi.de/midis/ravel/rav_scarbo.mid); concatenated in listed movement order and retained under the same licence.
+- **undefined**: [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_1.mid), [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_2.mid), [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_3.mid), [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_4.mid), [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_5.mid), [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_6.mid), [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_7.mid), [source MIDI](http://piano-midi.de/midis/mussorgsky/muss_8.mid); concatenated in listed movement order and retained under the same licence.
 - **undefined**: [source MIDI](http://piano-midi.de/midis/beethoven/mond_1.mid), [source MIDI](http://piano-midi.de/midis/beethoven/mond_2.mid), [source MIDI](http://piano-midi.de/midis/beethoven/mond_3.mid); concatenated in listed movement order and retained under the same licence.
 
 ### Arrangement rights checks
@@ -333,7 +334,7 @@ sorts and writes both sources through one path.
 
 ### Duplicate-source skips
 
-- None
+- mutopia pictures-at-an-exhibition: skipped because piano-midi.de supplies the complete work
 
 ### Second-source drops
 
@@ -342,12 +343,12 @@ sorts and writes both sources through one path.
 ## Shipped catalog weight
 
 - Pieces: **609**
-- Score assets: **6,694,948 bytes (6.38 MiB)**
+- Score assets: **6,825,045 bytes (6.51 MiB)**
 - 20 MiB deployment flag: **clear at the score-asset stage**
 
 ## Deployed catalog weight
 
-- `dist/catalog`: **7,346,642 bytes (7.01 MiB)**
+- `dist/catalog`: **7,477,312 bytes (7.13 MiB)**
 - 20 MiB deployment flag: **clear**
 ## Playlists
 

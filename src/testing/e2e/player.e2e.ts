@@ -249,14 +249,19 @@ test("[T07 highlight, T07a fill AC1-AC7] countdown fill and press cues render at
     await page.goto("/src/testing/e2e/player-harness.html?position=5.25&hand=none");
     await expect(page.getByTestId("piano-key-67")).toHaveAttribute("data-hand", "right");
     await expect(page.getByTestId("piano-key-61")).toHaveAttribute("data-hand", "right");
-    const singleColourFills = await page.evaluate(() =>
-      [67, 61].map((midi) =>
-        getComputedStyle(
-          document.querySelector(`[data-midi="${midi}"] [data-countdown-fill]`)!,
-        ).backgroundColor,
-      ),
+    const singleColourCues = await page.evaluate(() =>
+      [67, 61].map((midi) => {
+        const key = document.querySelector<HTMLElement>(`[data-midi="${midi}"]`)!;
+        return {
+          borderColor: getComputedStyle(key).borderColor,
+          fillColor: getComputedStyle(
+            key.querySelector<HTMLElement>("[data-countdown-fill]")!,
+          ).backgroundColor,
+        };
+      }),
     );
-    expect(singleColourFills[0]).toBe(singleColourFills[1]);
+    expect(singleColourCues[0].borderColor).toBe(singleColourCues[1].borderColor);
+    expect(singleColourCues[0].fillColor).not.toBe(singleColourCues[1].fillColor);
     const layout = await page.evaluate(() => ({
       clientHeight: document.documentElement.clientHeight,
       clientWidth: document.documentElement.clientWidth,
@@ -270,6 +275,55 @@ test("[T07 highlight, T07a fill AC1-AC7] countdown fill and press cues render at
     await page.screenshot({
       path: resolve("test-results/visual", `player-highlight-single-colour-${viewport.width}x${viewport.height}.png`),
     });
+  }
+});
+
+test("[T15 keyboard contrast] captures idle, prepare, press-now, and error at both report sizes", async ({ page }) => {
+  await mkdir(resolve("test-results/visual"), { recursive: true });
+  const states = [
+    { name: "idle", url: "?position=0", whiteMidi: 60, blackMidi: 61, state: "idle" },
+    { name: "prepare", url: "?position=5.25", whiteMidi: 67, blackMidi: 61, state: "prepare" },
+    { name: "press-now", url: "?position=4", whiteMidi: 60, blackMidi: 66, state: "pressed" },
+    { name: "error", url: "?position=4.1&listening=1&error=1", whiteMidi: 64, blackMidi: 66, state: "error" },
+  ] as const;
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 932, height: 430 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const state of states) {
+      await page.goto(`/src/testing/e2e/player-harness.html${state.url}`);
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      const whiteKey = page.getByTestId(`piano-key-${state.whiteMidi}`);
+      const blackKey = page.getByTestId(`piano-key-${state.blackMidi}`);
+      await expect(whiteKey).toHaveAttribute("data-state", state.state);
+      await expect(blackKey).toHaveAttribute("data-state", state.state);
+
+      if (state.state === "idle") {
+        const faces = await Promise.all([
+          whiteKey.evaluate((element) => getComputedStyle(element).backgroundColor),
+          blackKey.evaluate((element) => getComputedStyle(element).backgroundColor),
+        ]);
+        expect(faces[0]).not.toBe(faces[1]);
+      } else if (state.state === "prepare") {
+        await expect(whiteKey.locator("[data-countdown-fill]")).toHaveCount(1);
+        await expect(blackKey.locator("[data-countdown-fill]")).toHaveCount(1);
+      } else if (state.state === "pressed") {
+        await expect(whiteKey).toHaveCSS("outline-width", "2px");
+        await expect(whiteKey).toHaveCSS("outline-offset", "-2px");
+        await expect(blackKey).toHaveCSS("outline-style", "none");
+      }
+
+      await page.getByTestId("piano-keyboard").screenshot({
+        path: resolve(
+          "test-results/visual",
+          `t15-keyboard-${state.name}-${viewport.width}x${viewport.height}.png`,
+        ),
+      });
+    }
   }
 });
 

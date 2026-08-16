@@ -57,6 +57,10 @@ function keyStyle(
     style.background = activeColor;
     style.border = `1px solid ${activeColor}`;
     style.boxShadow = shadow.pressedKey(activeColor);
+    if (!geometry.black) {
+      style.outline = `2px solid ${color.keyLitRing}`;
+      style.outlineOffset = "-2px";
+    }
   } else if (state.kind === "error") {
     style.background = color.error;
     style.border = `1px solid ${color.errorKeyBorder}`;
@@ -78,7 +82,9 @@ function labelStyle(
       : state.kind === "pressed"
         ? color.onAccent
         : state.kind === "prepare"
-          ? activeColor
+          ? geometry.black
+            ? activeColor
+            : color.keyWhiteFace
           : geometry.black
             ? color.keyBlackLabel
             : color.keyWhiteLabel;
@@ -146,7 +152,9 @@ export function PianoKeyboard({
             className="absolute inset-x-0 bottom-0"
             style={{
               height: `${state.imminence * 100}%`,
-              background: `${activeColor}${alpha.prepareFill}`,
+              background: geometry.black
+                ? `${activeColor}${alpha.prepareFill}`
+                : `${color.keyLitRing}${alpha.prepareFillDark}`,
             }}
           />
         ) : null}

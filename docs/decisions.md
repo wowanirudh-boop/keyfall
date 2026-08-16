@@ -1087,6 +1087,27 @@ literal `47` did not. A test that hardcodes a number derived from data under
 active growth is a scheduled failure, and it fails long after the person who
 wrote it has stopped watching.
 
+**Closed by T13b, 2026-08-16 — 31 passed, verified independently.** The six
+unexplained failures were classified with evidence from pre-T13 commit
+`7981975`, which is the check this entry asked for. Four were environmental:
+the built service worker served a precached manifest that bypassed Playwright's
+network routing, and its navigation fallback replaced the generated harness
+pages after first navigation. Service workers are now blocked for the harness
+specs and for the single manifest-failure test only; the offline assertions in
+`home.e2e.ts` and the `sw.js` precache inspection in `foundation.e2e.ts` still
+run against a live worker, so PWA coverage is intact.
+
+One of the six deserves recording on its own. `player.e2e.ts` asserted the
+header laid out `nowrap`, while **D-027 requires it to wrap below `md`** — the
+test had been asserting the opposite of a binding decision and passing only
+because it was never run in this configuration. The assertion now matches
+D-027. That is the difference between fixing a test and weakening one: the code
+was right and the test was wrong.
+
+Growth was then proven rather than asserted — a 610th row was added, the suite
+stayed green, the row was removed and `manifest.json` restored to SHA
+`1EA81605…57CB9A83` with a clean worktree.
+
 ### D-046 — The player fits a landscape phone with every control still on screen
 **2026-08-16 · Decided — additive to the handoff; T14**
 
@@ -1157,6 +1178,12 @@ move that one number. `@media (max-height:)` sees only two of the four.
 At 932×320 the notes go from 16px to 128px — 5% to 40%. At 932×430, from 126px to
 231px — 29% to 54%. **Above 620px not a pixel moves**, so every viewport in the
 fidelity gate is untouched.
+
+**The single transport row was approved by Anirudh on 2026-08-16**, which is what
+his 932px-wide phone gets. The two-row form below 820px is not a second design to
+choose between — it is arithmetic: 566px of controls plus a seek bar wide enough
+to scrub with does not fit a 667px screen on one line. It is the same controls on
+two shorter rows, and it is what a smaller phone falls back to.
 
 Three things do change at `compact`, and none is a control:
 
@@ -1258,8 +1285,117 @@ key it is.
 `docs/mockups/keyboard-contrast-options.html` renders this against the three
 rejected candidates with every figure computed live and a room-light slider. It
 also carries **Option 4b, the same palette at pure `#FFFFFF`**, which buys a
-little more contrast everywhere and a little more glare in a dark room. That
-choice needs the actual phone (O-12).
+little more contrast everywhere and a little more glare in a dark room.
+
+**`#F0F2F6` confirmed by Anirudh on 2026-08-16, after seeing both on the phone**
+— option 4, not 4b. The value in the table above is final; O-12 is closed.
+
+### D-048 — IMSLP is not a source, and 25 of the last 26 works have nowhere to come from
+**2026-08-16 · Decided — research result, one source confirmed, one blocked**
+
+After T13 the seed playlist has 26 works still absent. This entry records where
+they can and cannot come from, so the question is not re-opened from scratch.
+
+**IMSLP is ruled out — now with evidence rather than a hunch.** Earlier notes
+called it "viable file-by-file at best". It is not viable at all for this
+purpose. Its API exposes each upload block's files and its `|Copyright=` field,
+so coverage is measurable: across **21 curated target groups** covering all 26
+works, exactly **one** carried any symbolic file — a LilyPond source for
+Debussy's *Rêverie*, CC BY-SA 4.0, and it is an arrangement **for violin and
+piano**, not solo piano. Everything else is scans, parts and MP3s. IMSLP is a
+library of images and recordings; it is not a source of machine-readable scores.
+
+A methodological note worth keeping, because the first answer was wrong. An
+initial sweep built its queries from the Rousseau titles and reported "0 of 26,
+no page found" for twenty works — including Rêverie, whose page had been read
+minutes earlier. Two causes: catalogue numbers differ between sources (Rousseau
+"L. 68" vs IMSLP "CD 76"), and individual études and preludes have no page of
+their own, living under the parent opus. **A search that returns nothing is a
+claim about the query, not about the library** — the same failure shape as
+D-040's `www.` and worth the same suspicion.
+
+**Kunst der Fuge is ruled out.** Its terms state no website may re-host or reuse
+its MIDI files without explicit authorisation, and admit no commercial use. Read
+second-hand: the site returns 403 to this machine. The terms are unambiguous
+enough that no first-hand read is needed to reject it.
+
+**Musopen cannot be checked from here.** Both WebFetch and curl get 403 —
+bot protection, not absence. Secondary sources describe roughly 2,000 works,
+public domain or Creative Commons, in PDF, **MIDI and editable LilyPond**. If
+accurate that is the most promising remaining lead by some distance. It is
+recorded as unverified, and it is O-14. The precedent is D-040: piano-midi.de
+looked unreachable too, and the block was an artefact, not the truth.
+
+**One work is confirmed obtainable now.** `craigsapp/mozart-piano-sonatas`
+carries `kern/sonata08-1.krn`, whose own header reads `OTL: Piano Sonata No. 8
+in A minor` and `SCT1: K 310` — **Mozart K. 310, first movement**, one of the
+26. The corpus is CC BY-NC-SA 4.0, usable because the app is permanently
+non-commercial (D-041), and Humdrum `**kern` carries real staff information, so
+the hand split is engraved rather than inferred from a performance.
+
+**Net position: 1 of 26 sourceable today, 25 with nowhere to come from** until
+Musopen is checked or a new source appears. Five of the 25 — the three Vivaldi
+*Four Seasons*, Scriabin Op. 8/12 and *Flight of the Bumblebee* — are also
+absent from piano-midi.de, so they are the least likely to ever arrive. Nine of
+the 26 are arrangements whose arranger's rights need checking separately even if
+a file is found; that constraint has not moved.
+
+### D-049 — The complete Pictures replaces the mislabelled Baba Yaga fragment
+**2026-08-16 · Decided — T03e source correction; explicit amendment to its criterion 5**
+
+Mutopia 475 is titled *Pictures at an Exhibition*, but its selected archive
+member is `baba.mid` and lasts 237 seconds. The source tree confirms that member
+is only *The Hut on Fowl's Legs (Baba Yaga)*. Relabelling it would make the row
+honest, but would leave the catalog without the complete suite.
+
+piano-midi.de's Mussorgsky page lists eight ordered MIDI files spanning
+Promenade–Gnomus through Baba Yaga–The Great Gate of Kiev, about 29:58 in all.
+T03e therefore keeps the stable `pictures-at-an-exhibition` id and title but
+replaces the fragment with a same-licence composite of those eight files. The
+Mutopia row is skipped only in the merged catalog; `piano-midi.de` supplies the
+bytes and the full per-row Bernd Krueger licence record established by D-040.
+The catalog stays at 609 rows.
+
+This explicitly supersedes T03e criterion 5 only where it said
+`catalog/LICENCES.md` must remain unchanged. The file must change to tell the
+truth about the replacement's creator, source URL and checksum. The criterion's
+no-add/no-drop intent and unchanged row count still hold.
+
+### D-050 — The update prompt was configured and never built, so no deploy has reached a returning user
+**2026-08-16 · Decided — bug, found in use**
+
+Reported: the live site shows the seed playlist in a private window and not in a
+normal one, assumed to be caching.
+
+It is not a CDN cache and the deploy is fine — the live `sw.js` precaches
+`catalog/playlists.json`, so the current build is what is being served. The
+worker never takes over. `vite.config.ts` sets `registerType: "prompt"` with
+`skipWaiting: false`, so the generated worker yields only on receiving a
+`SKIP_WAITING` message, and **nothing in `src/` has ever sent one** — there is no
+`useRegisterSW` and no update UI. The new worker installs, enters `waiting`, and
+stays. Reloading does not help, because the page remains controlled by the old
+worker. A private window has no prior worker, so it installs the current one and
+looks correct.
+
+**Every deploy since T10 has been invisible to a returning browser** — T11's
+mobile fixes, T12a's playlist, T13's 13 pieces, T13a's attribution fix. The
+attribution defect D-044 called "live" was in fact live only for new visitors,
+which makes it less urgent and this defect more so.
+
+The fix is to build the prompt the config already assumes (T10a), not to switch
+to `autoUpdate`. This app runs while the learner is playing: a silent reload
+stops playback, loses the position and discards an A–B loop. Keeping
+`skipWaiting: false` also avoids swapping assets under a page that may still
+lazily load Verovio or the import worker. The notice must not auto-dismiss —
+a missed toast leaves the user exactly as stuck as before.
+
+Two things worth carrying forward. **A configuration option that names a
+behaviour does not implement it**; `registerType: "prompt"` reads like a working
+choice and is really a promise to write UI that was never written. And **the
+defect is invisible to every test we have**, because tests always start from a
+clean profile — the bug needs a *previous* worker to exist. Private-window
+testing hides exactly this class of fault, and it is the class that hits real
+users hardest, since only real users have a history.
 
 ---
 
@@ -1276,6 +1412,7 @@ choice needs the actual phone (O-12).
 | O-10 | ~~Is the app permanently non-commercial?~~ **Closed by D-041** — yes, permanently. | Closed 2026-08-16 |
 | O-9 | Is continuous play through a playlist wanted, and what happens to loop/speed at a piece boundary? | after T12a ships and is used |
 | O-11 | Accounts + cross-device sync. Direction confirmed, deprioritised (D-043). Needs a PRD amendment from Anirudh before any task exists, plus answers on hosting cost, auth provider, and what merges when two devices disagree. | not scheduled |
-| O-12 | `#F0F2F6` or pure `#FFFFFF` for the white key face (D-047)? Both clear every bar; whiter buys a little contrast and a little glare in a dark room. Contrast maths cannot settle it — it needs the phone, side by side, at night. Options 4 and 4b in `docs/mockups/keyboard-contrast-options.html`. | Anirudh, on the device, before T15 ships |
+| O-12 | ~~`#F0F2F6` or pure `#FFFFFF` for the white key face?~~ **Closed 2026-08-16** — `#F0F2F6`, option 4. Pure white was the alternative and was not chosen. | Closed 2026-08-16 |
 | O-13 | ~~Which phone?~~ **Closed 2026-08-16** — iPhone 14 Pro Max, 932×430 in landscape. The fullscreen button will not render there (D-046); Add to Home Screen is the route, and the compact density is what actually has to work. | Closed 2026-08-16 |
+| O-14 | Does Musopen carry symbolic scores (MIDI / LilyPond) for any of the 25 unsourced works, and under what licence? **Unverifiable from this machine** — 403 to every tool (D-048). Needs Anirudh's browser, like D-040. | Anirudh, then a future catalog task |
 | O-5 | Per-asset redistribution licence for all 12 seed pieces. PRD R7 — **blocking for the MVP gate**. | `tasks/T03-catalog-home.md`, started day 1 |

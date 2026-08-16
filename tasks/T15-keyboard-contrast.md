@@ -153,8 +153,8 @@ says otherwise.
 - The keyboard is drawn twice over: `PianoKeyboard` for the keys and
   `WaterfallStage` for the notes above, sharing `keyboardGeometry`. Notes are
   unchanged. If a note's appearance moves, something has leaked.
-- A white keyboard is now the brightest thing on screen. **This is the one
-  judgement the arithmetic cannot make** (O-12): `#F0F2F6` is specified above, and
-  pure `#FFFFFF` is the alternative shown as Option 4b in the design reference.
-  Build `#F0F2F6`. If Anirudh reports otherwise after seeing both on the phone, it
-  is a one-value change, not a redesign.
+- `keyWhiteFace` is **`#F0F2F6`, confirmed by Anirudh on 2026-08-16** after
+  comparing it against pure `#FFFFFF` on the device (O-12, closed). Do not
+  substitute `#FFFFFF`, and do not "round" it to a neater value — the choice was
+  made by eye on the screen this app is used on, which no contrast figure
+  overrides.

@@ -42,14 +42,16 @@ export const color = {
   onAccent: '#06121A',
 
   // Keyboard
-  keyWhiteFace: '#151821',
-  keyBlackFace: '#0C0E11',
-  keyWhiteBorder: '#252A32',
-  keyBlackBorder: '#20242B',
-  keyWhitePrepare: '#161B21',
-  keyBlackPrepare: '#14181D',
-  keyWhiteLabel: '#5E6672',
-  keyBlackLabel: '#4A515A',
+  keyWhiteFace: '#F0F2F6',
+  keyBlackFace: '#0B0D11',
+  keyWhiteBorder: '#767D88',
+  /** Dimension only: keyBlackBorder is not the contrast cue that identifies a black key. */
+  keyBlackBorder: '#363D48',
+  keyWhitePrepare: '#EAEDF3',
+  keyBlackPrepare: '#12161C',
+  keyWhiteLabel: '#5B626B',
+  keyBlackLabel: '#9AA1AB',
+  keyLitRing: '#06121A',
 
   // Hands
   handRight: '#4CC2FF',
@@ -96,7 +98,9 @@ export const alpha = {
   prepareBorder: '88',
   toggleOnBg: '18',
   /** Countdown fill on a prepared key (D-022). */
-  prepareFill: '66',
+  prepareFill: '88',
+  /** Dark countdown fill on a prepared white key (D-047). */
+  prepareFillDark: 'E6',
   /** A–B loop region fill over the seek bar. */
   loopFill: '1F',
   /** A–B loop region border. */

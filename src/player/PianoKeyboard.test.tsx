@@ -9,7 +9,9 @@ import {
   shadow,
   tunables,
 } from "../design/tokens";
+import { HAND_COLOR_PRESETS } from "../design/handPalette";
 import type { NoteEvent } from "../music/types";
+import { HandColorProvider, writeHandSettings } from "./handColors";
 import { KeyStateScanner, type LiveVerdict } from "./keyState";
 import { PianoKeyboard } from "./PianoKeyboard";
 
@@ -39,6 +41,43 @@ function normalizedPrepareStyle(handColor: string, black: boolean) {
   return element.style;
 }
 
+function normalizedIdleStyle(black: boolean) {
+  const element = document.createElement("div");
+  element.style.background = black ? color.keyBlackFace : color.keyWhiteFace;
+  element.style.border = `1px solid ${black ? color.keyBlackBorder : color.keyWhiteBorder}`;
+  element.style.boxShadow = "none";
+  return element.style;
+}
+
+function normalizedErrorStyle() {
+  const element = document.createElement("div");
+  element.style.background = color.error;
+  element.style.border = `1px solid ${color.errorKeyBorder}`;
+  element.style.boxShadow = shadow.errorKey;
+  return element.style;
+}
+
+function normalizedLitRingStyle() {
+  const element = document.createElement("div");
+  element.style.outline = `2px solid ${color.keyLitRing}`;
+  element.style.outlineOffset = "-2px";
+  return element.style;
+}
+
+function memoryStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => [...values.keys()][index] ?? null,
+    removeItem: (key) => void values.delete(key),
+    setItem: (key, value) => void values.set(key, value),
+  } as Storage;
+}
+
 function labelFor(midi: number) {
   return screen
     .getByTestId(`piano-key-${midi}`)
@@ -62,6 +101,21 @@ function normalizedColor(value: string) {
   element.style.color = value;
   return element.style.color;
 }
+
+const KEYBOARD_STATE_CASES = [
+  { name: "idle / right hand", state: "idle", identity: "right" },
+  { name: "idle / left hand", state: "idle", identity: "left" },
+  { name: "idle / single colour", state: "idle", identity: "single" },
+  { name: "prepare / right hand", state: "prepare", identity: "right" },
+  { name: "prepare / left hand", state: "prepare", identity: "left" },
+  { name: "prepare / single colour", state: "prepare", identity: "single" },
+  { name: "pressed / right hand", state: "pressed", identity: "right" },
+  { name: "pressed / left hand", state: "pressed", identity: "left" },
+  { name: "pressed / single colour", state: "pressed", identity: "single" },
+  { name: "error / right hand", state: "error", identity: "right" },
+  { name: "error / left hand", state: "error", identity: "left" },
+  { name: "error / single colour", state: "error", identity: "single" },
+] as const;
 
 describe("PianoKeyboard", () => {
   it("[AC1, AC2] renders all 88 keys with black-key height and stacking", () => {
@@ -208,12 +262,12 @@ describe("PianoKeyboard", () => {
     expect(left.dataset.hand).toBe("left");
     expect(right.style.border).toBe(normalizedPrepareStyle(color.handRight, false).border);
     expect(left.style.border).toBe(normalizedPrepareStyle(color.handLeft, true).border);
-    expect(labelFor(60).style.color).toBe(normalizedColor(color.handRight));
+    expect(labelFor(60).style.color).toBe(normalizedColor(color.keyWhiteFace));
     expect(labelFor(61).style.color).toBe(normalizedColor(color.handLeft));
     expect(fillFor(60)?.style.height).toBe("50%");
     expect(fillFor(61)?.style.height).toBe("50%");
     expect(fillFor(60)?.style.background).toBe(
-      normalizedBackground(`${color.handRight}${alpha.prepareFill}`),
+      normalizedBackground(`${color.keyLitRing}${alpha.prepareFillDark}`),
     );
     expect(fillFor(61)?.style.background).toBe(
       normalizedBackground(`${color.handLeft}${alpha.prepareFill}`),
@@ -303,9 +357,9 @@ describe("PianoKeyboard", () => {
     expect(screen.getByTestId("piano-key-60").style.border).toBe(
       normalizedPrepareStyle(color.handRight, false).border,
     );
-    expect(labelFor(60).style.color).toBe(normalizedColor(color.handRight));
+    expect(labelFor(60).style.color).toBe(normalizedColor(color.keyWhiteFace));
     expect(fillFor(60)?.style.background).toBe(
-      normalizedBackground(`${color.handRight}${alpha.prepareFill}`),
+      normalizedBackground(`${color.keyLitRing}${alpha.prepareFillDark}`),
     );
 
     rerender(
@@ -320,6 +374,130 @@ describe("PianoKeyboard", () => {
       normalizedKeyStyle(color.handRight).background,
     );
   });
+
+  it.each(KEYBOARD_STATE_CASES)(
+    "[T15 AC3-AC5] renders $name on white and black keys",
+    ({ state, identity }) => {
+      const noteHand: NoteEvent["hand"] = identity === "right" ? "right" : "left";
+      const hasHandData = identity !== "single";
+      const notes =
+        state === "idle"
+          ? []
+          : [
+              note("matrix-white", 60, 1, 2, noteHand),
+              note("matrix-black", 61, 1, 2, noteHand),
+            ];
+      const liveVerdicts =
+        state === "error"
+          ? new Map<string, LiveVerdict>([
+              ["matrix-white", { kind: "wrong", publishedAt: 1 }],
+              ["matrix-black", { kind: "wrong", publishedAt: 1 }],
+            ])
+          : undefined;
+      const position = state === "prepare" ? 0.5 : state === "idle" ? 0 : 1.1;
+      const expectedHand = identity === "left" ? "left" : "right";
+      const activeColor = expectedHand === "left" ? color.handLeft : color.handRight;
+
+      render(
+        <PianoKeyboard
+          notes={notes}
+          position={position}
+          hasHandData={hasHandData}
+          listening={state === "error"}
+          liveVerdicts={liveVerdicts}
+        />,
+      );
+
+      const whiteKey = screen.getByTestId("piano-key-60");
+      const blackKey = screen.getByTestId("piano-key-61");
+      expect(whiteKey.dataset.state).toBe(state);
+      expect(blackKey.dataset.state).toBe(state);
+      expect(whiteKey.dataset.hand).toBe(state === "idle" ? "right" : expectedHand);
+      expect(blackKey.dataset.hand).toBe(state === "idle" ? "right" : expectedHand);
+
+      if (state === "idle") {
+        const whiteIdle = normalizedIdleStyle(false);
+        const blackIdle = normalizedIdleStyle(true);
+        expect(whiteKey.style.background).toBe(whiteIdle.background);
+        expect(whiteKey.style.border).toBe(whiteIdle.border);
+        expect(whiteKey.style.boxShadow).toBe(whiteIdle.boxShadow);
+        expect(blackKey.style.background).toBe(blackIdle.background);
+        expect(blackKey.style.border).toBe(blackIdle.border);
+        expect(blackKey.style.boxShadow).toBe(blackIdle.boxShadow);
+        expect(labelFor(60).style.color).toBe(normalizedColor(color.keyWhiteLabel));
+        expect(labelFor(61).style.color).toBe(normalizedColor(color.keyBlackLabel));
+      } else if (state === "prepare") {
+        const whitePrepare = normalizedPrepareStyle(activeColor, false);
+        const blackPrepare = normalizedPrepareStyle(activeColor, true);
+        expect(whiteKey.style.background).toBe(whitePrepare.background);
+        expect(whiteKey.style.border).toBe(whitePrepare.border);
+        expect(whiteKey.style.boxShadow).toBe(whitePrepare.boxShadow);
+        expect(blackKey.style.background).toBe(blackPrepare.background);
+        expect(blackKey.style.border).toBe(blackPrepare.border);
+        expect(blackKey.style.boxShadow).toBe(blackPrepare.boxShadow);
+        expect(fillFor(60)?.style.height).toBe("50%");
+        expect(fillFor(61)?.style.height).toBe("50%");
+        expect(fillFor(60)?.style.background).toBe(
+          normalizedBackground(`${color.keyLitRing}${alpha.prepareFillDark}`),
+        );
+        expect(fillFor(61)?.style.background).toBe(
+          normalizedBackground(`${activeColor}${alpha.prepareFill}`),
+        );
+        expect(labelFor(60).style.color).toBe(normalizedColor(color.keyWhiteFace));
+        expect(labelFor(61).style.color).toBe(normalizedColor(activeColor));
+      } else if (state === "pressed") {
+        const pressed = normalizedKeyStyle(activeColor);
+        const ring = normalizedLitRingStyle();
+        expect(whiteKey.style.background).toBe(pressed.background);
+        expect(whiteKey.style.border).toBe(pressed.border);
+        expect(whiteKey.style.boxShadow).toBe(pressed.boxShadow);
+        expect(whiteKey.style.outline).toBe(ring.outline);
+        expect(whiteKey.style.outlineOffset).toBe(ring.outlineOffset);
+        expect(blackKey.style.background).toBe(pressed.background);
+        expect(blackKey.style.border).toBe(pressed.border);
+        expect(blackKey.style.boxShadow).toBe(pressed.boxShadow);
+        expect(blackKey.style.outline).toBe("");
+        expect(labelFor(60).style.color).toBe(normalizedColor(color.onAccent));
+        expect(labelFor(61).style.color).toBe(normalizedColor(color.onAccent));
+      } else {
+        const error = normalizedErrorStyle();
+        for (const key of [whiteKey, blackKey]) {
+          expect(key.style.background).toBe(error.background);
+          expect(key.style.border).toBe(error.border);
+          expect(key.style.boxShadow).toBe(error.boxShadow);
+          expect(key.style.outline).toBe("");
+        }
+        expect(labelFor(60).style.color).toBe(normalizedColor(color.errorKeyLabel));
+        expect(labelFor(61).style.color).toBe(normalizedColor(color.errorKeyLabel));
+      }
+    },
+  );
+
+  it.each(HAND_COLOR_PRESETS)(
+    "[T15 AC6] keeps the lit white-key ring with the $name palette",
+    (preset) => {
+      const storage = memoryStorage();
+      writeHandSettings(
+        { right: preset.right, left: preset.left, mode: "score" },
+        storage,
+      );
+      render(
+        <HandColorProvider storage={storage}>
+          <PianoKeyboard
+            notes={[note("palette", 60, 1, 2, "right")]}
+            position={1}
+            hasHandData
+          />
+        </HandColorProvider>,
+      );
+
+      const key = screen.getByTestId("piano-key-60");
+      const ring = normalizedLitRingStyle();
+      expect(key.style.background).toBe(normalizedKeyStyle(preset.right).background);
+      expect(key.style.outline).toBe(ring.outline);
+      expect(key.style.outlineOffset).toBe(ring.outlineOffset);
+    },
+  );
 
   it("resets its advancing cursor by binary search after a seek", () => {
     const notes = Array.from({ length: 2_000 }, (_, index) =>

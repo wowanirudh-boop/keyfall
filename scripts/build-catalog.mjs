@@ -28,6 +28,12 @@ const PIANO_MIDI_LICENCE_NAME = "cc-by-sa Germany License";
 const PIANO_MIDI_CREATOR = "Bernd Krueger";
 const REQUEST_INTERVAL_MS = 1_000;
 const MAX_DURATION_SECONDS = 30 * 60;
+const CATALOG_TITLE_OVERRIDES = new Map([
+  ["sonate-2-b-moll", "Finale (Sonata No. 2, 4th mvt)"],
+]);
+const CATALOG_SOURCE_OVERRIDES = new Map([
+  ["pictures-at-an-exhibition", "piano-midi.de"],
+]);
 export const MIN_ALIAS_LENGTH = 4;
 export const ALIAS_STOP_WORDS = new Set([
   "a",
@@ -177,6 +183,22 @@ export const PIANO_MIDI_PIECES = [
     rawComposer: "Chopin",
     page: "chopin.htm",
     assets: ["midis/chopin/chpn_op35_3.mid"],
+  },
+  {
+    id: "pictures-at-an-exhibition",
+    title: "Pictures at an Exhibition",
+    rawComposer: "Mussorgsky",
+    page: "muss.htm",
+    assets: [
+      "midis/mussorgsky/muss_1.mid",
+      "midis/mussorgsky/muss_2.mid",
+      "midis/mussorgsky/muss_3.mid",
+      "midis/mussorgsky/muss_4.mid",
+      "midis/mussorgsky/muss_5.mid",
+      "midis/mussorgsky/muss_6.mid",
+      "midis/mussorgsky/muss_7.mid",
+      "midis/mussorgsky/muss_8.mid",
+    ],
   },
 ];
 
@@ -996,15 +1018,16 @@ export async function buildCatalog({
 
     const baseId = slug(piece.title);
     const id = slugCounts.get(baseId) === 1 ? baseId : `${baseId}-${piece.publicationId}`;
+    const title = CATALOG_TITLE_OVERRIDES.get(id) ?? piece.title;
     const asset = `${id}.mid`;
     const row = {
       id,
       mutopiaId: piece.publicationId,
-      title: piece.title,
+      title,
       composer: piece.composer,
       rawComposer: piece.rawComposer,
       ...(piece.arranger ? { arranger: piece.arranger } : {}),
-      aliases: baselineAliases(piece, aliases[piece.publicationId]),
+      aliases: baselineAliases({ ...piece, title }, aliases[piece.publicationId]),
       asset,
       format: "midi",
       durationSeconds,
@@ -1247,6 +1270,13 @@ export async function buildCatalogFromAdapters({
     for (const candidate of result.rows) {
       const { bytes, sourceKey, sourceAssets = [], ...candidateRow } = candidate;
       const label = `${adapter.key} ${candidateRow.id}`;
+      const requiredSource = CATALOG_SOURCE_OVERRIDES.get(candidateRow.id);
+      if (requiredSource && sourceKey !== requiredSource) {
+        const reason = `${label}: skipped because ${requiredSource} supplies the complete work`;
+        duplicateDrops.push(reason);
+        log(`SKIP: ${reason}`);
+        continue;
+      }
       const idOwner = seenIds.get(candidateRow.id);
       if (sourceKey === "piano-midi.de") {
         const canonicalComposer = composerAliases?.[candidateRow.rawComposer];
