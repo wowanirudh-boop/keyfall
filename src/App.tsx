@@ -19,6 +19,7 @@ import {
   writeVolumePreference,
 } from './player';
 import { PlaylistRoute } from './playlists';
+import { ServiceWorkerUpdateNotice } from './ServiceWorkerUpdateNotice';
 
 function PieceRoute() {
   const { pieceId } = useParams();
@@ -140,6 +141,7 @@ export function App() {
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>
+      <ServiceWorkerUpdateNotice />
     </HandColorProvider>
   );
 }

@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "types": ["vite/client"]
+    "types": ["vite/client", "vite-plugin-pwa/react"]
   },
   "include": ["src", "playwright.config.ts", "vite.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules"]

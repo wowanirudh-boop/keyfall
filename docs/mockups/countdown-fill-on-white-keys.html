@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  DESIGN REFERENCE — not production code, not a pixel spec.
+
+  D-047 turned the white keys light (#F0F2F6) and, as a consequence, turned the
+  D-022 countdown fill near-black on white keys: the hand colour #4CC2FF is only
+  1.79:1 on a near-white face, so a hand-coloured fill would have been invisible.
+  Anirudh prefers the old coloured fill and wants to keep the new keyboard.
+
+  This file shows the third option — a DARKENED hand colour, which keeps the hue
+  and clears the contrast bar — against the two he is choosing between. Every
+  ratio is computed live from the swatches actually rendered.
+
+  Nothing here is decided. Open directly in a browser: no server needed.
+-->
+<title>Countdown fill on white keys</title>
+</head>
+<body>
+<style>
+  :root{
+    --bg:#0B0C0E; --card:#101216; --raised:#14161A;
+    --line1:#1A1D22; --line2:#1D2026; --line3:#23262C;
+    --ink:#E8EAED; --dim:#8A9099; --md1:#6B727C; --md2:#5B626B; --md3:#3E444C;
+    --right:#4CC2FF; --left:#FF7A45; --hover:#34576B; --amber:#FFB25E;
+    --keyW:#F0F2F6; --keyB:#0B0D11; --keyWb:#767D88; --keyBb:#363D48;
+    --keyWlab:#5B626B; --keyBlab:#9AA1AB; --ring:#06121A;
+    --ok:#3ED598; --bad:#FF3B6B;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1100px;margin:0 auto;padding:36px 22px 90px;display:flex;flex-direction:column;gap:28px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;color:var(--md2);
+           text-transform:uppercase;margin:0 0 10px}
+  h1{font-size:25px;font-weight:700;letter-spacing:-0.02em;margin:0 0 10px;text-wrap:balance}
+  p.lede{margin:0;color:var(--dim);font-size:14px;max-width:72ch}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+  .opt{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:16px;
+       display:flex;flex-direction:column;gap:12px;min-width:0}
+  .opt.pick{border-color:var(--hover)}
+  .opt h2{margin:0;font-size:15px;font-weight:500;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .tag{font-family:var(--mono);font-size:9px;letter-spacing:0.08em;color:var(--md2);
+       border:1px solid var(--line3);border-radius:3px;padding:2px 6px;white-space:nowrap}
+  .tag.rec{color:var(--right);border-color:var(--hover)}
+  .tag.now{color:var(--amber);border-color:#4A3A22}
+  .why{margin:0;font-size:12.5px;color:var(--dim)}
+
+  /* keyboard */
+  .kb{position:relative;height:150px;background:#0A0B0D;border:1px solid var(--line1);
+      border-radius:0 0 6px 6px;overflow:hidden}
+  .k{position:absolute;top:0;display:flex;align-items:flex-end;justify-content:center;
+     padding-bottom:7px;overflow:hidden}
+  .k.w{height:100%;background:var(--keyW);border:1px solid var(--keyWb);border-radius:0 0 4px 4px;z-index:1}
+  .k.b{height:62%;background:var(--keyB);border:1px solid var(--keyBb);border-radius:0 0 3px 3px;z-index:2}
+  .lab{position:relative;z-index:3;font-family:var(--mono);font-size:8px;color:var(--keyWlab)}
+  .k.b .lab{color:var(--keyBlab);font-size:7px}
+  .fill{position:absolute;left:0;right:0;bottom:0;z-index:0}
+
+  .figs{display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--line1);padding-top:10px}
+  .fig{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--md1)}
+  .fig .n{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .fig .v{color:var(--md2)}
+  .pass{color:var(--ok)} .fail{color:var(--bad)}
+  .sw{width:11px;height:11px;border-radius:2px;flex:none;border:1px solid #ffffff22}
+
+  .tuner{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:16px;
+         display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--right)}
+  .val{font-family:var(--mono);font-size:12px;color:var(--right);font-variant-numeric:tabular-nums}
+  footer{border-top:1px solid var(--line1);padding-top:18px;color:var(--md1);font-size:13px}
+  code{font-family:var(--mono);font-size:12px;color:var(--dim)}
+  @media(max-width:560px){ .wrap{padding:24px 14px 70px} .grid{grid-template-columns:1fr} }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">D-022 countdown fill · after D-047 · nothing decided</p>
+  <h1>The falling-key fill lost its colour. It doesn’t have to.</h1>
+  <p class="lede">The fill shows how soon a key is due — it rises as the note approaches. It used to be
+    the hand colour, which worked because the key underneath was almost black. Now the key is almost
+    white, and the hand colour on white is <strong>1.79:1</strong> — near-invisible. D-047 solved that by
+    going near-black. The third option keeps the hue and darkens it instead.</p>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<div class="tuner">
+  <p class="eyebrow" style="margin:0">Tune the darkened option</p>
+  <div class="row">
+    <label for="mix" style="font-size:13px;color:var(--dim)">Hue strength</label>
+    <input id="mix" type="range" min="15" max="80" value="45">
+    <span class="val" id="mixval">45%</span>
+  </div>
+  <p class="why" id="tunerNote"></p>
+</div>
+
+<footer>
+  <p>Fills are drawn at 55% height — a note about halfway to its moment. Both hands are shown:
+    the left pair is orange, the right pair blue. Ratios are computed from the rendered colours,
+    against the white key face <code>#F0F2F6</code>. The bar for a state cue is <strong>3:1</strong>.</p>
+</footer>
+</div>
+
+<script>
+const KEYW="#F0F2F6", RING="#06121A", RIGHT="#4CC2FF", LEFT="#FF7A45";
+const hex=h=>h.replace('#','').match(/../g).map(x=>parseInt(x,16));
+const lin=c=>{c/=255;return c<=0.03928?c/12.92:((c+0.055)/1.055)**2.4};
+const L=h=>{const[r,g,b]=hex(h);return 0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b)};
+const CR=(a,b)=>{const x=L(a),y=L(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05)};
+const mix=(a,b,t)=>'#'+hex(a).map((v,i)=>Math.round(v*t+hex(b)[i]*(1-t)).toString(16).padStart(2,'0')).join('').toUpperCase();
+
+// white keys with a black key sitting between two of them, C D E F
+const KEYS=[
+  {n:"C3",black:false,hand:"left"},
+  {n:"D3",black:false,hand:null},
+  {n:"E3",black:false,hand:"right"},
+  {n:"F3",black:false,hand:null},
+  {n:"C♯3",black:true,left:"13%",hand:"left"},
+  {n:"D♯3",black:true,left:"38.5%",hand:"right"},
+];
+
+function keyboard(fillFor){
+  const kb=document.createElement("div"); kb.className="kb";
+  const w=100/4;
+  KEYS.filter(k=>!k.black).forEach((k,i)=>{
+    const el=document.createElement("div"); el.className="k w";
+    el.style.left=(i*w)+"%"; el.style.width=w+"%";
+    if(k.hand){
+      const f=document.createElement("span"); f.className="fill";
+      f.style.height="55%"; f.style.background=fillFor(k.hand,false);
+      el.appendChild(f);
+    }
+    const l=document.createElement("span"); l.className="lab"; l.textContent=k.n;
+    el.appendChild(l); kb.appendChild(el);
+  });
+  KEYS.filter(k=>k.black).forEach(k=>{
+    const el=document.createElement("div"); el.className="k b";
+    el.style.left=k.left; el.style.width=(w*0.62)+"%";
+    const f=document.createElement("span"); f.className="fill";
+    f.style.height="55%"; f.style.background=fillFor(k.hand,true);
+    el.appendChild(f);
+    const l=document.createElement("span"); l.className="lab"; l.textContent=k.n;
+    el.appendChild(l); kb.appendChild(el);
+  });
+  return kb;
+}
+
+function figRow(label,swatch,ratio,floor){
+  const d=document.createElement("div"); d.className="fig";
+  d.innerHTML=`<span class="sw" style="background:${swatch}"></span><span>${label}</span>`+
+    `<span class="v">${swatch}</span>`+
+    `<span class="n ${ratio>=floor?'pass':'fail'}">${ratio.toFixed(2)}:1</span>`;
+  return d;
+}
+
+function card({title,tag,tagClass,why,fillFor,rightSwatch,leftSwatch,pick}){
+  const c=document.createElement("div"); c.className="opt"+(pick?" pick":"");
+  c.innerHTML=`<h2>${title} <span class="tag ${tagClass||''}">${tag}</span></h2>`;
+  c.appendChild(keyboard(fillFor));
+  const p=document.createElement("p"); p.className="why"; p.textContent=why; c.appendChild(p);
+  const figs=document.createElement("div"); figs.className="figs";
+  figs.appendChild(figRow("right-hand fill on white key",rightSwatch,CR(rightSwatch,KEYW),3));
+  figs.appendChild(figRow("left-hand fill on white key",leftSwatch,CR(leftSwatch,KEYW),3));
+  c.appendChild(figs);
+  return c;
+}
+
+function render(){
+  const t=Number(document.getElementById("mix").value)/100;
+  document.getElementById("mixval").textContent=Math.round(t*100)+"%";
+  const dR=mix(RIGHT,RING,t), dL=mix(LEFT,RING,t);
+  const grid=document.getElementById("grid"); grid.innerHTML="";
+
+  grid.appendChild(card({
+    title:"What ships today", tag:"current", tagClass:"now",
+    why:"Near-black fill. Highly visible, but every key fills the same colour — the white keys no longer tell you which hand.",
+    fillFor:()=>RING+"E6", rightSwatch:RING, leftSwatch:RING
+  }));
+
+  grid.appendChild(card({
+    title:"The old fill, on the new key", tag:"what you remember",
+    why:"The hand colour straight onto the light key. The colour is back, but it barely separates from the key — this is the problem D-047 was solving, not a fix.",
+    fillFor:(h)=> h==="right"?RIGHT+"88":LEFT+"88", rightSwatch:RIGHT, leftSwatch:LEFT
+  }));
+
+  grid.appendChild(card({
+    title:"Darkened hand colour", tag:"proposed", tagClass:"rec", pick:true,
+    why:"The same hue, taken down until it reads against a light key. Blue stays blue, orange stays orange, and both clear the bar with room to spare.",
+    fillFor:(h,black)=> black ? ((h==="right"?RIGHT:LEFT)+"88") : (h==="right"?dR:dL),
+    rightSwatch:dR, leftSwatch:dL
+  }));
+
+  document.getElementById("tunerNote").textContent =
+    `At ${Math.round(t*100)}% the right-hand fill is ${dR} (${CR(dR,KEYW).toFixed(2)}:1) and the left is ${dL} (${CR(dL,KEYW).toFixed(2)}:1). `+
+    `Lower is darker and safer; higher is more colourful and closer to what you had. Black keys are unchanged in every option — they already work.`;
+}
+document.getElementById("mix").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
