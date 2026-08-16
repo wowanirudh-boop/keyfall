@@ -250,6 +250,13 @@ to isolate, and it is proven against a seeded v1 database before any UI. The
 shipped playlist stays a build artefact and is never written into the table.
 No auto-advance — still O-9. D-032, D-042.
 
+### T13a — The player names the wrong source
+
+`PlayerHeader.tsx` hardcodes "MUTOPIA CATALOG" for every bundled piece. True of
+all 596 until T13; false for the 13 piano-midi.de rows since. A licence matter,
+not cosmetics — the fallback for already-stored pieces must be no label at all.
+D-044.
+
 ### T13 — A second catalog source
 
 Mutopia does not carry 39 of the 72 rows in the Rousseau list. Refactors

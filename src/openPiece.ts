@@ -8,6 +8,12 @@ import { importPiece, type PieceDocument } from "./music";
 
 type SaveRepository = Pick<LibraryRepository, "get" | "save">;
 
+function sourceCollectionFromLicenceUrl(licenceUrl: string) {
+  return licenceUrl === "http://piano-midi.de/copy.htm"
+    ? "piano-midi.de"
+    : "Mutopia Project";
+}
+
 export async function savePiecePreservingSpeed(
   repository: SaveRepository,
   piece: PieceDocument,
@@ -43,6 +49,7 @@ export async function importAndSaveCatalogEntry(
       title: entry.title,
       composer: entry.composer,
       source: "catalog",
+      sourceCollection: sourceCollectionFromLicenceUrl(entry.licence.url),
       sourceCreator: entry.licence.creator,
     },
     entry.asset,

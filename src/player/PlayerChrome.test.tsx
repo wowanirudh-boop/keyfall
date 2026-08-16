@@ -97,10 +97,15 @@ describe("Player chrome", () => {
     expect(engine.getSnapshot().position).toBe(before);
   });
 
-  it("[T03b AC9] shows a catalog creator in the existing player metadata line", () => {
+  it("[T13a AC2] shows a Mutopia collection and its typesetter", () => {
     render(
       <PlayerHeader
-        piece={{ ...piece, source: "catalog", sourceCreator: "Careful Typesetter" }}
+        piece={{
+          ...piece,
+          source: "catalog",
+          sourceCollection: "Mutopia Project",
+          sourceCreator: "Careful Typesetter",
+        }}
         muted={false}
         volume={1}
         onLibrary={() => undefined}
@@ -110,8 +115,89 @@ describe("Player chrome", () => {
     );
 
     expect(
-      screen.getByText("J. S. BACH · MUTOPIA CATALOG · CAREFUL TYPESETTER"),
+      screen.getByText("J. S. BACH · Mutopia Project · CAREFUL TYPESETTER"),
     ).toBeTruthy();
+  });
+
+  it("[T13a AC1] shows piano-midi.de and Bernd Krueger without a Mutopia label", () => {
+    render(
+      <PlayerHeader
+        piece={{
+          ...piece,
+          composer: "Ravel, Maurice",
+          source: "catalog",
+          sourceCollection: "piano-midi.de",
+          sourceCreator: "Bernd Krueger",
+        }}
+        muted={false}
+        volume={1}
+        onLibrary={() => undefined}
+        onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.getByText("RAVEL, MAURICE · piano-midi.de · BERND KRUEGER"),
+    ).toBeTruthy();
+    expect(screen.queryByText(/mutopia/i)).toBeNull();
+  });
+
+  it("[T13a AC3] omits the source label from a legacy catalog document", () => {
+    render(
+      <PlayerHeader
+        piece={{ ...piece, source: "catalog", sourceCreator: "Legacy Typesetter" }}
+        muted={false}
+        volume={1}
+        onLibrary={() => undefined}
+        onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
+      />,
+    );
+
+    expect(screen.getByText("J. S. BACH · LEGACY TYPESETTER")).toBeTruthy();
+    expect(screen.queryByText(/mutopia|catalog/i)).toBeNull();
+  });
+
+  it("[T13a AC5] leaves MIDI and MusicXML upload labels unchanged", () => {
+    const view = render(
+      <PlayerHeader
+        piece={{ ...piece, source: "midi-upload" }}
+        muted={false}
+        volume={1}
+        onLibrary={() => undefined}
+        onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
+      />,
+    );
+    expect(screen.getByText("J. S. BACH · MIDI UPLOAD")).toBeTruthy();
+
+    view.rerender(
+      <PlayerHeader
+        piece={{ ...piece, source: "musicxml-upload" }}
+        muted={false}
+        volume={1}
+        onLibrary={() => undefined}
+        onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
+      />,
+    );
+    expect(screen.getByText("J. S. BACH · MUSICXML UPLOAD")).toBeTruthy();
+  });
+
+  it("[T13a AC6] renders a future collection without header-specific mapping", () => {
+    render(
+      <PlayerHeader
+        piece={{ ...piece, source: "catalog", sourceCollection: "Future Archive" }}
+        muted={false}
+        volume={1}
+        onLibrary={() => undefined}
+        onMutedChange={() => undefined}
+        onVolumeChange={() => undefined}
+      />,
+    );
+
+    expect(screen.getByText("J. S. BACH · Future Archive")).toBeTruthy();
   });
 
   it("[T05a AC5] keeps zero volume visually independent from mute", () => {

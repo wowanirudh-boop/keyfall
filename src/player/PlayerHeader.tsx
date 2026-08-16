@@ -99,7 +99,7 @@ export function VolumeSlider({ volume, onVolumeChange }: VolumeSliderProps) {
 }
 
 function sourceLabel(piece: PieceDocument) {
-  if (piece.source === "catalog") return "MUTOPIA CATALOG";
+  if (piece.source === "catalog") return piece.sourceCollection;
   return piece.source === "musicxml-upload" ? "MUSICXML UPLOAD" : "MIDI UPLOAD";
 }
 

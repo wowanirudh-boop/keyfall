@@ -27,6 +27,7 @@ export interface PieceDocument {
   title: string;
   composer: string;
   source: PieceSource;
+  sourceCollection?: string;
   sourceCreator?: string;
   duration: number;
   notes: NoteEvent[];

@@ -1012,6 +1012,40 @@ collision-proof (see the amendment in T12b). Nothing else is to be added
 speculatively: a sync design written now, against no backend and no requirements,
 would be guesswork that ages badly.
 
+### D-044 — T13 shipped, and it turned one true label into a false one
+**2026-08-16 · Decided — completion note plus a severity correction**
+
+The catalog is 609 rows: 596 Mutopia, byte-identical on regeneration, plus 13
+from piano-midi.de, each carrying name, url, sourceUrl, sha256 and creator, all
+with real hand data. The seed playlist went from 25 resolved / 39 missing to
+**38 / 26**, and `missingComposers` correctly re-derived to Vivaldi,
+Tchaikovsky, Rimsky-Korsakov, Schubert — the rule from D-042 working unattended,
+which is what it was for.
+
+Two rows worth noting: *Marche funèbre* and Étude Op. 25 No. 12 are now present
+with the **correct** files. Those are exactly the two rows D-038 demoted after
+finding the Mutopia ids were mislabelled, so that thread is closed properly
+rather than papered over.
+
+**The severity correction.** The report ended with "one pre-existing display
+limitation remains: the player header labels every bundled piece 'Mutopia
+catalog'". It is not pre-existing and it is not a display limitation.
+`PlayerHeader.tsx:102` hardcodes `MUTOPIA CATALOG` for every catalog piece;
+before T13 that was **true of all 596**, so the code was correct. T13 added 13
+pieces from a different source and thereby made the statement false — the defect
+was *introduced* here, not inherited.
+
+It is also a licence matter rather than cosmetics. cc-by-sa Germany requires
+attribution naming creator and source. Rendering the wrong source is worse than
+rendering none: it asserts a false provenance about Bernd Krueger's work and
+attaches Mutopia's name to files Mutopia never made. The app is publicly
+deployed, so it is live. **T13a** fixes it, with silence as the fallback for
+already-stored pieces — a wrong default is the whole bug.
+
+The generalisable point: a hardcoded constant that is true of every row today
+becomes a lie the moment a second source lands, and it will not fail a test that
+was written when it was still true.
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation

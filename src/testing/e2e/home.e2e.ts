@@ -138,11 +138,44 @@ test("[T03c AC1, AC2] Home requests no score until one piece is opened exactly o
   await expect(page.getByRole("heading", { name: "Für Elise" })).toBeVisible();
   await expect(
     page.getByText(
-      "BEETHOVEN, LUDWIG VAN · MUTOPIA CATALOG · STELIOS SAMELIS",
+      "BEETHOVEN, LUDWIG VAN · Mutopia Project · STELIOS SAMELIS",
     ),
   ).toBeVisible();
   expect(scoreRequests).toHaveLength(1);
   expect(scoreRequests[0]).toMatch(/\/catalog\/scores\/fur-elise\.mid$/);
+});
+
+test("[T13a AC1, AC6] a piano-midi.de piece renders its stored collection at both player viewports", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "Search catalog" }).fill("winter wind");
+  await page
+    .getByRole("button", { name: /^Étude Op\. 25 No\. 11 \(‘Winter Wind’\)/ })
+    .click();
+
+  const attribution = page.getByText(
+    "CHOPIN, FRÉDÉRIC · piano-midi.de · BERND KRUEGER",
+  );
+  await expect(attribution).toBeVisible();
+  await expect(page.getByTestId("player-header")).not.toContainText("Mutopia");
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(attribution).toBeVisible();
+    const layout = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      playerHeight: document.querySelector<HTMLElement>("[data-testid='player-view']")?.offsetHeight,
+      viewportHeight: window.innerHeight,
+    }));
+    expect(layout.scrollWidth).toBe(layout.clientWidth);
+    expect(layout.playerHeight).toBe(layout.viewportHeight);
+  }
 });
 
 test("[T03b AC5] fetches the static manifest outside entry JS and stays inside the first-load budget", async ({
@@ -289,6 +322,101 @@ async function indexedDbHasPiece(page: Page, pieceId: string) {
     pieceId,
   );
 }
+
+async function seedLegacyCatalogPiece(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolveResult, reject) => {
+        const request = indexedDB.open("piano-practice-player");
+        request.onerror = () => reject(request.error);
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          database.createObjectStore("pieces", { keyPath: "id" }).createIndex(
+            "lastOpened",
+            "lastOpened",
+          );
+          const attempts = database.createObjectStore("attempts", { keyPath: "id" });
+          attempts.createIndex("pieceId", "pieceId");
+          attempts.createIndex("createdAt", "createdAt");
+        };
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction("pieces", "readwrite");
+          transaction.onerror = () => reject(transaction.error);
+          transaction.oncomplete = () => {
+            database.close();
+            resolveResult();
+          };
+          transaction.objectStore("pieces").put({
+            id: "fur-elise",
+            title: "Für Elise",
+            composer: "Beethoven, Ludwig van",
+            source: "catalog",
+            sourceCreator: "Stelios Samelis",
+            duration: 1,
+            notes: [
+              {
+                id: "legacy-note",
+                midi: 60,
+                start: 0,
+                end: 1,
+                velocity: 0.8,
+                hand: "unknown",
+              },
+            ],
+            hasHandData: false,
+            notices: [],
+            originalName: "fur-elise.mid",
+            originalBytes: new Uint8Array([1]),
+            lastOpened: 1,
+            lastSpeed: 1,
+          });
+        };
+      }),
+  );
+}
+
+async function indexedDbSourceCollection(page: Page, pieceId: string) {
+  return page.evaluate(
+    (id) =>
+      new Promise<string | undefined>((resolveResult, reject) => {
+        const request = indexedDB.open("piano-practice-player");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const database = request.result;
+          const get = database.transaction("pieces", "readonly").objectStore("pieces").get(id);
+          get.onerror = () => reject(get.error);
+          get.onsuccess = () => {
+            database.close();
+            resolveResult((get.result as { sourceCollection?: string } | undefined)?.sourceCollection);
+          };
+        };
+      }),
+    pieceId,
+  );
+}
+
+test("[T13a AC2, AC3, AC4] a legacy record stays silent until catalog re-import heals it", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByRole("textbox", { name: "Search catalog" })).toBeVisible();
+  await seedLegacyCatalogPiece(page);
+  await page.goto("/pieces/fur-elise");
+
+  await expect(page.getByText("BEETHOVEN, LUDWIG VAN · STELIOS SAMELIS")).toBeVisible();
+  await expect(page.getByTestId("player-header")).not.toContainText("Mutopia");
+  await expect(page.getByTestId("player-header")).not.toContainText("piano-midi.de");
+
+  await page.getByRole("button", { name: "← Library" }).click();
+  await page.getByRole("textbox", { name: "Search catalog" }).fill("fur elise");
+  await page.getByRole("button", { name: /^Für Elise Beethoven, Ludwig van/ }).click();
+
+  await expect(
+    page.getByText("BEETHOVEN, LUDWIG VAN · Mutopia Project · STELIOS SAMELIS"),
+  ).toBeVisible();
+  await expect.poll(() => indexedDbSourceCollection(page, "fur-elise")).toBe("Mutopia Project");
+});
 
 test("[T10 AC1, AC2, AC5, AC7] offline cold boot opens and plays a saved piece with local fonts", async ({
   page,
