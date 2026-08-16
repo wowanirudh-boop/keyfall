@@ -7,7 +7,10 @@ import { build, preview, type PreviewServer } from "vite";
 
 const shippedManifest = JSON.parse(
   readFileSync(resolve("catalog/manifest.json"), "utf8"),
-) as unknown[];
+) as Array<{ composer: string }>;
+const shippedChopinCount = shippedManifest.filter(({ composer }) =>
+  composer.toLocaleLowerCase().includes("chopin"),
+).length;
 
 const { Midi } = midiPackage;
 const IMPORT_ERROR_MESSAGES = {
@@ -256,7 +259,7 @@ test("[T03d AC1, AC7, AC8] browse and composer search work at the iPad viewport"
   const browse = page.getByRole("region", { name: "Browse catalog" });
   const pageCount = Math.ceil(shippedManifest.length / 25);
   await expect(
-    browse.getByText(`${shippedManifest.length} PIECES · BROWSE A–Z BY COMPOSER`),
+    browse.getByText(`${shippedManifest.length} PIECES · COMPOSER A–Z`),
   ).toBeVisible();
   await expect(browse.getByText(`PAGE 1 OF ${pageCount}`)).toBeVisible();
   await expect(browse.locator(":scope > button")).toHaveCount(25);
@@ -264,10 +267,13 @@ test("[T03d AC1, AC7, AC8] browse and composer search work at the iPad viewport"
   await expect(browse.getByText(`PAGE 2 OF ${pageCount}`)).toBeVisible();
 
   await page.getByRole("textbox", { name: "Search catalog" }).fill("chopin");
-  const results = page.getByText(/MATCHES · PUBLIC DOMAIN & CC SOURCES/).locator("..");
-  await expect(results.getByRole("button")).toHaveCount(47);
-  const firstFive = results.getByRole("button").filter({ hasText: "Chopin, Frédéric" });
-  await expect(firstFive).toHaveCount(47);
+  const results = page.getByRole("region", { name: "Search results" });
+  await expect(
+    results.getByText(`${shippedChopinCount} MATCHES · PUBLIC DOMAIN & CC SOURCES`),
+  ).toBeVisible();
+  await expect(results.getByRole("button")).toHaveCount(shippedChopinCount);
+  const chopinResults = results.getByRole("button").filter({ hasText: "Chopin, Frédéric" });
+  await expect(chopinResults).toHaveCount(shippedChopinCount);
   for (let index = 0; index < 5; index += 1) {
     await expect(results.getByRole("button").nth(index)).toContainText("Chopin, Frédéric");
   }
@@ -278,29 +284,34 @@ test("[T03d AC1, AC7, AC8] browse and composer search work at the iPad viewport"
   expect(layout.scrollWidth).toBe(layout.clientWidth);
 });
 
-test("[T03b AC8] a real manifest-fetch failure keeps upload and My Pieces working", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await page.getByLabel("Upload", { exact: true }).setInputFiles({
-    name: "known.mid",
-    mimeType: "audio/midi",
-    buffer: Buffer.from(knownMidiBytes()),
-  });
-  await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
-  await page.getByRole("button", { name: "← Library" }).click();
-  await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
+test.describe(() => {
+  test.use({ serviceWorkers: "block" });
 
-  await page.route("**/catalog/manifest.json", (route) => route.abort());
-  await page.reload();
-  await expect(
-    page.getByText(
-      "Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.",
-    ),
-  ).toBeVisible();
-  await expect(page.getByLabel("Upload a MIDI or MusicXML file", { exact: true })).toBeVisible();
-  await page.getByRole("button").filter({ hasText: "Known timing fixture" }).click();
-  await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
+  test("[T03b AC8] a real manifest-fetch failure keeps upload and My Pieces working", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByLabel("Upload", { exact: true }).setInputFiles({
+      name: "known.mid",
+      mimeType: "audio/midi",
+      buffer: Buffer.from(knownMidiBytes()),
+    });
+    await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
+    await page.getByRole("button", { name: "← Library" }).click();
+    const library = page.getByRole("region", { name: "My pieces" });
+    await expect(library.getByText("Known timing fixture", { exact: true })).toBeVisible();
+
+    await page.route("**/catalog/manifest.json", (route) => route.abort());
+    await page.reload();
+    await expect(
+      page.getByText(
+        "Catalog search is unavailable right now. Uploading a file and opening pieces from My pieces both still work offline.",
+      ),
+    ).toBeVisible();
+    await expect(page.getByLabel("Upload a MIDI or MusicXML file", { exact: true })).toBeVisible();
+    await library.getByRole("button", { name: /^Known timing fixture / }).click();
+    await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
+  });
 });
 
 async function indexedDbHasPiece(page: Page, pieceId: string) {
@@ -541,7 +552,9 @@ test("[T05b AC3, AC4, AC5] no-results upload shows every failure and saves a val
   });
   await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
   await page.getByRole("button", { name: "← Library" }).click();
-  await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "My pieces" }).getByText("Known timing fixture", { exact: true }),
+  ).toBeVisible();
 });
 
 test("[T05b AC1, AC2, AC3] My pieces upload works with the library empty and populated", async ({
@@ -560,7 +573,9 @@ test("[T05b AC1, AC2, AC3] My pieces upload works with the library empty and pop
   await page.getByRole("button", { name: "← Library" }).click();
 
   await expect(page.getByText("1 SAVED LOCALLY")).toBeVisible();
-  await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "My pieces" }).getByText("Known timing fixture", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("Upload", { exact: true })).toBeVisible();
 });
 
@@ -609,7 +624,9 @@ test("[T03c AC1, AC3] a score outage is deferred to open while upload and librar
   });
   await expect(page.getByRole("heading", { name: "Known timing fixture" })).toBeVisible();
   await page.getByRole("button", { name: "← Library" }).click();
-  await expect(page.getByText("Known timing fixture", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "My pieces" }).getByText("Known timing fixture", { exact: true }),
+  ).toBeVisible();
 });
 
 test("[T03a AC2] [T03c AC3] checksum mismatch on open renders the D-006 upload card", async ({

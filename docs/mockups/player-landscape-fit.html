@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--
+  DESIGN REFERENCE — not production code, not a pixel spec.
+
+  Fitting the SHIPPED player into a landscape phone with every control still on
+  screen. Nothing hides, nothing moves behind a menu. See docs/decisions.md
+  D-046.
+
+  An earlier draft proposed a "focus mode" that auto-hid the chrome and moved
+  speed and A-B behind a menu. It was rejected before it was built: hiding
+  controls defeats careful practice, which is the point of the app. See D-046.
+
+  The band heights in the "Today" frames are REAL measured numbers from the
+  deployed app, taken 2026-08-16 via Playwright at each viewport listed. The
+  control widths that justify the single-row transport were measured the same
+  way and are printed in the fit table.
+
+  The NORMATIVE spec is tasks/T14-player-landscape-fit.md. Do not copy this
+  file's markup, class names, or inline colour literals into src/.
+
+  Open directly in a browser: no server needed. Open it ON THE PHONE, sideways —
+  the last section measures the screen you are holding.
+-->
+<title>Every Control, Sideways</title>
+<style>
+  :root{
+    --bg:#0B0C0E; --stage:#0A0B0D; --stageEnd:#0D0F13; --card:#101216;
+    --panel:#0E1013; --raised:#14161A; --control:#1D2026;
+    --line:#1A1D22; --line2:#23262C; --line3:#2C3037; --strike:#2A2F36;
+    --ink:#E8EAED; --dim:#8A9099; --dimmer:#5B626B; --faint:#3E444C;
+    --right:#4CC2FF; --left:#FF7A45; --amber:#FFB25E;
+    --pass:#3ED598; --fail:#FF3B6B; --onAccent:#06121A;
+    --keyW:#F0F2F6; --keyB:#0B0D11; --keyWb:#767D88; --keyBb:#363D48;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;line-height:1.55}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 110px;
+        display:flex;flex-direction:column;gap:30px}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;
+           color:var(--dimmer);margin:0 0 10px;text-transform:uppercase}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;margin:0 0 10px;text-wrap:balance}
+  h2{font-size:17px;font-weight:500;margin:0 0 10px;letter-spacing:-0.01em}
+  p{margin:0;color:var(--dim);font-size:14px;max-width:68ch}
+  p.lead{color:var(--ink);font-size:15px}
+  strong{color:var(--ink);font-weight:500}
+  code{font-family:var(--mono);font-size:0.92em;color:var(--ink)}
+  .card{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:22px}
+  .card.pick{border-color:#34576B;background:#0E1319}
+  .card + .card{margin-top:0}
+
+  .bar{position:sticky;top:0;z-index:20;background:#0B0C0Eee;backdrop-filter:blur(8px);
+       border-bottom:1px solid var(--line2);margin:0 -24px;padding:13px 24px;
+       display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .bar .lbl{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;
+            color:var(--dimmer);text-transform:uppercase;margin-right:2px}
+  button{font:inherit;cursor:pointer;border-radius:5px;border:1px solid var(--line2);
+         background:transparent;color:var(--dim);font-size:12px;padding:6px 11px}
+  button:hover{color:var(--ink);border-color:var(--line3)}
+  button[aria-pressed="true"]{border-color:var(--right);background:#0E2331;color:var(--right)}
+  button:focus-visible{outline:2px solid var(--right);outline-offset:2px}
+
+  .frames{display:flex;flex-direction:column;gap:26px}
+  .frame-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .frame-head h3{margin:0;font-size:15px;font-weight:500}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+       padding:3px 8px;border-radius:2px;border:1px solid var(--line3);color:var(--dimmer)}
+  .tag.rec{border-color:#34576B;color:var(--right);background:#0E2331}
+  .tag.no{border-color:#4A2230;color:#F0B9C6;background:#1A0E14}
+  .stage-hold{overflow-x:auto;padding-bottom:4px}
+  .rig{display:flex;align-items:flex-start}
+  .phone{border:1px solid var(--line3);border-radius:10px;overflow:hidden;
+         background:var(--bg);display:flex;flex-direction:column;position:relative;
+         transform-origin:top left;flex:0 0 auto}
+
+  .ph-header{display:flex;align-items:center;gap:12px;background:var(--panel);
+             border-bottom:1px solid var(--line);padding:0 14px;flex:0 0 auto;overflow:hidden}
+  .ph-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;
+            text-overflow:ellipsis;min-width:0;flex:1}
+  .ph-sub{font-family:var(--mono);font-size:10px;color:var(--dimmer);letter-spacing:0.04em}
+  .pill{border:1px solid var(--line3);border-radius:20px;padding:5px 10px;font-size:11px;
+        color:var(--dim);white-space:nowrap;flex:0 0 auto}
+  .pill.on{border-color:var(--right);background:#4CC2FF18;color:var(--right)}
+  .pill.off{opacity:.55}
+  .ghost{border:1px solid var(--line2);border-radius:5px;padding:5px 9px;font-size:11px;
+         color:var(--dim);white-space:nowrap;flex:0 0 auto}
+  .vol{width:60px;height:4px;border-radius:2px;background:var(--line3);position:relative;flex:0 0 auto}
+  .vol i{position:absolute;inset:0 30% 0 0;background:var(--right);border-radius:2px}
+  .vol b{position:absolute;left:70%;top:-3px;width:9px;height:9px;border-radius:50%;
+         background:var(--ink);transform:translateX(-50%)}
+  .swatch{display:flex;gap:3px;flex:0 0 auto}
+  .swatch i{width:11px;height:11px;border-radius:2px;display:block}
+
+  .ph-stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;
+            background:linear-gradient(180deg,var(--stage),var(--stageEnd))}
+  .ph-stage .look{position:absolute;left:12px;top:7px;font-family:var(--mono);font-size:9px;
+                  letter-spacing:0.1em;color:var(--faint);text-transform:uppercase}
+  .ph-stage .strike{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--strike)}
+  .note{position:absolute;border-radius:3px}
+
+  .ph-kb{position:relative;flex:0 0 auto;background:var(--stage);
+         border-top:1px solid var(--line);overflow:hidden}
+  .k{position:absolute;top:0}
+  .k.w{height:100%;background:var(--keyW);border:1px solid var(--keyWb);border-radius:0 0 4px 4px;z-index:1}
+  .k.b{height:62%;background:var(--keyB);border:1px solid var(--keyBb);border-radius:0 0 3px 3px;z-index:2}
+
+  .ph-tp{background:var(--panel);border-top:1px solid var(--line);flex:0 0 auto;
+         display:flex;flex-direction:column;justify-content:center}
+  .tp-row{display:flex;align-items:center;gap:12px;padding:0 14px;flex:1;min-height:0}
+  .tp-row + .tp-row{border-top:1px solid #14161A}
+  .play{width:44px;height:44px;border-radius:50%;background:var(--right);color:var(--onAccent);
+        display:grid;place-items:center;font-size:15px;flex:0 0 auto}
+  .play.sm{width:34px;height:34px;font-size:12px}
+  .clock{font-family:var(--mono);font-size:12px;letter-spacing:0.02em;flex:0 0 auto;
+         font-variant-numeric:tabular-nums;white-space:nowrap}
+  .seek{flex:1;height:4px;border-radius:2px;background:var(--line2);position:relative;min-width:40px}
+  .seek i{position:absolute;left:0;top:0;bottom:0;width:38%;background:var(--right);border-radius:2px}
+  .seek b{position:absolute;left:38%;top:-7px;width:3px;height:18px;background:var(--ink);border-radius:2px}
+  .chip{border:1px solid var(--line2);border-radius:5px;padding:5px 9px;font-family:var(--mono);
+        font-size:11px;color:var(--dim);flex:0 0 auto;white-space:nowrap}
+  .chip.on{border-color:var(--right);background:#0E2331;color:var(--right)}
+  .chip.amber{border-color:var(--amber);color:var(--amber);background:#FFB25E18}
+  .mlbl{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;color:var(--dimmer);flex:0 0 auto}
+  .grp{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+  .hint{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:0.06em;
+        color:var(--faint);flex:0 0 auto}
+
+  .rail{flex:0 0 132px;display:flex;flex-direction:column;border-left:1px dashed var(--line3)}
+  .rail div{display:flex;align-items:center;padding-left:10px;font-family:var(--mono);
+            font-size:10px;letter-spacing:0.04em;border-bottom:1px dashed var(--line2);
+            color:var(--dimmer);overflow:hidden;white-space:nowrap}
+  .rail div:last-child{border-bottom:0}
+  .rail .hero{color:var(--amber)}
+
+  .verdict{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);
+           font-size:11px;color:var(--dimmer)}
+  .verdict b{font-weight:500;font-variant-numeric:tabular-nums}
+  .verdict .good b{color:var(--pass)} .verdict .bad b{color:var(--fail)}
+  .verdict .warn b{color:var(--amber)}
+
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+     color:var(--dimmer);font-weight:400}
+  td{color:var(--dim)} td:first-child{color:var(--ink)}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .scroller{overflow-x:auto}
+  ul,ol{margin:8px 0 0;padding-left:20px;color:var(--dim);font-size:14px}
+  li{margin:6px 0} li::marker{color:var(--faint)}
+  .note-b{border-left:2px solid var(--amber);padding-left:14px;color:var(--dim);font-size:14px}
+
+  #live{border:1px solid #34576B;background:#0E1319}
+  #liveRead{font-family:var(--mono);font-size:13px;color:var(--amber);
+            font-variant-numeric:tabular-nums}
+  @media (max-width:640px){
+    .wrap{padding:26px 16px 80px;gap:22px} h1{font-size:23px} .card{padding:16px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Design reference · docs/decisions.md D-046</p>
+    <h1>Every control, sideways</h1>
+    <p class="lead">The shipped player, unchanged in what it offers, folded so it fits a phone
+    held sideways. <strong>Nothing hides. Nothing moves behind a menu.</strong> Speed, both loop
+    markers, volume, mute, hand colours and Listen mode all stay on screen, because a player you
+    have to go looking through is no use for careful practice.</p>
+  </header>
+
+  <div class="bar">
+    <span class="lbl">Screen</span>
+    <button data-i="0" aria-pressed="true">932 × 430</button>
+    <button data-i="1" aria-pressed="false">932 × 390</button>
+    <button data-i="2" aria-pressed="false">932 × 340</button>
+    <button data-i="3" aria-pressed="false">932 × 320</button>
+    <button data-i="4" aria-pressed="false">844 × 390</button>
+    <button data-i="5" aria-pressed="false">667 × 375</button>
+    <button data-i="6" aria-pressed="false">1024 × 768</button>
+  </div>
+
+  <section class="frames" id="frames"></section>
+
+  <section class="card pick" id="live">
+    <h2>Your screen, right now</h2>
+    <p style="margin-top:8px">Open this page on the phone and turn it sideways. This measures the
+    space the browser is actually giving a web page — toolbars already deducted — and works out
+    what the player would get.</p>
+    <p id="liveRead" style="margin-top:14px">measuring…</p>
+    <div id="liveFrame" style="margin-top:14px"></div>
+  </section>
+
+  <section class="card">
+    <h2>How it fits: the measurements that decide it</h2>
+    <p>Every control's natural width, measured on the deployed app at 1440×900 where nothing is
+    compressed:</p>
+    <div class="scroller"><table>
+      <thead><tr><th>Control</th><th>Width</th><th>Where it goes when the screen is short</th></tr></thead>
+      <tbody>
+        <tr><td>Play button</td><td class="num">46px → 34px</td><td>Transport row, first</td></tr>
+        <tr><td>Time readout</td><td class="num">96px</td><td>Transport row</td></tr>
+        <tr><td>Seek bar + A/B markers</td><td class="num">flexible, 40px min</td><td>Transport row, takes the slack</td></tr>
+        <tr><td>SPEED · 1x 0.5x 0.25x</td><td class="num">210px</td><td>Transport row, unchanged</td></tr>
+        <tr><td>LOOP · Set A Set B Clear</td><td class="num">214px</td><td>Transport row, unchanged</td></tr>
+        <tr><td>← Library</td><td class="num">80px → 34px</td><td>Header, as <code>←</code></td></tr>
+        <tr><td>Volume + Audio on + Listen mode + hand colours</td><td class="num">456px</td><td>Header, unchanged</td></tr>
+        <tr><td>Title + composer + source</td><td class="num">flexible</td><td>Header, on one line instead of two</td></tr>
+      </tbody>
+    </table></div>
+    <p style="margin-top:14px">Play + time + speed + loop is <strong>566px</strong> of fixed
+    controls. On a 932px or 844px screen that leaves 160–250px for the seek bar, so
+    <strong>the whole transport fits on one row</strong>. Below about 820px it does not, so the
+    seek bar takes its own row and the speed and loop groups share the one below — still two
+    rows, but 44px each instead of 72 and 48.</p>
+    <div class="scroller"><table style="margin-top:16px">
+      <thead><tr><th></th><th>Comfortable · ≥620px tall</th><th>Compact · &lt;620px tall</th></tr></thead>
+      <tbody>
+        <tr><td>Header</td><td class="num">71px, two lines</td><td class="num">44px, one line</td></tr>
+        <tr><td>Transport</td><td class="num">121px, two rows</td><td class="num">52px wide / 88px narrow</td></tr>
+        <tr><td>Keyboard</td><td class="num">clamp(112, 15vh, 158)</td><td class="num">clamp(96, 24vh, 158)</td></tr>
+        <tr><td>Controls hidden</td><td class="num">none</td><td class="num">none</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card">
+    <h2>The three things that do change — none of them a control</h2>
+    <ol>
+      <li><strong>Title and composer share one line</strong> instead of stacking. Same words, one
+      row shorter: <code>Air — BWV Anh. 131 · BACH · MUTOPIA CATALOG</code>, truncating from the
+      right.</li>
+      <li><strong>The <code>← → SKIP 5 SECONDS</code> hint drops</strong> below 620px. It
+      describes two keys on a hardware keyboard, on a device that does not have one. The
+      shortcuts themselves keep working for anyone with a keyboard attached.</li>
+      <li><strong>The RIGHT / LEFT text legend drops</strong> — as it already does below 1024px
+      today. The coloured swatches on the hand-colour button say the same thing in a quarter of
+      the width.</li>
+    </ol>
+    <p style="margin-top:14px">Everything else is the shipped player at a smaller scale. Above
+    620px tall not a single pixel moves, so the laptop and the iPad are untouched.</p>
+  </section>
+
+  <section class="card">
+    <h2>The scroll that reveals nothing</h2>
+    <p>Separate from the layout, and the thing that makes the player feel broken rather than
+    cramped. The stylesheet gives the page a minimum height of <code>100%</code> while the player
+    is sized to <code>100dvh</code>. On a phone those are different numbers: <code>100%</code>
+    measures the screen with the browser toolbars <em>hidden</em>, <code>100dvh</code> measures
+    it as it is right now. The difference — exactly one toolbar — becomes scrollable empty
+    space. Two-line fix, and it goes first.</p>
+  </section>
+
+  <section class="card">
+    <h2>On an iPhone, there is no fullscreen button — install it instead</h2>
+    <p>Safari on iPhone has never reliably offered the fullscreen API for anything but a video,
+    so a fullscreen button would do nothing there. The app is already built as an installable web
+    app that opens with no browser chrome at all, which is better than fullscreen because it is
+    permanent and needs no button.</p>
+    <p style="margin-top:12px"><strong>To install it on an iPhone:</strong></p>
+    <ol>
+      <li>Open <code>piano-practice-player.wowanirudh.workers.dev</code> in <strong>Safari</strong>
+      — this does not work in Chrome on iPhone.</li>
+      <li>Tap the <strong>Share</strong> button: the square with an arrow pointing up, in the bar
+      at the bottom of the screen.</li>
+      <li>Scroll the grey list down to <strong>Add to Home Screen</strong> and tap it.</li>
+      <li>Tap <strong>Add</strong>, top right.</li>
+      <li>Open it from the new icon on the Home Screen, not from Safari. There should be no
+      address bar and no toolbar — turn the phone sideways and the whole screen is the player.</li>
+    </ol>
+    <p class="note-b" style="margin-top:14px">A fullscreen button still ships for the browsers
+    that do support it — desktop, Android Chrome, iPad — and simply does not render where the
+    browser cannot honour it. That is why the layout above has to work on its own.</p>
+  </section>
+
+</div>
+
+<script>
+// ---- Measured on the deployed app, 2026-08-16, via Playwright at each viewport ----
+const CASES = [
+  { w:932, h:430, header:71,  notes:126, kb:112, tp:121, label:'iPhone 14 Pro Max sideways, installed to the Home Screen' },
+  { w:932, h:390, header:71,  notes:86,  kb:112, tp:121, label:'the same phone with a slim browser bar' },
+  { w:932, h:340, header:71,  notes:36,  kb:112, tp:121, label:'the same phone in Safari, both toolbars showing' },
+  { w:932, h:320, header:71,  notes:16,  kb:112, tp:121, label:'worst realistic case' },
+  { w:844, h:390, header:71,  notes:86,  kb:112, tp:121, label:'iPhone 14 Pro / 15 / 16 sideways' },
+  { w:667, h:375, header:105, notes:37,  kb:112, tp:121, label:'iPhone SE sideways — today the header wraps to two rows' },
+  { w:1024,h:768, header:71,  notes:461, kb:115, tp:121, label:'iPad landscape — already comfortable, nothing changes' },
+];
+
+// ---- The proposal ----
+const COMFORTABLE_MIN = 620;
+const ONE_ROW_TRANSPORT_MIN = 820;   // 566px of fixed controls + gaps + a usable seek bar
+
+function proposed(w, h){
+  if (h >= COMFORTABLE_MIN) return null;              // untouched
+  const header = 44;
+  const tp = w >= ONE_ROW_TRANSPORT_MIN ? 52 : 88;
+  const kb = Math.max(96, Math.min(158, Math.round(h * 0.24)));
+  return { header, tp, kb, notes: h - header - tp - kb };
+}
+
+const NOTES = [
+  [0.10,0.24],[0.17,0.42],[0.24,0.12],[0.31,0.58],[0.38,0.30],[0.45,0.16],[0.52,0.46],
+  [0.60,0.22],[0.67,0.36],[0.74,0.14],[0.81,0.50],[0.88,0.28],
+];
+const LEFT_NOTES = [[0.06,0.52],[0.13,0.20],[0.28,0.34],[0.43,0.26],[0.58,0.44],[0.71,0.18],[0.84,0.38]];
+
+function stageHTML(px){
+  if (px < 24) return '<div class="look">3S MUSICAL LOOKAHEAD</div><div class="strike"></div>';
+  const draw = (list, colour, glow) => list.map(([x,t]) => {
+    const top = Math.round(t * px * 0.88), hh = Math.max(5, Math.round(px * 0.11));
+    if (top + hh > px) return '';
+    return `<i class="note" style="left:${(x*100).toFixed(1)}%;width:1.4%;top:${top}px;
+            height:${hh}px;background:${colour};box-shadow:0 0 14px ${glow}"></i>`;
+  }).join('');
+  return `<div class="look">3S MUSICAL LOOKAHEAD · 3.0S AT 1x</div>
+          ${draw(NOTES,'var(--right)','#4CC2FF55')}${draw(LEFT_NOTES,'var(--left)','#FF7A4555')}
+          <div class="strike"></div>`;
+}
+
+function keysHTML(){
+  let s = ''; const n = 52, w = 100/n;
+  for (let i = 0; i < n; i++) s += `<i class="k w" style="left:${(i*w).toFixed(3)}%;width:${w.toFixed(3)}%"></i>`;
+  for (let oc = 0; oc < 8; oc++) for (const a of [0,1,3,4,5]){
+    const idx = oc*7 + a - 5;
+    if (idx < 0 || idx >= n-1) continue;
+    s += `<i class="k b" style="left:${((idx+1)*w - w*0.31).toFixed(3)}%;width:${(w*0.62).toFixed(3)}%"></i>`;
+  }
+  return s;
+}
+
+const HEADER_FULL = `
+  <span class="ghost">← Library</span>
+  <span style="min-width:0;flex:1">
+    <span class="ph-title" style="display:block">Air — BWV Anh. 131</span>
+    <span class="ph-sub">BACH, JOHANN SEBASTIAN · MUTOPIA CATALOG</span>
+  </span>
+  <span class="ph-sub" style="flex:0 0 auto">■ RIGHT&nbsp;&nbsp;■ LEFT</span>
+  <span class="swatch"><i style="background:var(--right)"></i><i style="background:var(--left)"></i></span>
+  <span class="vol"><i></i><b></b></span>
+  <span class="pill on">Audio on</span>
+  <span class="pill off">Listen mode</span>`;
+
+const HEADER_COMPACT = `
+  <span class="ghost">←</span>
+  <span class="ph-title">Air — BWV Anh. 131 <span class="ph-sub">· BACH · MUTOPIA CATALOG</span></span>
+  <span class="swatch"><i style="background:var(--right)"></i><i style="background:var(--left)"></i></span>
+  <span class="vol"><i></i><b></b></span>
+  <span class="pill on">Audio on</span>
+  <span class="pill off">Listen mode</span>
+  <span class="pill">Full screen</span>`;
+
+const SPEED = `<span class="grp"><span class="mlbl">SPEED</span><span class="chip on">1x</span>
+  <span class="chip">0.5x</span><span class="chip">0.25x</span></span>`;
+const LOOP = `<span class="grp"><span class="mlbl">LOOP</span><span class="chip amber">Set A</span>
+  <span class="chip">Set B</span><span class="chip">Clear</span></span>`;
+const SEEK = `<span class="seek"><i></i><b></b></span>`;
+
+function transportHTML(kind){
+  if (kind === 'full') return `
+    <div class="tp-row"><span class="play">▶</span><span class="clock">0:12 / 1:36</span>${SEEK}</div>
+    <div class="tp-row">${SPEED}${LOOP}<span class="hint">← → SKIP 5 SECONDS</span></div>`;
+  if (kind === 'one') return `
+    <div class="tp-row"><span class="play sm">▶</span><span class="clock">0:12 / 1:36</span>
+      ${SEEK}${SPEED}${LOOP}</div>`;
+  return `
+    <div class="tp-row"><span class="play sm">▶</span><span class="clock">0:12 / 1:36</span>${SEEK}</div>
+    <div class="tp-row" style="gap:16px">${SPEED}${LOOP}</div>`;
+}
+
+function frame(w, h, bands, mode){
+  const pct = Math.round(bands.notes / h * 100);
+  const rail = `<div class="rail" style="height:${h}px">
+    <div style="height:${bands.header}px">header ${bands.header}px</div>
+    <div class="hero" style="height:${bands.notes}px">notes ${bands.notes}px · ${pct}%</div>
+    <div style="height:${bands.kb}px">keys ${bands.kb}px</div>
+    <div style="height:${bands.tp}px">transport ${bands.tp}px</div>
+  </div>`;
+  return `<div class="rig"><div class="phone" style="height:${h}px;width:${w}px">
+      <div class="ph-header" style="height:${bands.header}px">
+        ${mode === 'full' ? HEADER_FULL : HEADER_COMPACT}</div>
+      <div class="ph-stage">${stageHTML(bands.notes)}</div>
+      <div class="ph-kb" style="height:${bands.kb}px">${keysHTML()}</div>
+      <div class="ph-tp" style="height:${bands.tp}px">${transportHTML(mode)}</div>
+    </div>${rail}</div>`;
+}
+
+function scaled(html, totalW){
+  const max = Math.min(document.querySelector('.wrap').clientWidth, 952);
+  const s = Math.min(1, max / totalW);
+  return `<div class="stage-hold"><div style="height:0;overflow:visible">
+    <div style="transform:scale(${s.toFixed(4)});transform-origin:top left">${html}</div></div>
+    <div style="height:${Math.ceil(CURRENT_H * s) + 6}px"></div></div>`;
+}
+
+function verdict(bands, h){
+  const pct = Math.round(bands.notes / h * 100);
+  const cls = pct >= 40 ? 'good' : pct >= 25 ? 'warn' : 'bad';
+  return `<div class="verdict">
+    <span class="${cls}">Notes <b>${bands.notes}px</b> — <b>${pct}%</b> of the screen</span>
+    <span>Chrome <b>${bands.header + bands.tp}px</b></span>
+    <span>Keyboard <b>${bands.kb}px</b></span>
+    <span>Controls hidden <b>0</b></span></div>`;
+}
+
+let CURRENT_H = 430;
+
+function render(i){
+  const c = CASES[i];
+  CURRENT_H = c.h;
+  const today = { header:c.header, notes:c.notes, kb:c.kb, tp:c.tp };
+  const p = proposed(c.w, c.h);
+  const blocks = [{
+    title:'Today', tag:'no', tagText:'shipped', note:c.label,
+    html: frame(c.w, c.h, today, 'full'), bands: today,
+  }];
+  if (p) blocks.push({
+    title:'Proposed', tag:'rec', tagText: c.w >= ONE_ROW_TRANSPORT_MIN ? 'one transport row' : 'two compact rows',
+    note:'Same controls, all of them, all visible.',
+    html: frame(c.w, c.h, p, c.w >= ONE_ROW_TRANSPORT_MIN ? 'one' : 'two'), bands: p,
+  });
+  else blocks[0].note = c.label + ' — above 620px tall, so nothing changes here.';
+
+  document.getElementById('frames').innerHTML = blocks.map(b => `
+    <section>
+      <div class="frame-head"><h3>${b.title}</h3><span class="tag ${b.tag}">${b.tagText}</span>
+        <span style="font-size:13px;color:var(--dimmer)">${b.note}</span></div>
+      ${scaled(b.html, c.w + 132)}
+      ${verdict(b.bands, c.h)}
+    </section>`).join('');
+}
+
+document.querySelectorAll('.bar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.bar button').forEach(b => b.setAttribute('aria-pressed','false'));
+    btn.setAttribute('aria-pressed','true');
+    render(Number(btn.dataset.i));
+  });
+});
+
+// ---- live measurement of the device this page is open on ----
+function renderLive(){
+  const w = window.innerWidth, h = window.innerHeight;
+  const p = proposed(w, h);
+  const kbToday = Math.max(112, Math.min(158, Math.round(h * 0.15)));
+  const todayNotes = Math.max(0, h - 71 - kbToday - 121);
+  const read = document.getElementById('liveRead');
+  if (!p){
+    read.innerHTML = `Your screen: <b>${w} × ${h}</b>. Taller than 620px, so this counts as
+      comfortable — the player is unchanged here. Turn the phone sideways, or narrow the window,
+      to see the compact layout.`;
+    document.getElementById('liveFrame').innerHTML = '';
+    return;
+  }
+  const pctNow = Math.round(todayNotes / h * 100), pctNew = Math.round(p.notes / h * 100);
+  read.innerHTML = `Your screen: <b>${w} × ${h}</b> &nbsp;·&nbsp; falling notes today
+    <b style="color:var(--fail)">${todayNotes}px (${pctNow}%)</b> &nbsp;→&nbsp; proposed
+    <b style="color:var(--pass)">${p.notes}px (${pctNew}%)</b>
+    &nbsp;·&nbsp; transport ${w >= ONE_ROW_TRANSPORT_MIN ? 'one row' : 'two rows'}
+    &nbsp;·&nbsp; controls hidden 0`;
+  CURRENT_H = h;
+  document.getElementById('liveFrame').innerHTML =
+    scaled(frame(w, h, p, w >= ONE_ROW_TRANSPORT_MIN ? 'one' : 'two'), w + 132);
+  CURRENT_H = CASES[[...document.querySelectorAll('.bar button')]
+    .findIndex(b => b.getAttribute('aria-pressed') === 'true')].h;
+}
+
+function renderAll(){
+  const i = [...document.querySelectorAll('.bar button')]
+    .findIndex(b => b.getAttribute('aria-pressed') === 'true');
+  render(i < 0 ? 0 : i);
+  renderLive();
+}
+window.addEventListener('resize', renderAll);
+window.addEventListener('orientationchange', () => setTimeout(renderAll, 250));
+renderAll();
+</script>
+</body>
+</html>

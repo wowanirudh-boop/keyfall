@@ -5,6 +5,8 @@ import { build, preview, type PreviewServer } from "vite";
 
 let server: PreviewServer;
 
+test.use({ serviceWorkers: "block" });
+
 test.beforeAll(async () => {
   await build({
     logLevel: "silent",
@@ -104,7 +106,7 @@ test("[T05a AC3, AC4, AC5, AC7, AC8] volume and header states persist and fit", 
         ).touchAction,
       };
     });
-    expect(layout.flexWrap).toBe("nowrap");
+    expect(layout.flexWrap).toBe("wrap");
     expect(layout.headerChildrenFit).toBe(true);
     expect(layout.scrollWidth).toBe(layout.clientWidth);
     expect(layout.touchAction).toBe("none");

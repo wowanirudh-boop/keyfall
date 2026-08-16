@@ -101,6 +101,21 @@ npm run check               # types + lint + guardrails + unit tests — the gat
 - [ ] `npm run check` passes. Two exceptions, both stated in the task files:
       T01 creates the project that makes `check` runnable, and T00's spike code
       is throwaway and not held to the production guardrails.
+- [ ] **`npm run test:e2e` passes too, whenever the task changes catalog data,
+      routes, or anything a screen renders.** `check` runs types, lint,
+      guardrails and *unit* tests only — it does not run Playwright, so a green
+      `check` says nothing about the end-to-end suite. Several e2e tests assert
+      **hardcoded counts** derived from the catalog (matches for a search term,
+      pieces in a playlist), and adding pieces silently invalidates them.
+      Run it with **nothing else listening on port 4181** — each spec builds and
+      serves its own preview there, so a stray `vite dev` or `vite preview`
+      makes the whole suite fail in ways that have nothing to do with the code.
+- [ ] **A failing test is yours until proven otherwise.** Do not report a
+      failure as "pre-existing", "unrelated" or "out of scope" without evidence:
+      check the failing assertion against what the task changed, and if still
+      unsure, run the same spec on the previous commit and say so. Two failures
+      have already been mislabelled this way (D-045); both were caused by the
+      task reporting them.
 - [ ] New behaviour has tests; every acceptance criterion in the task file maps
       to at least one assertion
 - [ ] **If the task touches a screen:** every state listed for that screen in

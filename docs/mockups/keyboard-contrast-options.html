@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  DESIGN REFERENCE — not production code, not a pixel spec.
+
+  Three candidate keyboard palettes against the shipped one, for the problem
+  recorded in docs/decisions.md D-047: on a phone the white and black keys are
+  indistinguishable.
+
+  Every contrast figure on this page is computed live in the browser from the
+  WCAG 2.1 relative-luminance formula against the hex values shown, so the
+  numbers cannot drift from the swatches. The ambient-light model adds a
+  constant luminance floor to both colours, which is what a reflective screen
+  in a lit room does.
+
+  The NORMATIVE spec, once chosen, is src/design/tokens.ts. This file exists to
+  show the INTENT and to let the rejected options be re-examined later. Do not
+  copy its markup, its class names, or its inline colour literals into src/.
+
+  Open directly in a browser: no server needed. Judge it on the phone.
+-->
+<title>Can you see the keys?</title>
+<style>
+  :root{
+    --bg:#0B0C0E; --stage:#0A0B0D; --card:#101216; --raised:#14161A;
+    --line:#1A1D22; --line2:#23262C; --line3:#2C3037; --line4:#3A3F47;
+    --ink:#E8EAED; --dim:#8A9099; --dimmer:#5B626B; --faint:#3E444C;
+    --right:#4CC2FF; --left:#FF7A45; --amber:#FFB25E;
+    --pass:#3ED598; --fail:#FF3B6B; --onAccent:#06121A;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;line-height:1.55}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 110px;
+        display:flex;flex-direction:column;gap:30px}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;
+           color:var(--dimmer);margin:0 0 10px;text-transform:uppercase}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;margin:0 0 10px;text-wrap:balance}
+  h2{font-size:17px;font-weight:500;margin:0;letter-spacing:-0.01em}
+  h3{font-size:13px;font-weight:500;margin:0 0 8px;color:var(--dim)}
+  p{margin:0;color:var(--dim);font-size:14px;max-width:68ch}
+  p.lead{color:var(--ink);font-size:15px}
+  strong{color:var(--ink);font-weight:500}
+  code{font-family:var(--mono);font-size:0.92em;color:var(--ink)}
+
+  .card{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:22px}
+  .card.pick{border-color:#34576B;background:#0E1319}
+
+  /* --- glare control --------------------------------------------------- */
+  .glare{position:sticky;top:0;z-index:20;background:#0B0C0Eee;
+         backdrop-filter:blur(8px);border-bottom:1px solid var(--line2);
+         margin:0 -24px;padding:14px 24px;display:flex;flex-wrap:wrap;
+         align-items:center;gap:16px}
+  .glare label{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;
+               color:var(--dimmer);text-transform:uppercase}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--right);height:24px}
+  .glare .read{font-family:var(--mono);font-size:12px;color:var(--amber);
+               font-variant-numeric:tabular-nums;min-width:15ch}
+
+  /* --- keyboard -------------------------------------------------------- */
+  .kb-shell{position:relative;border:1px solid var(--line);border-radius:6px;
+            overflow:hidden;background:var(--stage)}
+  .kb{position:relative;height:132px;isolation:isolate}
+  .key{position:absolute;top:0;display:flex;align-items:flex-end;
+       justify-content:center;overflow:hidden;transition:none}
+  .key.w{height:100%;border-radius:0 0 4px 4px;z-index:1;padding-bottom:7px}
+  .key.b{height:62%;border-radius:0 0 3px 3px;z-index:2;padding-bottom:5px}
+  .key span{font-family:var(--mono);font-size:9px;letter-spacing:0.02em;
+            position:relative;z-index:3;line-height:1}
+  .key.b span{writing-mode:vertical-rl;font-size:7px}
+  .key.lit span{font-size:13px;font-weight:500}
+  .key.b.lit span{font-size:10px}
+  .fill{position:absolute;left:0;right:0;bottom:0;z-index:2}
+  .roomlight{position:absolute;inset:0;z-index:9;pointer-events:none;
+             background:#fff;opacity:0}
+
+  /* --- readouts -------------------------------------------------------- */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+           gap:1px;background:var(--line);border:1px solid var(--line);
+           border-radius:6px;overflow:hidden;margin-top:16px}
+  .metric{background:var(--card);padding:11px 13px;display:flex;
+          flex-direction:column;gap:4px}
+  .metric .k{font-family:var(--mono);font-size:9.5px;letter-spacing:0.08em;
+             color:var(--dimmer);text-transform:uppercase;line-height:1.4}
+  .metric .v{font-family:var(--mono);font-size:19px;font-weight:500;
+             font-variant-numeric:tabular-nums;line-height:1}
+  .v.ok{color:var(--pass)} .v.warn{color:var(--amber)} .v.bad{color:var(--fail)}
+  .metric .n{font-family:var(--mono);font-size:9.5px;color:var(--faint)}
+
+  .opt-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;
+       text-transform:uppercase;padding:3px 8px;border-radius:2px;
+       border:1px solid var(--line3);color:var(--dimmer)}
+  .tag.rec{border-color:#34576B;color:var(--right);background:#0E2331}
+  .tag.no{border-color:#4A2230;color:#F0B9C6;background:#1A0E14}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+  .sw{display:flex;align-items:center;gap:7px;font-family:var(--mono);
+      font-size:10px;color:var(--dimmer);border:1px solid var(--line2);
+      border-radius:4px;padding:4px 8px 4px 5px}
+  .sw i{width:14px;height:14px;border-radius:2px;display:block;
+        border:1px solid var(--line3)}
+
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;
+     text-transform:uppercase;color:var(--dimmer);font-weight:400}
+  td{color:var(--dim)} td:first-child{color:var(--ink)}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .scroller{overflow-x:auto}
+
+  ul{margin:8px 0 0;padding-left:18px;color:var(--dim);font-size:14px}
+  li{margin:5px 0} li::marker{color:var(--faint)}
+  .note{border-left:2px solid var(--amber);padding-left:14px;color:var(--dim);font-size:14px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);
+          font-size:10px;letter-spacing:0.06em;color:var(--dimmer);
+          text-transform:uppercase;margin-bottom:12px}
+  .legend b{font-weight:400;color:var(--dim)}
+  @media (max-width:640px){
+    .wrap{padding:26px 16px 80px;gap:22px}
+    h1{font-size:23px} .card{padding:16px}
+    .kb{height:112px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Design reference · docs/decisions.md D-047</p>
+    <h1>Can you see the keys?</h1>
+    <p class="lead">The shipped keyboard puts a white key at <code>#151821</code> next to a
+    black key at <code>#0C0E11</code>. That is a contrast ratio of <strong>1.09:1</strong>.
+    Anything below 3:1 fails WCAG for a control you have to identify; 1.09:1 means the two
+    key types are, measurably, the same colour. Below are the ways out, rendered as real
+    keyboards, with the three rejected ones kept so the reasoning stays checkable. Judge them
+    on the phone, not the laptop — that is where the problem is.</p>
+  </header>
+
+  <div class="glare">
+    <label for="glare">Room light</label>
+    <input id="glare" type="range" min="0" max="100" value="0">
+    <span class="read" id="glareRead">dark room</span>
+  </div>
+
+  <p class="note">Drag the slider. It adds a constant luminance floor to every pixel, which is
+  exactly what a lit room does to a screen through reflection. This is the reason the keyboard
+  looks worse on your phone than on the laptop: a phone is used in far more light, and the
+  darker two colours are, the faster room light collapses the difference between them.</p>
+
+  <div class="legend">
+    <span><b>C4</b> idle</span>
+    <span><b>E4</b> prepare — countdown fill, right hand</span>
+    <span><b>G4</b> pressed — right hand</span>
+    <span><b>A♯4</b> pressed — black key, right hand</span>
+    <span><b>D5</b> pressed — left hand</span>
+  </div>
+
+  <section id="options"></section>
+
+  <section class="card">
+    <h2>Why ivory looked wrong, and why white does not</h2>
+    <p style="margin-top:10px">Two things need contrast, and on one flat key face they pull in
+    opposite directions:</p>
+    <ul>
+      <li><strong>Identification</strong> — a white key against a black key. Wants the white
+      key <em>lighter</em>.</li>
+      <li><strong>State</strong> — a lit key, painted in the hand colour <code>#4CC2FF</code>,
+      against an unlit one. Wants the white key <em>darker</em>, because the hand colour is
+      itself a light blue.</li>
+    </ul>
+    <p style="margin-top:12px">They cross at roughly <code>#5C6572</code> — option 2 — where
+    both land near 3:1 and neither is comfortable. Everything between there and white is the
+    uncanny middle, and ivory sits in the worst of it: <code>#C6CBD4</code> is
+    <strong>1.23:1</strong> against the lit key, meaning the keyboard and the keys being played
+    are within a hair of the same lightness. That is the flat, plasticky look — it is not taste,
+    it is a measurement.</p>
+    <p style="margin-top:12px">Going <em>further</em> is what fixes it. At
+    <code>#F0F2F6</code> the key face is clearly above the hand colour rather than level with
+    it, so identification climbs to 17.35:1 <em>and</em> the lit key separates by 1.79:1 instead
+    of 1.23:1. Both numbers improve at once, which is the sign you have left the trade-off
+    rather than split it. The dark ring then finishes the job the luminance cannot.</p>
+    <div class="scroller"><table id="tradeoff"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>Why the phone is worse than the laptop</h2>
+    <ul>
+      <li><strong>Room light, above all.</strong> Contrast between two near-blacks collapses
+      toward 1.00:1 as reflected light raises the screen's black floor. The shipped pair goes
+      from 1.09:1 in a dark room to <strong>1.02:1</strong> in daylight. A laptop at a desk sits
+      in far less light than a phone on a music stand.</li>
+      <li><strong>Smaller keys.</strong> At 844px landscape a white key is 16.2px wide; the only
+      thing separating two white keys is a 1px border at 1.23:1. Narrower keys make that
+      separator a smaller share of what you see.</li>
+      <li><strong>Black crush.</strong> Phone OLED panels and their ambient-light compensation
+      routinely flatten everything below about 4% luminance. Both key colours live there —
+      9 code values apart out of 255.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>What this does not change</h2>
+    <p style="margin-top:10px">The waterfall, the stage, the transport and every other surface
+    stay exactly as designed. Only the keyboard moves. A real piano in a dim room still shows
+    light keys — the instrument is lit, the room is not, and that is the picture all three
+    options are reaching for to different degrees.</p>
+  </section>
+
+</div>
+
+<script>
+// ---------------------------------------------------------------- contrast
+const lin = c => { const s = c/255; return s <= 0.04045 ? s/12.92 : Math.pow((s+0.055)/1.055, 2.4); };
+const rgb = h => { h = h.replace('#',''); return [0,2,4].map(i => parseInt(h.slice(i,i+2),16)); };
+const lum = h => { const [r,g,b] = rgb(h); return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b); };
+// k = reflected room light, as a fraction of the display's own white luminance
+const cr  = (a,b,k=0) => { const x = lum(a)+k, y = lum(b)+k;
+                           return (Math.max(x,y)+0.05) / (Math.min(x,y)+0.05); };
+const over = (fg, alphaHex, bg) => { const F = rgb(fg), B = rgb(bg), t = parseInt(alphaHex,16)/255;
+  return '#' + [0,1,2].map(i => Math.round(F[i]*t + B[i]*(1-t)).toString(16).padStart(2,'0')).join(''); };
+
+const RIGHT = '#4CC2FF', LEFT = '#FF7A45', ON_ACCENT = '#06121A';
+
+// ---------------------------------------------------------------- options
+const OPTIONS = [
+  { id:'current', name:'Shipped today', tag:'no', tagText:'the problem',
+    blurb:'White key and black key are 9 code values apart. In any room light at all they are one colour.',
+    wf:'#151821', bf:'#0C0E11', wb:'#252A32', bb:'#20242B',
+    wl:'#5E6672', bl:'#4A515A', fillAlpha:'66', fillOnWhite:'light', ring:null },
+
+  { id:'o1', name:'Option 1 — Lifted', tag:'no', tagText:'rejected · still fails',
+    blurb:'White keys lift to a dark slate, black keys drop to near-zero, and the line between two white keys becomes a dark gutter instead of a light one. Keeps the dark mood, and reaches 1.96:1 — better, still failing.',
+    wf:'#3A414E', bf:'#06070A', wb:'#0A0C10', bb:'#2E3540',
+    wl:'#A6ADB9', bl:'#7C8492', fillAlpha:'88', fillOnWhite:'light', ring:null },
+
+  { id:'o2', name:'Option 2 — Knee', tag:'no', tagText:'rejected · half a fix',
+    blurb:'The lightest white key that still lets a lit key read against it. Clears 3:1 in a dark room and changes nothing but tokens — but in daylight it is back to 1.62:1, which is the condition the complaint came from.',
+    wf:'#5C6572', bf:'#06070A', wb:'#0A0C10', bb:'#3A4250',
+    wl:'#C3C9D2', bl:'#9AA1AB', fillAlpha:'AA', fillOnWhite:'light', ring:null },
+
+  { id:'ivory', name:'Option 3 — Ivory', tag:'no', tagText:'rejected on sight',
+    blurb:'Tried and rejected: it looks wrong. There is a measurable reason, and it is the one below the fold — ivory sits at almost exactly the lit key’s own lightness, so the keyboard and the keys being played read as one flat mid-tone. Going further, not less far, is what fixes it.',
+    wf:'#C6CBD4', bf:'#0A0C10', wb:'#05060A', bb:'#363D48',
+    wl:'#565D68', bl:'#9AA1AB', fillAlpha:'CC', fillOnWhite:'dark', ring:'#06121A' },
+
+  { id:'o4', name:'Option 4 — White and black', tag:'rec', tagText:'recommended',
+    blurb:'White keys white, black keys black, like the instrument. 17.35:1, and still 5.33:1 in daylight — the best figure of anything here, and the only palette where the error state also clears 3:1. A lit key keeps a dark ring, because the hand colour is a light blue and 1.79:1 on its own is not enough; the countdown fill on a white key runs dark.',
+    wf:'#F0F2F6', bf:'#0B0D11', wb:'#767D88', bb:'#363D48',
+    wl:'#5B626B', bl:'#9AA1AB', fillAlpha:'E6', fillOnWhite:'dark', ring:'#06121A' },
+
+  { id:'o4b', name:'Option 4b — Pure white', tag:'', tagText:'the same, at maximum',
+    blurb:'Identical to option 4 with the key face at #FFFFFF instead of #F0F2F6. Worth a look on the phone side by side: it buys a little more contrast everywhere and a little more glare in a dark room. Pick whichever reads better on the actual screen.',
+    wf:'#FFFFFF', bf:'#0B0D11', wb:'#767D88', bb:'#363D48',
+    wl:'#5B626B', bl:'#9AA1AB', fillAlpha:'E6', fillOnWhite:'dark', ring:'#06121A' },
+];
+
+// ---------------------------------------------------------------- keyboard
+// Two octaves from C4. Black keys sit centred on the gap after white 0,1,3,4,5.
+const WHITE_PC = [0,2,4,5,7,9,11];
+const BLACK_AFTER = [0,1,3,4,5];
+const NAMES_W = ['C','D','E','F','G','A','B'];
+const NAMES_B = ['C♯','D♯','F♯','G♯','A♯'];
+const OCTAVES = 2, WHITES = 7*OCTAVES;
+
+// which demo state each key is in
+const STATE = { 'C4':'idle', 'E4':'prepare', 'G4':'pressed-right', 'A♯4':'pressed-right', 'D5':'pressed-left' };
+
+function keyboardHTML(o){
+  const w = 100/WHITES;
+  let html = '';
+  for (let oc = 0; oc < OCTAVES; oc++){
+    for (let i = 0; i < 7; i++){
+      const idx = oc*7 + i, name = NAMES_W[i] + (4+oc);
+      html += keyHTML(o, name, false, idx*w, w);
+    }
+  }
+  for (let oc = 0; oc < OCTAVES; oc++){
+    BLACK_AFTER.forEach((after, j) => {
+      const name = NAMES_B[j] + (4+oc);
+      const centre = (oc*7 + after + 1) * w;
+      html += keyHTML(o, name, true, centre - (w*0.62)/2, w*0.62);
+    });
+  }
+  return html;
+}
+
+function keyHTML(o, name, black, left, width){
+  const state = STATE[name] || 'idle';
+  const face = black ? o.bf : o.wf;
+  const border = black ? o.bb : o.wb;
+  const label = black ? o.bl : o.wl;
+  let bg = face, bd = border, lab = label, extra = '', cls = black ? 'key b' : 'key w', sh = '';
+
+  if (state === 'prepare'){
+    const dark = (!black && o.fillOnWhite === 'dark');
+    const fillCol = dark ? ON_ACCENT : RIGHT;
+    const fillAlpha = dark ? o.fillAlpha : o.fillAlpha;
+    bd = RIGHT;
+    sh = `box-shadow:inset 0 -8px 14px ${RIGHT}22;`;
+    extra = `<i class="fill" style="height:62%;background:${fillCol}${fillAlpha}"></i>`;
+    lab = dark ? o.wf : RIGHT;
+  } else if (state.startsWith('pressed')){
+    const hand = state.endsWith('left') ? LEFT : RIGHT;
+    bg = hand; bd = hand; lab = ON_ACCENT; cls += ' lit';
+    sh = `box-shadow:0 -2px 20px ${hand}66;`;
+    if (o.ring && !black) bd = o.ring, sh += `outline:2px solid ${o.ring};outline-offset:-2px;`;
+  }
+  return `<div class="${cls}" style="left:${left}%;width:${width}%;background:${bg};
+    border:1px solid ${bd};${sh}"><span style="color:${lab}">${name.replace(/\d/,'')}</span>${extra}</div>`;
+}
+
+// ---------------------------------------------------------------- metrics
+function metric(k, value, bar, note){
+  const cls = value >= bar ? 'ok' : value >= bar*0.66 ? 'warn' : 'bad';
+  return `<div class="metric"><div class="k">${k}</div>
+          <div class="v ${cls}">${value.toFixed(2)}:1</div>
+          <div class="n">${note}</div></div>`;
+}
+
+function render(k){
+  document.getElementById('options').innerHTML = OPTIONS.map(o => {
+    const litW = o.ring ? o.ring : RIGHT;   // what actually outlines a lit white key
+    return `
+    <section class="card${o.tag === 'rec' ? ' pick' : ''}" style="margin-bottom:18px">
+      <div class="opt-head">
+        <h2>${o.name}</h2>
+        <span class="tag ${o.tag}">${o.tagText}</span>
+      </div>
+      <p>${o.blurb}</p>
+      <div class="kb-shell" style="margin-top:16px">
+        <div class="kb">${keyboardHTML(o)}<div class="roomlight" style="opacity:${k*2.2}"></div></div>
+      </div>
+      <div class="metrics">
+        ${metric('White key vs black key', cr(o.wf, o.bf, k), 3, 'needs 3:1 — identification')}
+        ${metric('White key vs its gutter', cr(o.wf, o.wb, k), 3, 'one white key from the next')}
+        ${metric('Lit key vs unlit white', cr(RIGHT, o.wf, k), 3, o.ring ? 'carried by the dark ring instead' : 'needs 3:1 — state')}
+        ${metric('Key label', cr(o.wl, o.wf, k), 4.5, 'needs 4.5:1 — 9px text')}
+      </div>
+      <div class="swatches">
+        <span class="sw"><i style="background:${o.wf}"></i>white face ${o.wf}</span>
+        <span class="sw"><i style="background:${o.bf}"></i>black face ${o.bf}</span>
+        <span class="sw"><i style="background:${o.wb}"></i>white edge ${o.wb}</span>
+        <span class="sw"><i style="background:${o.bb}"></i>black edge ${o.bb}</span>
+        <span class="sw"><i style="background:${o.wl}"></i>white label ${o.wl}</span>
+        <span class="sw"><i style="background:${o.bl}"></i>black label ${o.bl}</span>
+        ${o.ring ? `<span class="sw"><i style="background:${litW}"></i>lit-key ring ${litW}</span>` : ''}
+      </div>
+    </section>`;
+  }).join('');
+
+  // trade-off table
+  const rows = OPTIONS.map(o => {
+    const idn = cr(o.wf, o.bf, k), st = o.ring ? cr(o.ring, o.wf, k) : cr(RIGHT, o.wf, k);
+    const fillDark = (o.fillOnWhite === 'dark');
+    const fillCol = over(fillDark ? ON_ACCENT : RIGHT, fillDark ? 'E6' : o.fillAlpha, o.wf);
+    return `<tr>
+      <td>${o.name}</td>
+      <td class="num" style="color:${idn>=3?'var(--pass)':idn>=2?'var(--amber)':'var(--fail)'}">${idn.toFixed(2)}:1</td>
+      <td class="num" style="color:${st>=3?'var(--pass)':st>=2?'var(--amber)':'var(--fail)'}">${st.toFixed(2)}:1</td>
+      <td class="num" style="color:${cr(fillCol,o.wf,k)>=3?'var(--pass)':cr(fillCol,o.wf,k)>=2?'var(--amber)':'var(--fail)'}">${cr(fillCol, o.wf, k).toFixed(2)}:1</td>
+      <td>${o.ring ? 'ring + dark fill' : 'none'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tradeoff').innerHTML =
+    `<thead><tr><th>Palette</th><th>Identification<br>white vs black</th>
+     <th>State<br>lit vs unlit white</th><th>Countdown fill<br>on a white key</th>
+     <th>Extra work</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+const slider = document.getElementById('glare');
+const read = document.getElementById('glareRead');
+const LABELS = [[0,'dark room'],[0.02,'lamp-lit room'],[0.06,'bright indoors'],[0.11,'by a window'],[0.15,'daylight']];
+function update(){
+  const k = (slider.value/100) * 0.15;
+  let label = LABELS[0][1];
+  for (const [t, l] of LABELS) if (k >= t - 0.0001) label = l;
+  read.textContent = `${label} · k=${k.toFixed(3)}`;
+  render(k);
+}
+slider.addEventListener('input', update);
+update();
+</script>
+</body>
+</html>

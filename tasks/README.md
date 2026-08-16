@@ -32,6 +32,15 @@ of T08–T10.
 | G | [T03d](T03d-catalog-quality.md) | Search broken by junk aliases; BWV 846 missing; composer names unnormalised; no browse |
 | H | [T07a](T07a-countdown-fill.md) | Prepared keys give no order — the biggest comprehension failure |
 | I | [T05c](T05c-chrome-cleanup.md) | Attribution off Home, header jargon, transport hints |
+| J | [T13b](T13b-e2e-baseline-repair.md) | Six unclassified e2e failures; `npm run check` never ran Playwright |
+| K | [T14](T14-player-landscape-fit.md) | Phone held sideways: a scroll to nowhere, and 5–29% of the screen for the falling notes |
+| L | [T15](T15-keyboard-contrast.md) | White key vs black key is 1.09:1 — the keyboard is one colour |
+
+T14 depends on T13b, so that a failing e2e test found during T14 can be trusted
+to belong to T14. **T15 depends on nothing** and can run at any point, including
+alongside T14 — they share no files beyond `PianoKeyboard.tsx`, where T14 touches
+only the container's height and T15 only the keys' colours. Run them in separate
+conversations regardless, per the one-task-one-run rule.
 
 **T03 moved after T06.** Its acceptance criteria ("opening a piece lands on the
 player paused at 0:00", "reopens and plays without re-parsing") need a working

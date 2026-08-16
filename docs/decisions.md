@@ -1046,6 +1046,221 @@ The generalisable point: a hardcoded constant that is true of every row today
 becomes a lie the moment a second source lands, and it will not fail a test that
 was written when it was still true.
 
+### D-045 — "Unrelated baseline failures" were ours, twice
+**2026-08-16 · Decided — process correction**
+
+T13a shipped correctly: `sourceCollection` on `PieceDocument`, derived from
+`licence.url`, with `sourceLabel()` returning the stored value so legacy records
+drop the segment through the existing filter. All seven criteria hold.
+
+It ended with: *"An optional full e2e run passed both T13a cases but finished
+23/31 due to eight unrelated baseline failures... I left those outside-scope
+issues untouched."* The run reproduces exactly — 8 failed, 23 passed — and **at
+least two of the eight are caused by T13**:
+
+- `home.e2e.ts:270` asserts 47 catalog matches for "chopin". There are now 51.
+  The four extra are Winter Wind, Ocean, Marche funèbre and Polonaise Op. 53 —
+  T13's Chopin additions. 47 + 4 = 51.
+- `playlist.e2e.ts` asserts "25 PIECES · 1H 29M" and "39 more works". The
+  playlist is now 38 and 26.
+
+Neither is unrelated and neither is a baseline. Six others remain genuinely
+unclassified and are T13b's job to diagnose rather than dismiss.
+
+**This is the second instance of the same pattern**, after D-044 recorded the
+"pre-existing display limitation" that T13 had in fact introduced. Both times a
+task changed the catalog, broke something that depended on the catalog, and
+described the breakage as inherited. The common cause is that **`npm run check`
+does not run Playwright** — it is types, lint, guardrails and unit tests. A task
+can be honestly reported as green while leaving the e2e suite red.
+
+Three changes follow. `AGENTS.md`'s definition of done now requires
+`npm run test:e2e` for any task touching catalog data, routes or a screen; it
+records that the suite needs port 4181 free because every spec builds and serves
+its own preview there; and it states that **a failing test belongs to the task
+that finds it until evidence says otherwise** — checking the assertion against
+what changed, or running the spec on the previous commit.
+
+The deeper lesson is about hardcoded counts. `home.e2e.ts` derives most of its
+numbers from the manifest at runtime and those assertions survived; the one
+literal `47` did not. A test that hardcodes a number derived from data under
+active growth is a scheduled failure, and it fails long after the person who
+wrote it has stopped watching.
+
+### D-046 — The player fits a landscape phone with every control still on screen
+**2026-08-16 · Decided — additive to the handoff; T14**
+
+The handoff's responsive gate (`docs/design-contract.md` §4) is 1440×900 and
+1024×768. A phone in landscape was never in it. Measured on the deployed app via
+Playwright, opening *Air — BWV Anh. 131*:
+
+| Viewport | Header | **Notes** | Keyboard | Transport | Notes' share |
+|---|---|---|---|---|---|
+| 932×430 — iPhone 14 Pro Max, installed | 71 | **126** | 112 | 121 | 29% |
+| 932×390 — slim browser bar | 71 | **86** | 112 | 121 | 22% |
+| 932×340 — Safari, both toolbars | 71 | **36** | 112 | 121 | 10% |
+| 932×320 — worst realistic case | 71 | **16** | 112 | 121 | **5%** |
+| 667×375 — small phone, header wraps to two rows | 105 | **37** | 112 | 121 | 10% |
+| 1024×768 — iPad landscape | 71 | 461 | 115 | 121 | 60% |
+
+The waterfall is the only part anyone reads while playing. iPad landscape is
+already fine; the phone is not. Below roughly 338px of visible height the fixed
+chrome exceeds the viewport outright and the transport is clipped with no way to
+scroll to it, because the shell is `overflow: hidden`.
+
+**Nothing hides.** An earlier draft of this decision proposed a "focus mode" that
+auto-hid the chrome after 2.5s and moved speed and A–B behind a `⋯` sheet.
+Rejected by Anirudh the same day, and correctly: *"keeping a focus mode removes
+controls which defeats the purpose of careful study and practice."* The whole
+value of this player over a video is that you can slow a passage, loop four bars
+and re-run them — controls you reach for constantly, that must be there when you
+look. A player you have to go searching through is a video player with extra
+steps. **Every control stays visible at every size.** The `⋯` sheet and the
+auto-hide are struck from the design.
+
+**The scroll that reveals nothing** — the part being reported as broken — is
+separate and goes first. `globals.css` sets `min-height: 100%` on `html`, `body`
+and `#root` while `PlayerView` sizes the shell to `100dvh` (D-027). On a phone
+those differ: `100%` resolves against the initial containing block, which mobile
+browsers size to the viewport with the toolbars *hidden*, while `100dvh` is the
+viewport as it stands. The difference, exactly one toolbar, becomes scrollable
+empty space. Two-line fix.
+
+**How everything fits without hiding anything.** Measured natural widths, taken
+at 1440×900 where nothing is compressed: play 46 · time 96 · SPEED group 210 ·
+LOOP group 214 — **566px of fixed transport controls**. A 932px or 844px screen
+therefore has 160–250px left for the seek bar, so the two transport rows merge
+into one. Below about 820px they do not fit, so the seek bar keeps its own row
+and speed and loop share the one beneath — still two rows, but 44px each rather
+than 72 and 48.
+
+The header is the same story. Its controls are 456px at their widest and the
+`← Library` button is 80px, so one row needs about 660px including a title —
+comfortably inside a landscape phone. The 105px two-row header at 667px is
+caused by the `w-full` wrap rule from D-027, which was the right fix for a narrow
+*portrait* phone and is exactly wrong sideways, where width is the plentiful
+dimension and height is the scarce one. It becomes conditional on being narrow
+**and** tall.
+
+**Two densities, chosen from the shell's own measured height.** Not a media
+query: `PlayerView` already observes its own box with a `ResizeObserver`, and a
+rotation, a fullscreen toggle, an iPad split view and a toolbar sliding away all
+move that one number. `@media (max-height:)` sees only two of the four.
+
+| | `comfortable` — ≥ 620px tall | `compact` — < 620px tall |
+|---|---|---|
+| Header | 71px, two lines | 44px, one line |
+| Transport | 121px, two rows | 52px (≥820px wide) / 88px (narrower) |
+| Keyboard | `clamp(112px, 15vh, 158px)` | `clamp(96px, 24vh, 158px)` |
+| Controls hidden | none | **none** |
+
+At 932×320 the notes go from 16px to 128px — 5% to 40%. At 932×430, from 126px to
+231px — 29% to 54%. **Above 620px not a pixel moves**, so every viewport in the
+fidelity gate is untouched.
+
+Three things do change at `compact`, and none is a control:
+
+1. **Title and composer share one line** instead of stacking. Same words, one row
+   shorter, truncating from the right.
+2. **The `← → SKIP 5 SECONDS` hint drops.** It describes two keys on a hardware
+   keyboard, on a device that has none. The shortcuts keep working.
+3. **The RIGHT / LEFT text legend drops** — as it already does below 1024px. The
+   swatches on the hand-colour button carry the same information.
+
+**Fullscreen is a bonus, not the fix.** A toggle renders only where
+`document.fullscreenEnabled` is true, and asks for a landscape orientation lock
+inside the same gesture where supported. **Anirudh's device is an iPhone 14 Pro
+Max, so it will not render for him**: Safari on iPhone has never reliably offered
+the Fullscreen API for anything but a `<video>`, and caniuse lists Safari iOS as
+*partial* through 26.5. A button that silently does nothing is worse than no
+button, and this is exactly why the layout above has to stand on its own.
+
+The iPhone equivalent already exists and costs nothing: the app ships
+`display: standalone` (D-035, `vite.config.ts`), so **Add to Home Screen** launches
+with no browser chrome at all — the full 430px, permanently, which is the 932×430
+row of the table above. The install steps belong in the report to Anirudh, not in
+code.
+
+`index.html` also gains `viewport-fit=cover` with `env(safe-area-inset-*)`
+padding; without it iOS letterboxes landscape and discards width on a notched
+device. `docs/mockups/player-landscape-fit.html` renders every size above, and
+measures the device it is opened on.
+
+### D-047 — The keys go white and black
+**2026-08-16 · Decided — a deliberate, recorded departure from the handoff; T15**
+
+The shipped keyboard puts `keyWhiteFace: #151821` beside `keyBlackFace: #0C0E11`.
+That is **1.09:1**. WCAG 1.4.11 requires 3:1 for visual information needed to
+identify a control, and telling a white key from a black key is the entire job of
+the component. The line between two white keys is 1.23:1, and the labels are
+3.06:1 and 2.41:1 against 4.5:1 required.
+
+**Why the phone is worse than the laptop.** A screen in a lit room reflects some
+of that light, adding a constant luminance floor to every pixel. Contrast between
+two near-blacks collapses toward 1.00:1 as that floor rises — the shipped pair
+goes from 1.09:1 in a dark room to **1.02:1** in daylight. A laptop at a desk sits
+in far less light than a phone on a music stand, and phone OLED panels flatten
+everything below roughly 4% luminance regardless. Both key colours live there,
+nine code values apart out of 255. The palette works only in the condition it was
+chosen in.
+
+**Decided: white keys `#F0F2F6`, black keys `#0B0D11`.** 17.35:1, and **5.33:1
+even in daylight** — the best figure of any candidate, and the only palette in
+which the error state also clears 3:1 (3.08:1 against a white key, where every
+darker option fails it). It is what the instrument looks like, so the mental
+model transfers for free.
+
+**Why the middle was wrong, which is the useful part.** Two things need contrast
+and, on one flat key face, they pull in opposite directions. *Identification* —
+white key against black key — wants the face lighter. *State* — a lit key,
+painted in the hand colour `#4CC2FF`, against an unlit one — wants it darker,
+because the hand colour is itself a light blue. They cross at about `#5C6572`,
+where identification reaches 3.41:1 and state falls to 2.94:1 and neither is
+comfortable.
+
+An ivory face, `#C6CBD4`, was drafted and **rejected on sight by Anirudh as
+looking wrong**. There is a measurement behind that reaction: ivory is
+**1.23:1** against the lit key, meaning the keyboard and the keys being played
+are within a hair of the same lightness, so the whole band reads as one flat
+mid-tone. The fix is to go *further*, not less far. At `#F0F2F6` the face is
+clearly above the hand colour rather than level with it, so identification climbs
+to 17.35:1 **and** the lit key separates by 1.79:1 instead of 1.23:1. Both
+numbers improve together, which is the sign the trade-off has been left rather
+than split. Rejected options are kept rendered in the mockup with live figures.
+
+Three state changes follow, and they are the whole of the work:
+
+- **A lit white key gains a 2px `#06121A` ring.** 1.79:1 on hue alone is not
+  enough, and it fails outright in greyscale or for a colour-blind viewer. The
+  ring is 16.89:1 against the white face and 9.44:1 against the accent, so the
+  lit key stays outlined whatever the lighting. White keys only — a lit black key
+  is already 9.69:1 against its own face.
+- **The countdown fill (D-022) runs dark on a white key.** `#4CC2FF` over white is
+  1.79:1 — the fill would be invisible. `#06121A` at `E6` gives 13.40:1 against
+  the key and 7.49:1 against an accent-lit neighbour, and reads as the key filling
+  with shadow. Hand identity is still carried, by the prepared key's border and
+  its inset hand-coloured glow, both unchanged; the fill carries imminence only,
+  which is exactly what D-022 specified.
+- **The fill on a black key goes from alpha `66` to `88`.** At `66` it is 2.42:1
+  against the key face — a shipped value that has always been under the bar and
+  was invisible for the same reason everything else was. `88` gives 3.47:1. One
+  hex digit, and it is the same defect as the rest of this entry.
+
+The stage, the waterfall, the transport and every other surface are untouched.
+The picture is a lit instrument in a dark room, which is what a piano looks like
+in the situation this app is used in.
+
+One value is deliberately not held to 3:1: the black key's top edge, `#363D48`, is
+1.78:1 against its own face. It is dimension, not identification — a black key is
+17.35:1 against the white keys either side of it, and that is what tells you which
+key it is.
+
+`docs/mockups/keyboard-contrast-options.html` renders this against the three
+rejected candidates with every figure computed live and a room-light slider. It
+also carries **Option 4b, the same palette at pure `#FFFFFF`**, which buys a
+little more contrast everywhere and a little more glare in a dark room. That
+choice needs the actual phone (O-12).
+
 ---
 
 ## Open — must be resolved by the named task, not by improvisation
@@ -1061,4 +1276,6 @@ was written when it was still true.
 | O-10 | ~~Is the app permanently non-commercial?~~ **Closed by D-041** — yes, permanently. | Closed 2026-08-16 |
 | O-9 | Is continuous play through a playlist wanted, and what happens to loop/speed at a piece boundary? | after T12a ships and is used |
 | O-11 | Accounts + cross-device sync. Direction confirmed, deprioritised (D-043). Needs a PRD amendment from Anirudh before any task exists, plus answers on hosting cost, auth provider, and what merges when two devices disagree. | not scheduled |
+| O-12 | `#F0F2F6` or pure `#FFFFFF` for the white key face (D-047)? Both clear every bar; whiter buys a little contrast and a little glare in a dark room. Contrast maths cannot settle it — it needs the phone, side by side, at night. Options 4 and 4b in `docs/mockups/keyboard-contrast-options.html`. | Anirudh, on the device, before T15 ships |
+| O-13 | ~~Which phone?~~ **Closed 2026-08-16** — iPhone 14 Pro Max, 932×430 in landscape. The fullscreen button will not render there (D-046); Add to Home Screen is the route, and the compact density is what actually has to work. | Closed 2026-08-16 |
 | O-5 | Per-asset redistribution licence for all 12 seed pieces. PRD R7 — **blocking for the MVP gate**. | `tasks/T03-catalog-home.md`, started day 1 |

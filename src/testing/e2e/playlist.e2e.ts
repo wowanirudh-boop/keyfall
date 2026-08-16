@@ -3,6 +3,40 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { resolve } from "node:path";
 import { build, preview, type PreviewServer } from "vite";
 
+import { formatPlaylistDuration, joinNames } from "../../playlists/format";
+
+interface ShippedManifestEntry {
+  id: string;
+  durationSeconds?: number;
+}
+
+interface ShippedPlaylist {
+  id: string;
+  entries: Array<{ ref: string }>;
+  counts: { missing: number };
+  missingComposers: string[];
+}
+
+const shippedManifest = JSON.parse(
+  readFileSync(resolve("catalog/manifest.json"), "utf8"),
+) as ShippedManifestEntry[];
+const shippedPlaylists = JSON.parse(
+  readFileSync(resolve("catalog/playlists.json"), "utf8"),
+) as { playlists: ShippedPlaylist[] };
+const shippedPlaylist = shippedPlaylists.playlists.find(
+  ({ id }) => id === "rousseau-classical",
+);
+if (!shippedPlaylist) throw new Error("Shipped Rousseau playlist is missing");
+const shippedEntriesById = new Map(shippedManifest.map((entry) => [entry.id, entry]));
+const shippedPlaylistDuration = formatPlaylistDuration(
+  shippedPlaylist.entries.reduce(
+    (total, { ref }) => total + (shippedEntriesById.get(ref)?.durationSeconds ?? 0),
+    0,
+  ),
+);
+const shippedPlaylistSize = shippedPlaylist.entries.length;
+const shippedPlaylistSourceSize = shippedPlaylistSize + shippedPlaylist.counts.missing;
+
 const playlistJsonPath = resolve("dist/catalog/playlists.json");
 let playlistJson: Buffer;
 let server: PreviewServer;
@@ -59,19 +93,27 @@ test("[playlist] [T12a AC4-AC6, AC8] fresh Home opens, saves, and reopens an ord
   await expect(page.getByText("0 SAVED LOCALLY")).toBeVisible();
   const homePlaylists = page.getByRole("region", { name: "Playlists" });
   await expect(homePlaylists.getByText("Classical Rousseau")).toBeVisible();
-  await expect(homePlaylists.getByText("25 PIECES · 1H 29M")).toBeVisible();
+  await expect(
+    homePlaylists.getByText(`${shippedPlaylistSize} PIECES · ${shippedPlaylistDuration}`),
+  ).toBeVisible();
   await homePlaylists.getByRole("button").click();
 
   await expect(page).toHaveURL(/\/playlists\/rousseau-classical$/);
   await expect(page.getByRole("heading", { name: "Classical Rousseau" })).toBeVisible();
-  await expect(page.getByText("25 OF 64 · 1H 29M")).toBeVisible();
-  const rows = page.getByRole("region", { name: "Classical Rousseau pieces" });
-  await expect(rows.getByRole("button")).toHaveCount(25);
   await expect(
-    page.getByText("39 more works from this playlist are not in the catalog yet."),
+    page.getByText(
+      `${shippedPlaylistSize} OF ${shippedPlaylistSourceSize} · ${shippedPlaylistDuration}`,
+    ),
+  ).toBeVisible();
+  const rows = page.getByRole("region", { name: "Classical Rousseau pieces" });
+  await expect(rows.getByRole("button")).toHaveCount(shippedPlaylistSize);
+  await expect(
+    page.getByText(
+      `${shippedPlaylist.counts.missing} more works from this playlist are not in the catalog yet.`,
+    ),
   ).toBeVisible();
   await expect(
-    page.getByText("Liszt, Ravel, Vivaldi and Beethoven are the big gaps."),
+    page.getByText(`${joinNames(shippedPlaylist.missingComposers)} are the big gaps.`),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: /\b(rename|reorder|remove|delete|add|duplicate)\b/i }),

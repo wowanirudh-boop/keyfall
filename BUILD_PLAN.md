@@ -250,6 +250,13 @@ to isolate, and it is proven against a seeded v1 database before any UI. The
 shipped playlist stays a build artefact and is never written into the table.
 No auto-advance — still O-9. D-032, D-042.
 
+### T13b — The e2e suite is red
+
+8 of 31 Playwright tests fail. Two are provably T13's (a hardcoded count of 47
+Chopin matches, now 51; the playlist's 25/39 figures, now 38/26); six need
+diagnosis rather than dismissal. Counts must be derived from the manifest and
+`playlists.json`, never hardcoded. D-045.
+
 ### T13a — The player names the wrong source
 
 `PlayerHeader.tsx` hardcodes "MUTOPIA CATALOG" for every bundled piece. True of
