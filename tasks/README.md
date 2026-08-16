@@ -44,6 +44,7 @@ having to re-derive what was done from the decision log.
 | [T15](T15-keyboard-contrast.md) ✅ | White vs black key was 1.09:1; now 17.35:1 (D-047) |
 | [T10a](T10a-update-prompt.md) ✅ | No deploy reached a returning browser; update prompt now exists (D-050) |
 | [T15a](T15a-restore-coloured-fill.md) ✅ | Countdown fill back to the hand colour on white keys (D-051) |
+| [T14](T14-player-landscape-fit.md) ✅ | Landscape phone: notes area 126px → 230.8px, no dead scroll (D-046) |
 
 [T12](T12-playlists.md) is a stub: it was split into T12a and T12b.
 

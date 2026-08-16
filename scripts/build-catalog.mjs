@@ -29,10 +29,180 @@ const PIANO_MIDI_CREATOR = "Bernd Krueger";
 const REQUEST_INTERVAL_MS = 1_000;
 const MAX_DURATION_SECONDS = 30 * 60;
 const CATALOG_TITLE_OVERRIDES = new Map([
+  ["clementi-s-art-of-playing-on-the-piano-forte", "Lesson 1: Away with melancholy (Mozart)"],
+  ["english-suite-ii-gigue", "English Suite II: Prelude"],
+  ["feuilles-d-album", "Feuilles d'album, Op. 124 No. 16: Berceuse"],
+  ["passepied-et-menuet", "Passepied"],
+  ["six-partitas-clavierubung-part-i-no-2", "Partita No. 2: Sinfonia"],
   ["sonate-2-b-moll", "Finale (Sonata No. 2, 4th mvt)"],
+  ["symphony-no-5-piano-reduction", "Symphony No. 5: I. Allegro con brio (piano reduction)"],
+  ["the-virtuoso-pianist-part-i", "The Virtuoso Pianist (Part I): Exercise No. 1"],
 ]);
-const CATALOG_SOURCE_OVERRIDES = new Map([
-  ["pictures-at-an-exhibition", "piano-midi.de"],
+export const CATALOG_SOURCE_OVERRIDES = new Map([
+  [
+    "die-kunst-der-fuge-contrapunctus-xvii-fuga-a-2-clav-rectus-inversus",
+    {
+      sourceKey: "mutopia",
+      members: ["rectus.mid", "inversus.mid"],
+    },
+  ],
+  [
+    "french-suite-no-5-in-g-major",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "french-suite-5-allemande.mid",
+        "french-suite-5-courante.mid",
+        "french-suite-5-sarabande.mid",
+        "french-suite-5-gavotte.mid",
+        "french-suite-5-bourree.mid",
+        "french-suite-5-loure.mid",
+        "french-suite-5-gigue.mid",
+      ],
+    },
+  ],
+  [
+    "french-suite-no-6-in-e-major",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "bach-french-suite-6-allemande.mid",
+        "bach-french-suite-6-courante.mid",
+        "bach-french-suite-6-sarabande.mid",
+        "bach-french-suite-6-gavotte.mid",
+        "bach-french-suite-6-polonaise.mid",
+        "bach-french-suite-6-bourree.mid",
+        "bach-french-suite-6-menuet.mid",
+        "bach-french-suite-6-gigue.mid",
+      ],
+    },
+  ],
+  [
+    "keyboard-partita-in-a-minor",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "BWV-827.mid",
+        "BWV-827-1.mid",
+        "BWV-827-2.mid",
+        "BWV-827-3.mid",
+        "BWV-827-4.mid",
+        "BWV-827-5.mid",
+      ],
+    },
+  ],
+  [
+    "keyboard-partita-in-e-minor",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "BWV-830.mid",
+        "BWV-830-1.mid",
+        "BWV-830-2.mid",
+        "BWV-830-3.mid",
+        "BWV-830-4.mid",
+        "BWV-830-5.mid",
+      ],
+    },
+  ],
+  ["pictures-at-an-exhibition", { sourceKey: "piano-midi.de" }],
+  [
+    "preludio-con-fuga",
+    {
+      sourceKey: "mutopia",
+      members: ["bwv895.mid", "bwv895-1.mid"],
+    },
+  ],
+  [
+    "six-partitas-clavierubung-part-i-no-1",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "11title-hub.mid",
+        "12title-hub.mid",
+        "13title-hub.mid",
+        "14title-hub.mid",
+        "15title-hub.mid",
+        "16title-hub.mid",
+      ],
+    },
+  ],
+  [
+    "six-partitas-clavierubung-part-i-no-5",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "51title-hub.mid",
+        "52title-hub.mid",
+        "53title-hub.mid",
+        "54title-hub.mid",
+        "55title-hub.mid",
+        "56title-hub.mid",
+        "57title-hub.mid",
+      ],
+    },
+  ],
+  [
+    "six-sonates-faciles-pour-le-piano-forte-i",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "Dussek_Op46_1.mid",
+        "Dussek_Op46_1-1.mid",
+        "Dussek_Op46_1-2.mid",
+        "Dussek_Op46_1-3.mid",
+        "Dussek_Op46_1-4.mid",
+      ],
+    },
+  ],
+  [
+    "six-sonates-faciles-pour-le-piano-forte-ii",
+    {
+      sourceKey: "mutopia",
+      members: ["Dussek_Op46_2.mid", "Dussek_Op46_2-1.mid"],
+    },
+  ],
+  [
+    "six-sonates-faciles-pour-le-piano-forte-iii",
+    {
+      sourceKey: "mutopia",
+      members: ["Dussek_Op46_3.mid", "Dussek_Op46_3-1.mid"],
+    },
+  ],
+  [
+    "six-sonates-faciles-pour-le-piano-forte-iv",
+    {
+      sourceKey: "mutopia",
+      members: ["Dussek_Op46_4.mid", "Dussek_Op46_4-1.mid"],
+    },
+  ],
+  [
+    "six-sonates-faciles-pour-le-piano-forte-v",
+    {
+      sourceKey: "mutopia",
+      members: ["Dussek_Op46_5.mid", "Dussek_Op46_5-1.mid"],
+    },
+  ],
+  [
+    "six-sonates-faciles-pour-le-piano-forte-vi",
+    {
+      sourceKey: "mutopia",
+      members: [
+        "Dussek_Op46_6.mid",
+        "Dussek_Op46_6-1.mid",
+        "Dussek_Op46_6-2.mid",
+        "Dussek_Op46_6-3.mid",
+        "Dussek_Op46_6-4.mid",
+      ],
+    },
+  ],
+  [
+    "sonatina-o-36",
+    {
+      sourceKey: "mutopia",
+      members: ["sonatina-1.mid", "sonatina-1-1.mid", "sonatina-1-2.mid"],
+    },
+  ],
 ]);
 export const MIN_ALIAS_LENGTH = 4;
 export const ALIAS_STOP_WORDS = new Set([
@@ -975,6 +1145,11 @@ export async function buildCatalog({
       continue;
     }
 
+    const baseId = slug(piece.title);
+    const id = slugCounts.get(baseId) === 1 ? baseId : `${baseId}-${piece.publicationId}`;
+    const title = CATALOG_TITLE_OVERRIDES.get(id) ?? piece.title;
+    const asset = `${id}.mid`;
+    const sourceOverride = CATALOG_SOURCE_OVERRIDES.get(id);
     const directoryUrl = publicationUrl(sourceDir, piece.publicationDirectory);
     let assetUrl;
     let sourceUrl;
@@ -994,11 +1169,23 @@ export async function buildCatalog({
       );
       if (isZip) {
         const entries = extractMidiEntries(downloaded);
-        const selectedName = selectName(entries.map((entry) => entry.name), piece);
-        const selected = entries.find((entry) => entry.name === selectedName);
-        if (!selected) throw new Error("MIDI archive contains no MIDI members");
-        bytes = selected.bytes;
-        sourceUrl = `${assetUrl}#${encodeURIComponent(selected.name)}`;
+        if (sourceOverride?.members) {
+          const entriesByName = new Map(entries.map((entry) => [entry.name, entry.bytes]));
+          const missing = sourceOverride.members.filter((name) => !entriesByName.has(name));
+          if (missing.length > 0) {
+            throw new Error(`MIDI archive is missing configured members: ${missing.join(", ")}`);
+          }
+          bytes = concatenateMidiAssets(
+            sourceOverride.members.map((name) => entriesByName.get(name)),
+          );
+          sourceUrl = assetUrl;
+        } else {
+          const selectedName = selectName(entries.map((entry) => entry.name), piece);
+          const selected = entries.find((entry) => entry.name === selectedName);
+          if (!selected) throw new Error("MIDI archive contains no MIDI members");
+          bytes = selected.bytes;
+          sourceUrl = `${assetUrl}#${encodeURIComponent(selected.name)}`;
+        }
       } else {
         bytes = downloaded;
         sourceUrl = assetUrl;
@@ -1016,10 +1203,6 @@ export async function buildCatalog({
       continue;
     }
 
-    const baseId = slug(piece.title);
-    const id = slugCounts.get(baseId) === 1 ? baseId : `${baseId}-${piece.publicationId}`;
-    const title = CATALOG_TITLE_OVERRIDES.get(id) ?? piece.title;
-    const asset = `${id}.mid`;
     const row = {
       id,
       mutopiaId: piece.publicationId,
@@ -1270,7 +1453,7 @@ export async function buildCatalogFromAdapters({
     for (const candidate of result.rows) {
       const { bytes, sourceKey, sourceAssets = [], ...candidateRow } = candidate;
       const label = `${adapter.key} ${candidateRow.id}`;
-      const requiredSource = CATALOG_SOURCE_OVERRIDES.get(candidateRow.id);
+      const requiredSource = CATALOG_SOURCE_OVERRIDES.get(candidateRow.id)?.sourceKey;
       if (requiredSource && sourceKey !== requiredSource) {
         const reason = `${label}: skipped because ${requiredSource} supplies the complete work`;
         duplicateDrops.push(reason);

@@ -1686,26 +1686,6 @@
     }
   },
   {
-    "id": "clementi-s-art-of-playing-on-the-piano-forte",
-    "mutopiaId": "1938",
-    "title": "Clementi's Art of Playing on the Piano Forte",
-    "composer": "Clementi, Muzio",
-    "rawComposer": "Muzio Clementi",
-    "aliases": [
-      "clementi of playing on the piano forte"
-    ],
-    "asset": "clementi-s-art-of-playing-on-the-piano-forte.mid",
-    "format": "midi",
-    "durationSeconds": 76.8,
-    "licence": {
-      "name": "CC-BY-SA-4.0",
-      "url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/ClementiM/O42/clementi-op42/clementi-op42-mids.zip#clementi-op42-les01-mozart-moder.mid",
-      "sha256": "1b23a3061b29b4da754691074c92c03069d80611b83461c7b7180a18690bcff2",
-      "creator": "Javier Ruiz-Alma"
-    }
-  },
-  {
     "id": "concerto",
     "mutopiaId": "155",
     "title": "Concerto",
@@ -2647,12 +2627,12 @@
     ],
     "asset": "die-kunst-der-fuge-contrapunctus-xvii-fuga-a-2-clav-rectus-inversus.mid",
     "format": "midi",
-    "durationSeconds": 154.090755,
+    "durationSeconds": 308.18125,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV1080/contrapunctusXVII/contrapunctusXVII-mids.zip#inversus.mid",
-      "sha256": "2451ba54fff06e30ece7862a9816db29e25edbfabf976569d094b37357ccfd5c",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV1080/contrapunctusXVII/contrapunctusXVII-mids.zip",
+      "sha256": "414450f2c9b7e35f1c10fc3f6f4df939c9208e08b09f5c8caa01e8572a6ef4e5",
       "creator": "Arnaud Gossart"
     }
   },
@@ -2903,12 +2883,12 @@
   {
     "id": "english-suite-ii-gigue",
     "mutopiaId": "84",
-    "title": "English Suite II: Gigue",
+    "title": "English Suite II: Prelude",
     "composer": "Bach, Johann Sebastian",
     "rawComposer": "Johann Sebastian Bach (1685-1750)",
     "aliases": [
       "bach",
-      "english ii gigue"
+      "english ii prelude"
     ],
     "asset": "english-suite-ii-gigue.mid",
     "format": "midi",
@@ -3309,10 +3289,11 @@
   {
     "id": "feuilles-d-album",
     "mutopiaId": "665",
-    "title": "Feuilles d'album",
+    "title": "Feuilles d'album, Op. 124 No. 16: Berceuse",
     "composer": "Schumann, Robert",
     "rawComposer": "Robert Schumann (1810-1856)",
     "aliases": [
+      "feuilles d album berceuse",
       "schumann"
     ],
     "asset": "feuilles-d-album.mid",
@@ -3379,12 +3360,12 @@
     ],
     "asset": "french-suite-no-5-in-g-major.mid",
     "format": "midi",
-    "durationSeconds": 96,
+    "durationSeconds": 705.35,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV816/french-suite-5/french-suite-5-mids.zip#french-suite-5-allemande.mid",
-      "sha256": "9af0d4b6a310422e26a477efe2c81bfc12b23ba411c8fd1f66992c4aef204b23",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV816/french-suite-5/french-suite-5-mids.zip",
+      "sha256": "6e2fc0f52b80bf74b09fd5e4a8d5c784e36786f856c98402f8de127d26e42dbe",
       "creator": "Joel Mayes"
     }
   },
@@ -3400,12 +3381,12 @@
     ],
     "asset": "french-suite-no-6-in-e-major.mid",
     "format": "midi",
-    "durationSeconds": 84,
+    "durationSeconds": 528.240625,
     "licence": {
       "name": "CC-BY-SA-4.0",
       "url": "https://creativecommons.org/licenses/by-sa/4.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV817/french-suite-6/french-suite-6-mids.zip#bach-french-suite-6-allemande.mid",
-      "sha256": "9d92a1980b3a12d00be2c1d2ccf7c865287f496133c2f5eacca9956c130cda6d",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV817/french-suite-6/french-suite-6-mids.zip",
+      "sha256": "c7b84487bf5f25d57379003c66b8f539f7e9d361ee73e4381f25dcf18d857532",
       "creator": "Knute Snortum"
     }
   },
@@ -4568,12 +4549,12 @@
     ],
     "asset": "keyboard-partita-in-a-minor.mid",
     "format": "midi",
-    "durationSeconds": 177,
+    "durationSeconds": 948,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV827/BWV-827/BWV-827-mids.zip#BWV-827.mid",
-      "sha256": "dca40dce3d152d68111d433c4da84cd6bec16b7afc51bcabb23d85c599502442",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV827/BWV-827/BWV-827-mids.zip",
+      "sha256": "c9813de8d853536cab7cad433b48ce795716ec1c6df754ccbf67ec95fe4d4688",
       "creator": "Steven McDougall"
     }
   },
@@ -4588,12 +4569,12 @@
     ],
     "asset": "keyboard-partita-in-e-minor.mid",
     "format": "midi",
-    "durationSeconds": 420,
+    "durationSeconds": 1119.75,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV830/BWV-830/BWV-830-mids.zip#BWV-830.mid",
-      "sha256": "d8a24a23b3c1753116240f74471d494c6842db4a737c4f550861a222226d19eb",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV830/BWV-830/BWV-830-mids.zip",
+      "sha256": "29b7dc82e14abf6335ecd31bbb6598f70ac0401493b915fa37cac26d72aa82b1",
       "creator": "Steven McDougall"
     }
   },
@@ -5708,6 +5689,26 @@
     }
   },
   {
+    "id": "clementi-s-art-of-playing-on-the-piano-forte",
+    "mutopiaId": "1938",
+    "title": "Lesson 1: Away with melancholy (Mozart)",
+    "composer": "Clementi, Muzio",
+    "rawComposer": "Muzio Clementi",
+    "aliases": [
+      "clementi"
+    ],
+    "asset": "clementi-s-art-of-playing-on-the-piano-forte.mid",
+    "format": "midi",
+    "durationSeconds": 76.8,
+    "licence": {
+      "name": "CC-BY-SA-4.0",
+      "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/ClementiM/O42/clementi-op42/clementi-op42-mids.zip#clementi-op42-les01-mozart-moder.mid",
+      "sha256": "1b23a3061b29b4da754691074c92c03069d80611b83461c7b7180a18690bcff2",
+      "creator": "Javier Ruiz-Alma"
+    }
+  },
+  {
     "id": "liebestraum-no-3-s-541",
     "title": "Liebestraum No. 3, S.541",
     "composer": "Liszt, Franz",
@@ -6683,9 +6684,29 @@
     }
   },
   {
+    "id": "six-partitas-clavierubung-part-i-no-2",
+    "mutopiaId": "602",
+    "title": "Partita No. 2: Sinfonia",
+    "composer": "Bach, Johann Sebastian",
+    "rawComposer": "J. S. Bach",
+    "aliases": [
+      "bach"
+    ],
+    "asset": "six-partitas-clavierubung-part-i-no-2.mid",
+    "format": "midi",
+    "durationSeconds": 168.78484699999998,
+    "licence": {
+      "name": "Public Domain",
+      "url": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV826/2-Partita/2-Partita-mids.zip#21title-hub.mid",
+      "sha256": "37d848f3c6f7bc329901658738df7dbd07e8cdb817183be5bda909048561ef0b",
+      "creator": "Carl Bolstad"
+    }
+  },
+  {
     "id": "passepied-et-menuet",
     "mutopiaId": "167",
-    "title": "Passepied (et Menuet)",
+    "title": "Passepied",
     "composer": "Handel, George Frideric",
     "rawComposer": "Georg Friedrich Händel (1685-1759)",
     "aliases": [
@@ -8083,12 +8104,12 @@
     ],
     "asset": "preludio-con-fuga.mid",
     "format": "midi",
-    "durationSeconds": 57.777772,
+    "durationSeconds": 171.11145833333333,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV895/bwv895/bwv895-mids.zip#bwv895.mid",
-      "sha256": "5520bb0ed7db7cb11591aad37bc68de0cadf5274461351dd6bb07c64905cca9c",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV895/bwv895/bwv895-mids.zip",
+      "sha256": "ffb5f7c5b87b87159adfa4f6fff47e04398a5ce04abf7ae553d65b9f01b86ea9",
       "creator": "Andreas Scherer"
     }
   },
@@ -8805,33 +8826,12 @@
     ],
     "asset": "six-partitas-clavierubung-part-i-no-1.mid",
     "format": "midi",
-    "durationSeconds": 126,
+    "durationSeconds": 627.6260416666667,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV825/1-Partita/1-Partita-mids.zip#11title-hub.mid",
-      "sha256": "b1708ead95c4c72e4ea100bf899640a684f83eadf68833994404a42933112d97",
-      "creator": "Carl Bolstad"
-    }
-  },
-  {
-    "id": "six-partitas-clavierubung-part-i-no-2",
-    "mutopiaId": "602",
-    "title": "Six Partitas (Clavierubung part I): No. 2",
-    "composer": "Bach, Johann Sebastian",
-    "rawComposer": "J. S. Bach",
-    "aliases": [
-      "bach",
-      "six partitas no 2"
-    ],
-    "asset": "six-partitas-clavierubung-part-i-no-2.mid",
-    "format": "midi",
-    "durationSeconds": 168.78484699999998,
-    "licence": {
-      "name": "Public Domain",
-      "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV826/2-Partita/2-Partita-mids.zip#21title-hub.mid",
-      "sha256": "37d848f3c6f7bc329901658738df7dbd07e8cdb817183be5bda909048561ef0b",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV825/1-Partita/1-Partita-mids.zip",
+      "sha256": "14f01e55b3dfaa1573d34333acce58916a505a8843b9c102eebb54acd13736e5",
       "creator": "Carl Bolstad"
     }
   },
@@ -8847,12 +8847,12 @@
     ],
     "asset": "six-partitas-clavierubung-part-i-no-5.mid",
     "format": "midi",
-    "durationSeconds": 142.5,
+    "durationSeconds": 892.3989583333333,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV829/5-Partita/5-Partita-mids.zip#51title-hub.mid",
-      "sha256": "d9f4a0429c1213304db7d64900a85629b992408451e5090bdf74ae8834fd3d1d",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/BachJS/BWV829/5-Partita/5-Partita-mids.zip",
+      "sha256": "c2b7bbff5fc0d431d53a7f3a79b29152fdf6c9205322986a173db87c00fce64f",
       "creator": "Carl Bolstad"
     }
   },
@@ -8867,12 +8867,12 @@
     ],
     "asset": "six-sonates-faciles-pour-le-piano-forte-i.mid",
     "format": "midi",
-    "durationSeconds": 125.5,
+    "durationSeconds": 253.5,
     "licence": {
       "name": "CC-BY-SA-3.0",
       "url": "https://creativecommons.org/licenses/by-sa/3.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_1/Dussek_Op46_1-mids.zip#Dussek_Op46_1.mid",
-      "sha256": "d6c30dc812a580ef6f45d460e0c74de9217e641324220c64cc2f5c011b5a604c",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_1/Dussek_Op46_1-mids.zip",
+      "sha256": "0355017a4cb67d5639fc6ad098bffffad5a88e19d733df1e9f1d6c561f204f30",
       "creator": "Kris Van Bruwaene"
     }
   },
@@ -8887,12 +8887,12 @@
     ],
     "asset": "six-sonates-faciles-pour-le-piano-forte-ii.mid",
     "format": "midi",
-    "durationSeconds": 165.5,
+    "durationSeconds": 258.5,
     "licence": {
       "name": "CC-BY-SA-3.0",
       "url": "https://creativecommons.org/licenses/by-sa/3.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_2/Dussek_Op46_2-mids.zip#Dussek_Op46_2.mid",
-      "sha256": "c7dbec04b00326c146e23b74891748a823cabb25bd92d0290948cff3ac05e221",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_2/Dussek_Op46_2-mids.zip",
+      "sha256": "e70120c0b9c29794d0b602e91e152e61439cc25f6af10adf57692b5e65585919",
       "creator": "Kris Van Bruwaene"
     }
   },
@@ -8907,12 +8907,12 @@
     ],
     "asset": "six-sonates-faciles-pour-le-piano-forte-iii.mid",
     "format": "midi",
-    "durationSeconds": 184.2,
+    "durationSeconds": 252.2,
     "licence": {
       "name": "CC-BY-SA-3.0",
       "url": "https://creativecommons.org/licenses/by-sa/3.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_3/Dussek_Op46_3-mids.zip#Dussek_Op46_3.mid",
-      "sha256": "bbcc4d2de819a9aa91cedc763f4c000c0381b2ad4df8a32c344aefdd030e3233",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_3/Dussek_Op46_3-mids.zip",
+      "sha256": "c3aaa6e67c445e87d4f885d0b53af1fe8d210749ceba0b8e1eb63ed1236a55f9",
       "creator": "Kris Van Bruwaene"
     }
   },
@@ -8927,12 +8927,12 @@
     ],
     "asset": "six-sonates-faciles-pour-le-piano-forte-iv.mid",
     "format": "midi",
-    "durationSeconds": 163.5,
+    "durationSeconds": 216,
     "licence": {
       "name": "CC-BY-SA-3.0",
       "url": "https://creativecommons.org/licenses/by-sa/3.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_4/Dussek_Op46_4-mids.zip#Dussek_Op46_4.mid",
-      "sha256": "286dd8b83804a62e5b5def3d05113921e1e31bbba9330f041cb130f115f7313f",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_4/Dussek_Op46_4-mids.zip",
+      "sha256": "c943bf8e90d2c28745e95e0ca74c6e46b1d9bb04ae2733aa743129496103d187",
       "creator": "Kris Van Bruwaene"
     }
   },
@@ -8947,12 +8947,12 @@
     ],
     "asset": "six-sonates-faciles-pour-le-piano-forte-v.mid",
     "format": "midi",
-    "durationSeconds": 151.908939,
+    "durationSeconds": 226.20208333333332,
     "licence": {
       "name": "CC-BY-SA-3.0",
       "url": "https://creativecommons.org/licenses/by-sa/3.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_5/Dussek_Op46_5-mids.zip#Dussek_Op46_5.mid",
-      "sha256": "0fdbd009bdad8ddc155a0feda624c941ce185aa882b3e57c41fb6ae9afc64695",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_5/Dussek_Op46_5-mids.zip",
+      "sha256": "0b558e35e86b6c8252fad5abeee19139889f3d97d05fc70654b41c7420ce6004",
       "creator": "Kris Van Bruwaene"
     }
   },
@@ -8967,12 +8967,12 @@
     ],
     "asset": "six-sonates-faciles-pour-le-piano-forte-vi.mid",
     "format": "midi",
-    "durationSeconds": 179.5,
+    "durationSeconds": 323.5,
     "licence": {
       "name": "CC-BY-SA-3.0",
       "url": "https://creativecommons.org/licenses/by-sa/3.0/",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_6/Dussek_Op46_6-mids.zip#Dussek_Op46_6.mid",
-      "sha256": "3d51e485c03bf508f74973daa87490330856b5887ab91f9e660b7c6d9cae7bc8",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/DussekJL/O46/Dussek_Op46_6/Dussek_Op46_6-mids.zip",
+      "sha256": "a3da79b1262de34451b13ffe3a45a84dea281327117216643dabe5a6e91c1fdc",
       "creator": "Kris Van Bruwaene"
     }
   },
@@ -10147,12 +10147,12 @@
     ],
     "asset": "sonatina-o-36.mid",
     "format": "midi",
-    "durationSeconds": 58.076865,
+    "durationSeconds": 187.321875,
     "licence": {
       "name": "Public Domain",
       "url": "https://www.mutopiaproject.org/legal.html",
-      "sourceUrl": "https://www.mutopiaproject.org/ftp/ClementiM/O36/sonatina-1/sonatina-1-mids.zip#sonatina-1.mid",
-      "sha256": "365dc51f22f89c005d71343df592d9b08fdc314042027989557f1eebcd8bc107",
+      "sourceUrl": "https://www.mutopiaproject.org/ftp/ClementiM/O36/sonatina-1/sonatina-1-mids.zip",
+      "sha256": "aaf5c0304ddf646a3139c73d49b31555ccccab4aea21312771d0c45ad4591603",
       "creator": "Brian D. Rude"
     }
   },
@@ -10320,7 +10320,7 @@
   {
     "id": "symphony-no-5-piano-reduction",
     "mutopiaId": "497",
-    "title": "Symphony no. 5, Piano reduction",
+    "title": "Symphony No. 5: I. Allegro con brio (piano reduction)",
     "composer": "Beethoven, Ludwig van",
     "rawComposer": "Ludwig van Beethoven (1770-1827)",
     "aliases": [
@@ -10706,11 +10706,12 @@
   {
     "id": "the-virtuoso-pianist-part-i",
     "mutopiaId": "2037",
-    "title": "The Virtuoso Pianist (Part I)",
+    "title": "The Virtuoso Pianist (Part I): Exercise No. 1",
     "composer": "Hanon, Charles-Louis",
     "rawComposer": "HanonCL",
     "aliases": [
-      "hanon"
+      "hanon",
+      "the virtuoso pianist exercise no 1"
     ],
     "asset": "the-virtuoso-pianist-part-i.mid",
     "format": "midi",

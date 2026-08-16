@@ -343,12 +343,12 @@ sorts and writes both sources through one path.
 ## Shipped catalog weight
 
 - Pieces: **609**
-- Score assets: **6,825,045 bytes (6.51 MiB)**
+- Score assets: **7,079,435 bytes (6.75 MiB)**
 - 20 MiB deployment flag: **clear at the score-asset stage**
 
 ## Deployed catalog weight
 
-- `dist/catalog`: **7,477,312 bytes (7.13 MiB)**
+- `dist/catalog`: **7,731,579 bytes (7.37 MiB)**
 - 20 MiB deployment flag: **clear**
 ## Playlists
 

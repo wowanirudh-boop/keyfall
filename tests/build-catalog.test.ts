@@ -12,6 +12,7 @@ import {
   buildCatalog,
   buildCatalogFromAdapters,
   buildPlaylists,
+  CATALOG_SOURCE_OVERRIDES,
   concatenateMidiAssets,
   createPianoMidiSourceAdapter,
   extractMidiEntries,
@@ -476,6 +477,97 @@ describe("catalog ingestion", () => {
           "https://www.mutopiaproject.org/ftp/ChopinFF/O35/chp-op-35-4-scholz-fi/chp-op-35-4-scholz-fi.mid",
       },
     });
+  });
+
+  it("[T03f AC3] corrects English Suite II from the source member rather than its metadata title", async () => {
+    const manifest = JSON.parse(await readFile("catalog/manifest.json", "utf8"));
+    const prelude = manifest.find(
+      (row: { id: string }) => row.id === "english-suite-ii-gigue",
+    );
+
+    expect(prelude).toMatchObject({
+      title: "English Suite II: Prelude",
+      licence: {
+        sourceUrl:
+          "https://www.mutopiaproject.org/ftp/BachJS/BWV807/bach-english-suite-2-prelude/bach-english-suite-2-prelude.mid",
+      },
+    });
+  });
+
+  it("[T03f AC1, AC2, AC4, AC5] ships every audited row with honest scope and complete merge metadata", async () => {
+    const manifest = JSON.parse(await readFile("catalog/manifest.json", "utf8"));
+    const rowsById = new Map(manifest.map((row: { id: string }) => [row.id, row]));
+    const previousDurations = new Map([
+      ["die-kunst-der-fuge-contrapunctus-xvii-fuga-a-2-clav-rectus-inversus", 154.08],
+      ["french-suite-no-5-in-g-major", 96],
+      ["french-suite-no-6-in-e-major", 84],
+      ["keyboard-partita-in-a-minor", 177],
+      ["keyboard-partita-in-e-minor", 420],
+      ["preludio-con-fuga", 57.78],
+      ["six-partitas-clavierubung-part-i-no-1", 126],
+      ["six-partitas-clavierubung-part-i-no-5", 142.5],
+      ["six-sonates-faciles-pour-le-piano-forte-i", 125.5],
+      ["six-sonates-faciles-pour-le-piano-forte-ii", 165.5],
+      ["six-sonates-faciles-pour-le-piano-forte-iii", 184.2],
+      ["six-sonates-faciles-pour-le-piano-forte-iv", 163.5],
+      ["six-sonates-faciles-pour-le-piano-forte-v", 151.9],
+      ["six-sonates-faciles-pour-le-piano-forte-vi", 179.5],
+      ["sonatina-o-36", 58.1],
+    ]);
+    const mergeOverrides = [...CATALOG_SOURCE_OVERRIDES.entries()].filter(
+      ([, override]: [string, { sourceKey: string; members?: string[] }]) =>
+        override.sourceKey === "mutopia" && override.members,
+    );
+
+    expect(manifest).toHaveLength(609);
+    expect(mergeOverrides).toHaveLength(15);
+    for (const [id, override] of mergeOverrides) {
+      const row = rowsById.get(id) as {
+        asset: string;
+        durationSeconds: number;
+        licence: Record<string, string>;
+      };
+      const bytes = await readFile(join("catalog", "scores", row.asset));
+      expect(override.members).not.toHaveLength(0);
+      expect(new Set(override.members).size).toBe(override.members?.length);
+      expect(override.members?.every((name: string) => name.endsWith(".mid"))).toBe(true);
+      expect(row.durationSeconds).toBeGreaterThan(previousDurations.get(id)!);
+      expect(row.licence).toEqual({
+        name: expect.any(String),
+        url: expect.any(String),
+        sourceUrl: expect.stringMatching(/-mids\.zip$/),
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+        creator: expect.any(String),
+      });
+    }
+
+    const correctedTitles = new Map([
+      ["clementi-s-art-of-playing-on-the-piano-forte", "Lesson 1: Away with melancholy (Mozart)"],
+      ["english-suite-ii-gigue", "English Suite II: Prelude"],
+      ["feuilles-d-album", "Feuilles d'album, Op. 124 No. 16: Berceuse"],
+      ["passepied-et-menuet", "Passepied"],
+      ["six-partitas-clavierubung-part-i-no-2", "Partita No. 2: Sinfonia"],
+      ["symphony-no-5-piano-reduction", "Symphony No. 5: I. Allegro con brio (piano reduction)"],
+      ["the-virtuoso-pianist-part-i", "The Virtuoso Pianist (Part I): Exercise No. 1"],
+    ]);
+    for (const [id, title] of correctedTitles) {
+      expect(rowsById.get(id)).toMatchObject({ title });
+    }
+
+    expect(
+      manifest
+        .filter((row: { licence: { sourceUrl: string } }) =>
+          row.licence.sourceUrl.includes(".zip#"),
+        )
+        .map((row: { id: string }) => row.id)
+        .sort(),
+    ).toEqual([
+      "clementi-s-art-of-playing-on-the-piano-forte",
+      "fugue-in-g-minor-kv-401-375e",
+      "six-partitas-clavierubung-part-i-no-2",
+      "sonata-no-14-moonlight-1st-movement-adagio-sostenuto",
+      "the-virtuoso-pianist-part-i",
+    ]);
   });
 });
 

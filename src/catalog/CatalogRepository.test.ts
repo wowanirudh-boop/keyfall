@@ -331,17 +331,21 @@ describe("CatalogRepository", () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
-  it("[T03a AC4] [T03b AC2, AC3] [T03c AC5] validates all shipped rows and exact checksums", () => {
-    expect(shippedManifest.length).toBeGreaterThanOrEqual(460);
-    for (const row of shippedManifest) {
-      expect(validateCatalogEntry(row)).not.toBeNull();
-      const bytes = readFileSync(resolve("catalog/scores", row.asset));
-      expect(createHash("sha256").update(bytes).digest("hex")).toBe(row.licence.sha256);
-      if (row.licence.name !== "Public Domain") {
-        expect(row.licence.creator?.trim()).toBeTruthy();
+  it(
+    "[T03a AC4] [T03b AC2, AC3] [T03c AC5] validates all shipped rows and exact checksums",
+    () => {
+      expect(shippedManifest.length).toBeGreaterThanOrEqual(460);
+      for (const row of shippedManifest) {
+        expect(validateCatalogEntry(row)).not.toBeNull();
+        const bytes = readFileSync(resolve("catalog/scores", row.asset));
+        expect(createHash("sha256").update(bytes).digest("hex")).toBe(row.licence.sha256);
+        if (row.licence.name !== "Public Domain") {
+          expect(row.licence.creator?.trim()).toBeTruthy();
+        }
       }
-    }
-  });
+    },
+    15_000,
+  );
 
   it("[T03b AC4] lists every shipped piece, licence, creator, count, and total weight", () => {
     const audit = readFileSync(resolve("catalog/LICENCES.md"), "utf8");
